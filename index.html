@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pickleball Competition</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body background="picklecompbackground.webp">
+    <div class="container">
+        <h1 id="title">Pickleball Competition</h1>
+
+        <!-- Player Input Section -->
+        <div class="navigation">
+            <button id="clearOldComp" onclick="clearState()">Clear Old Competition Data</button>
+            <textarea id="playerInput" placeholder="Enter player names separated by commas or returns..."></textarea>
+
+            <button id="addPlayersBtn">Add Players</button>
+            <label for="courtSelect">How many courts?</label>
+            <select id="courtSelect">
+                <option value="1">1 Court</option>
+                <option value="2">2 Courts</option>
+                <option value="3">3 Courts</option>
+                <option value="4">4 Courts</option>
+                <option value="5">5 Courts</option>
+                <option value="6">6 Courts</option>
+                <option value="7">7 Courts</option>
+                <option value="8">8 Courts</option>
+                <option value="9">9 Courts</option>
+                <option value="10">10 Courts</option>
+            </select>
+            <button id="generatePairsBtn">Let's Play Pickle!</button>
+            <button id="showPodiumElemtn" onclick="showPodium()">&#127942;</button>
+
+            </br><h5 class="compStats" id="playerCount"></h5>
+            <button class="compStats" id="matchesPlayed">Match History</button>
+
+        </div>
+
+
+        <!-- Floating Player List Section -->
+        <div id="playerListContainer" class="floating-panel">
+            <button id="togglePlayerList" class="toggle-btn">&#x1F3C3;&#8680;</button>
+            <h2>Players</h2>
+            <div id="playerListContainerTable">
+                <table id="playerTable">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Eligibility</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="playerList"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="editMatchModal" class="modal">
+            <div class="modal-content">
+                <h3>Edit Match</h3>
+                <div id="editMatchForm"></div>
+                <button id="saveMatchChangesBtn">Save Changes</button>
+                <button id="closeMatchModalBtn">Cancel</button>
+            </div>
+        </div>
+
+
+
+        <!-- Match Display Section -->
+        <div id="matchDisplay"></div>
+
+
+        <!-- Podium Display Section (Hidden initially) -->
+        <!-- Podium Display Section (Hidden initially) -->
+        <div id="podiumDisplay" class="podium-container">
+            <button id="saveAsPictureBtn" class="save-picture-btn">Save as Picture</button>
+            <button id="editPlayerStatsBtn" onclick="enablePlayerStatsEditing()">Edit Player Stats</button>
+
+
+            <h2>The Podium</h2>
+            <div id="dateDisplay"></div>
+
+            <!-- Sorting Buttons -->
+            <div class="sorting-buttons">
+                <button id="sortVictoryPoints">Victory Points</button>
+                <button id="sortPicklePoints">Pickle Points</button>
+                <button id="sortWinPercentage">Win Percentage</button>
+                <button id="sortPicklePointAvg">Pickle Points Average</button>
+                <button id="sortPickleDifferential">Pickle Differential</button>
+            </div>
+
+            <!-- Podium Standings -->
+            <div class="podium">
+                <div class="podium-place silver">
+                    <div class="placementtitle" id="king">&#x1F451;</div>
+                    <div class="player-name" id="silver"></div>
+                    <div class="medals" id="silvermedal">&#x1F948;</div>
+                </div>
+                <div class="podium-place gold">
+                    <div class="placementtitle" id="goat">&#x1F410;</div>
+                    <div class="player-name" id="gold"></div>
+                    <div class="medals" id="goldmedal">&#x1F947;</div>
+                </div>
+                <div class="podium-place bronze">
+                    <div class="placementtitle" id="king">&#x1F3D3;</div>
+
+                    <div class="player-name" id="bronze"></div>
+                    <div class="medals" id="bronzemedal">&#x1F949;</div>
+                </div>
+            </div>
+
+            <!-- Player Stats Table -->
+            <table id="playerStatsTable">
+                <!-- Columns for stats: Rank, Name, Games Played, etc. -->
+            </table>
+
+            <!-- Close Button -->
+            <button id="closePodiumBtn">Close Podium</button>
+        </div>
+
+        <div id="matchHistoryDisplay" class="hidden">
+            <h2>Match History</h2>
+            <div id="matchHistoryContent"></div>
+            <button id="closeMatchHistoryBtn">Close</button>
+        </div>
+
+        <!-- Save/Load Section -->
+        <div class="save-load">
+            <button id="exportBtn">Export to JSON</button>
+            <input type="file" id="importFile" />
+        </div>
+        <button onclick="scrollTop">Scroll to Top</button>
+        <script>function scrollTop() { document.body.scrollTop = document.documentElement.scrollTop = 0; }</script>
+
+        <script src="script.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+
+</body>
+</html>

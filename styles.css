@@ -1,0 +1,582 @@
+﻿/* styles.css */
+
+body {
+    font-family: Arial, sans-serif;
+    text-align: center;
+    color: #333;
+    background-color: #f4f4f9;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    background-image: url(picklecompbackground3.webp);
+    background-repeat: no-repeat;
+    background-size: 100%;
+}
+
+.container {
+    max-width: 90vw;
+    margin: auto;
+    padding: 20px;
+    
+}
+
+.input-section, .round-setup, .save-load {
+    margin-bottom: 20px;
+}
+
+textarea {
+    width: 100%;
+    height: 100px;
+    padding: 10px;
+    margin-bottom: 10px;
+    font-size: 16px;
+}
+
+button {
+    padding: 12px 15px;
+    margin-top: 5px;
+    color: black;
+    border: solid;
+    border-color: black;
+    border-width: 3px;
+    cursor: pointer;
+    border-radius: 15px;
+    font-size: 16px;
+}
+
+    button:disabled {
+        background-color: #ccc;
+    }
+
+
+
+/* Floating Panel (Player List) */
+.floating-panel {
+    position: fixed;
+    top: 10%;
+    left: 0;
+    width: 70%;
+    max-width: 50vw;
+    padding: 15px;
+    background-color: #fff;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+    max-height: 70%; /* Limit panel height */
+    display: flex;
+    flex-direction: column; /* Stack content vertically */
+}
+
+/* Make the inner container scrollable */
+#playerListContainerTable {
+    overflow-y: auto; /* Enable vertical scrolling */
+    max-height: 100%; /* Take full height of available space */
+    flex-grow: 1; /* Allow this section to expand within the panel */
+}
+
+/* Ensure the table fits the container */
+#playerTable {
+    width: 100%; /* Make table width match its container */
+    border-collapse: collapse; /* Optional: Remove extra space between table cells */
+}
+
+    .floating-panel.active {
+        transform: translateX(0);
+    }
+
+/* Optional: Make the toggle button more visually independent */
+.toggle-btn {
+    position: absolute;
+    top: 10px;
+    left: 110%;
+    transform: translateX(-50%);
+    padding: 10px 15px;
+    background-color: lightyellow;
+    color: black;
+    border-radius: 10%;
+    font-size: 40px;
+    cursor: pointer;
+    vertical-align: middle;
+    z-index: 2000; /* Ensure it stays on top */
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+th, td {
+    padding: 10px;
+    border-bottom: 1px solid #ddd;
+    text-align: left;
+}
+
+.hidden {
+    display: none;
+}
+
+/* Podium Section */
+.podium {
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
+    gap: 15px;
+    margin: 20px 0;
+    padding: 20px;
+    background-color: #f9f9f9;
+    border-radius: 10px;
+}
+.placementtitle{
+    font-size: 25px;
+}
+.medals{
+    font-size: 15px;
+}
+
+.save-picture-btn {
+    position: absolute;
+    left: 10px;
+    top: 10px;
+    width: auto;
+    padding: 10px 15px;
+    color: black;
+    cursor: pointer;
+    z-index: 10;
+}
+
+    .save-picture-btn:hover {
+        background-color: #45a049;
+    }
+
+
+
+.podium-place {
+    width: 80px;
+    text-align: center;
+    border-radius: 5px;
+    padding: 10px;
+}
+
+
+.gold {
+    background-color: gold;
+    height: 130px;
+}
+
+.silver {
+    background-color: silver;
+    height: 100px;
+}
+
+.bronze {
+    background-color: #cd7f32;
+    height: 70px;
+}
+
+.save-load {
+    margin-top: 20px;
+}
+
+/* Style for player names */
+.player-name {
+    font-weight: bold;
+    padding-top: 5px;
+}
+
+#podiumDisplay {
+    position: fixed;
+    top: 0%; 
+    width: 90%;
+    height: 90%; /* Adjust height as needed */
+    background-color: #f0f0f0;
+    box-shadow: 0 -4px 8px rgba(0, 0, 0, 0.1);
+    padding: 0px;
+    display: block;
+    flex: 1;
+    overflow-y: auto;
+    border: 2px black solid;
+    transform: translateY(+120%);
+    transition: transform 0.3s ease;
+}
+
+
+    #podiumDisplay.active {
+        transform: translateY(+10%);
+        display: block;
+        flex: 1;
+    }
+
+
+#showPodiumBtn {
+    position: absolute;
+    top: -10%;
+    width: 12vw;
+    right: 20%;
+    transform: translateX(+120%);
+    padding: 10px 15px;
+    color: black;
+    border-radius: 10%;
+    font-size: 30px;
+    cursor: pointer;
+    z-index: 2000;
+
+}
+
+
+#closePodiumBtn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background-color: #0066cc;
+    color: black;
+    padding: 8px 12px;
+    cursor: pointer;
+    flex:1;
+}
+
+#playerStatsTable {
+    width: 100%;
+    max-height: 100vh;
+    overflow-y: auto;
+    border-collapse: collapse;
+    margin-top: 20px;
+    flex:1;
+    
+}
+
+
+    #playerStatsTable th, #playerStatsTable td {
+        text-align: center;
+        padding: 10px;
+      
+        
+    }
+
+
+
+    #playerStatsTable th {
+        background-color: lightyellow;
+        position: sticky;
+        top: 0;
+        z-index: 1;
+        border: 2px solid black;
+        font-size: 12px;
+    }
+
+
+.hidden {
+    display: none; /* This class should not be applied to #podiumDisplay if you want it to slide */
+}
+
+
+/* Match container styling */
+.round-container {
+    padding: 40px;
+    margin: 10px;
+    border-radius: 5px;
+}
+
+    .round-container.even-round {
+        background-color: #eaf6cd;
+        color: #333;
+    }
+
+    .round-container.odd-round {
+        background-color: #d9f2ff;
+        color: #111;
+    }
+
+/* Match Styling */
+.match {
+    margin: 10px 0;
+    padding: 15px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    background-color: #fff;
+    font-size: 16px;
+    text-align: center;
+}
+
+.match-even {
+    background-color: #fffbea;
+}
+
+.match-odd {
+    background-color: #e9ffeb;
+}
+
+/* Team layout within a match */
+.team {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+}
+
+
+
+.team-label {
+    font-weight: bold;
+    margin-right: 10px;
+}
+
+.team-players {
+    flex-grow: 1;
+}
+
+
+.team-score {
+    width: 100%;
+    max-width: 80px;
+    padding: 8px;
+    font-size: 16px;
+}
+
+
+  .match-title {
+        font-size: 18px;
+  }
+
+/* Styling for sit-out players section */
+.sit-out-players {
+    margin: 10px 0;
+    padding: 10px;
+    background-color: #f9f9f9;
+    border-radius: 8px;
+    font-size: 14px;
+    font-style: italic;
+    color: #555;
+}
+
+/* Header with fixed navigation */
+.header {
+    position: fixed;
+    top: 0;
+    width: 100%;
+    background-color: #f3f3f3;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    z-index: 10;
+    padding: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+#title {
+    margin: 0px;
+    font-size: 80px;
+    flex:1;
+    font-family:Borneo;
+    justify-content: center;
+    align-items: center;
+    display: flex;
+    -webkit-text-stroke-width: 1px;
+    -webkit-text-stroke-color: white;
+    text-shadow: 3px 3px 5px black, 3px 3px 5px darkred;
+}
+
+#playerInput{
+    width: 90%;
+    height: 50px;
+    min-width: 90%;
+    max-width: 90%;
+}
+
+.navigation {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    padding: 10px;
+    background-color: #ebe1f6;
+    border-radius: 10px;
+    border: 6px solid black;
+    width: 90%;
+}
+
+
+
+/* Match Display Section */
+#matchDisplay {
+    margin-top: 20px;
+    width:90%;
+    padding: 10px;
+    text-align: center;
+}
+
+#matchHistoryDisplay {
+    position: fixed;
+    top: 10%;
+    left: 50%;
+    transform: translate(-50%, 0);
+    width: 80%;
+    max-height: 70%;
+    background-color: #fff;
+    border: 2px solid #ccc;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+    overflow-y: auto;
+    z-index: 1000;
+    display: none;
+}
+
+    #matchHistoryDisplay.active {
+        display: block;
+    }
+
+#closeMatchHistoryBtn {
+    background-color: #0066cc;
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 5px;
+    cursor: pointer;
+    float: right;
+    margin-bottom: 10px;
+}
+
+
+.compStats {
+    margin: 0px;
+    font-size: 12px;
+}
+
+.round-history {
+    margin-bottom: 20px;
+    padding: 10px;
+    border-radius: 5px;
+}
+
+.match-history-item {
+    margin-bottom: 10px;
+    padding: 5px;
+    border-bottom: 1px solid #ccc;
+}
+
+.round-history h3 {
+    margin-top: 0;
+    font-size: 20px;
+    color: #333;
+}
+
+
+.submit-scores-btn {
+    background-image: linear-gradient( lightblue, powderblue);
+    color: black;
+}
+.submit-scores-btn:hover {
+    background-image: linear-gradient( lightblue, white);
+    color: black;
+}
+.edit-match-btn {
+    background-color: lightblue;
+    color: black;
+}
+    .edit-match-btn:hover {
+        background-color: powderblue;
+        border-color: blue;
+    }
+   
+
+.skip-match-btn {
+    background-color: lightcoral;
+    color: black;
+}
+
+    .skip-match-btn:hover {
+        background-color: lightpink;
+        border-color: red;
+    }
+
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+    .container {
+        padding: 10px;
+    }
+
+    button {
+        font-size: 12px;
+        padding: 10px;
+    }
+
+    .navigation {
+        flex-direction: column;
+    }
+
+    .match {
+        font-size: 14px;
+        text-align: center;
+    }
+
+    .team-score {
+        width: 60px;
+        font-size: 14px;
+    }
+
+    .floating-panel {
+        width: 90%;
+    }
+
+    #playerStatsTable th, #playerStatsTable td {
+        font-size: 8px;
+        padding: 8px;
+       }
+}
+
+
+.modal {
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: white;
+    padding: 20px;
+    border: 1px solid #ccc;
+    z-index: 1000;
+}
+
+.match-editor-popup {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: white;
+    border: 1px solid black;
+    padding: 20px;
+    z-index: 1000;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    width: 300px;
+    border-radius: 8px;
+}
+
+.match-editor-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.close-btn {
+    background: none;
+    border: none;
+    font-size: 20px;
+    cursor: pointer;
+}
+
+.save-btn {
+    margin-top: 15px;
+    padding: 5px 10px;
+    background-color: #28a745;
+    color: white;
+    border: none;
+    cursor: pointer;
+    border-radius: 5px;
+}
+
+    .save-btn:hover {
+        background-color: #218838;
+    }
