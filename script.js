@@ -1,4 +1,4 @@
-﻿const players = [];
+const players = [];
 let currentRound = 1;
 let matches = []; // Store matches here for reference in scoring
 let isFirstRound = true; // Track if it's the first round
@@ -19,81 +19,97 @@ const matchPlayCounter = {}; // Tracks unique matches across rounds
 
 
 document.getElementById('addPlayersBtn').addEventListener('click', addPlayers);
-document.getElementById('generatePairsBtn').addEventListener('click', generatePairsAndMatches);
+document.getElementById('startTournament').addEventListener('click', generatePairsAndMatches);
 document.getElementById('togglePlayerList').addEventListener('click', togglePlayerList);
 document.getElementById('exportBtn').addEventListener('click', exportData);
 document.getElementById('importFile').addEventListener('change', importData);
+document.getElementById('clearBtn').addEventListener('click', clearState);
 
 // Event listeners for sorting buttons
 document.getElementById('sortVictoryPoints').addEventListener('click', () => {
+    // Highlight active button
+    clearActiveSortingButtons();
+    document.getElementById('sortVictoryPoints').classList.add('active');
+    
     const sortedPlayers = sortByVictoryPoints(players);
     displayPodium(sortedPlayers); // Update podium based on new sort
     displayPlayerStatsTable(sortedPlayers); // Update table based on new sort
 });
 
 document.getElementById('sortPicklePoints').addEventListener('click', () => {
+    // Highlight active button
+    clearActiveSortingButtons();
+    document.getElementById('sortPicklePoints').classList.add('active');
+    
     const sortedPlayers = sortByPicklePoints(players);
     displayPodium(sortedPlayers); // Update podium based on new sort
     displayPlayerStatsTable(sortedPlayers); // Update table based on new sort
 });
 
 document.getElementById('sortWinPercentage').addEventListener('click', () => {
+    // Highlight active button
+    clearActiveSortingButtons();
+    document.getElementById('sortWinPercentage').classList.add('active');
+    
     const sortedPlayers = sortByWinPercentage(players);
     displayPodium(sortedPlayers); // Update podium based on new sort
     displayPlayerStatsTable(sortedPlayers); // Update table based on new sort
 });
 
 document.getElementById('sortPicklePointAvg').addEventListener('click', () => {
+    // Highlight active button
+    clearActiveSortingButtons();
+    document.getElementById('sortPicklePointAvg').classList.add('active');
+    
     const sortedPlayers = sortByPicklePointAvg(players);
     displayPodium(sortedPlayers); // Update podium based on new sort
     displayPlayerStatsTable(sortedPlayers); // Update table based on new sort
 });
 
 document.getElementById('sortPickleDifferential').addEventListener('click', () => {
+    // Highlight active button
+    clearActiveSortingButtons();
+    document.getElementById('sortPickleDifferential').classList.add('active');
+    
     const sortedPlayers = sortByPickleDifferential(players);
     displayPodium(sortedPlayers); // Update podium based on new sort
     displayPlayerStatsTable(sortedPlayers); // Update table based on new sort
 });
 
-
-function hidePlayPickleBtn() {
-    if (players.length > 4) {
-
-        const button = document.getElementById('generatePairsBtn');
-        button.style.display = 'none';
-    }
-    else
-        return;
+// Helper function to clear active class from all sorting buttons
+function clearActiveSortingButtons() {
+    const sortButtons = document.querySelectorAll('.sorting-buttons button');
+    sortButtons.forEach(button => button.classList.remove('active'));
 }
+
+// Function to set default active sort button when podium is shown
+function setDefaultActiveSortButton() {
+    clearActiveSortingButtons();
+    document.getElementById('sortVictoryPoints').classList.add('active');
+}
+
 
 
 // Create the debug area and log function for debugging messages
 function createDebugArea() {
-    let debugArea = document.getElementById('debugArea');
-    if (!debugArea) {
-        debugArea = document.createElement('textarea');
-        debugArea.id = 'debugArea';
-        debugArea.style.width = '100%';
-        debugArea.style.height = '200px';
-        debugArea.style.marginTop = '20px';
-        debugArea.readOnly = true;
-        document.body.appendChild(debugArea);
-    }
+    const debugArea = document.getElementById('debugArea');
     return debugArea;
 }
 
 function logDebugMessage(message) {
     const debugArea = createDebugArea();
-    debugArea.value += message + '\n';
-    debugArea.scrollTop = debugArea.scrollHeight;
+    if (debugArea) {
+        debugArea.value += message + '\n';
+        debugArea.scrollTop = debugArea.scrollHeight;
+    }
 }
-
-
 
 // Function to clear the debug area
 function clearDebugArea() {
     const debugArea = createDebugArea();
-    debugArea.value = ''; // Clear previous messages
+    if (debugArea) {
+        debugArea.value = ''; // Clear previous messages
+    }
 }
 
 
@@ -161,14 +177,39 @@ function updatePlayerList() {
             <option value="false" ${player.manualSitOut ? 'selected' : ''}>Sit Out</option>
         `;
 
+        // Add status indicator
+        const statusIndicator = document.createElement('span');
+        statusIndicator.classList.add('player-status');
+        
+        if (player.manualSitOut) {
+            statusIndicator.classList.add('status-inactive');
+            statusIndicator.textContent = 'Sitting Out';
+        } else {
+            statusIndicator.classList.add('status-active');
+            statusIndicator.textContent = 'Active';
+        }
+        
         // Listen for changes in the dropdown
         select.addEventListener('change', () => {
             player.manualSitOut = select.value === "false";
             player.eligible = !player.manualSitOut;
+            
+            // Update status indicator when selection changes
+            if (player.manualSitOut) {
+                statusIndicator.classList.remove('status-active');
+                statusIndicator.classList.add('status-inactive');
+                statusIndicator.textContent = 'Sitting Out';
+            } else {
+                statusIndicator.classList.remove('status-inactive');
+                statusIndicator.classList.add('status-active');
+                statusIndicator.textContent = 'Active';
+            }
+            
             console.log(`Selector changed: Player ${player.name}, Manual Sit-Out: ${player.manualSitOut}, Eligible: ${player.eligible}`);
         });
 
         eligibilityCell.appendChild(select);
+        eligibilityCell.appendChild(statusIndicator);
         row.appendChild(nameCell);
         row.appendChild(eligibilityCell);
         playerList.appendChild(row);
@@ -184,7 +225,7 @@ function editPlayer(index) {
         updatePlayerList();
     }
 
-    autosave();
+    autoSave();
 }
 
 function removePlayer(index) {
@@ -197,24 +238,27 @@ function removePlayer(index) {
         }
         updatePlayerList();
     }
-    autosave();
+    autoSave();
 }
 
 function togglePlayerList() {
     const playerListContainer = document.getElementById('playerListContainer');
+    const toggleButton = document.getElementById('togglePlayerList');
     playerListContainer.classList.toggle('active');
-    document.getElementById('togglePlayerList').innerHTML = playerListContainer.classList.contains('active') ? '&#x1F3C3;&#8678;' : '&#x1F3C3;&#8680;';
-}
-
-function toggleshowPodium() {
-    const playerListContainer = document.getElementById('podiumDisplay');
-    playerListContainer.classList.toggle('active');
-    document.getElementById('togglePlayerList').innerHTML = playerListContainer.classList.contains('active') ? '&#127942;' : '&#8679;';
+    
+    // Update toggle button content based on panel state
+    if (playerListContainer.classList.contains('active')) {
+        toggleButton.innerHTML = '<span class="material-symbols-rounded">arrow_back</span>';
+        toggleButton.setAttribute('aria-label', 'Hide player list');
+    } else {
+        toggleButton.innerHTML = '<span class="material-symbols-rounded">people</span>';
+        toggleButton.setAttribute('aria-label', 'Show player list');
+    }
 }
 
 // Function to determine which players need to sit out
 
-document.getElementById('generatePairsBtn').addEventListener('click', generatePairsAndMatches);
+document.getElementById('startTournament').addEventListener('click', generatePairsAndMatches);
 
 
 // Function to create teams while minimizing repetitive pairing
@@ -451,15 +495,7 @@ function isValidMatch(team1, team2) {
 
     return matches;
 }
-// Helper function to check opponent conflict
-function hasPreviousOpponentConflict(team1, team2) {
-    const matchKey = generateMatchKey(team1, team2);
-    return matches.some(
-        match =>
-            generateMatchKey(match.team1, match.team2) === matchKey ||
-            generateMatchKey(match.team2, match.team1) === matchKey
-    );
-}
+
 
 
 
@@ -479,11 +515,7 @@ function logErrorIf(condition, message) {
     }
 }
 
-// Helper function to update pair count globally in extendedPairHistory
-function updateExtendedPairHistory(player1, player2) {
-    const pairKey = generatePairKey(player1, player2);
-    extendedPairHistory[pairKey] = (extendedPairHistory[pairKey] || 0) + 1;
-}
+
 
 function resetPreviousRoundPairs() {
     previousRoundPairs.clear(); // Clear only pairs from the immediate previous round
@@ -506,42 +538,10 @@ function addPairToRecentHistory(pairKey) {
 }
 
 
-function isUniqueOpponentCombination(player1, player2) {
-    const remainingPlayers = players.filter(p => p !== player1 && p !== player2); // Get remaining players
-    if (remainingPlayers.length < 2) return true; // Not enough players to form a valid team
 
-    const opponent1 = remainingPlayers[0];
-    const opponent2 = remainingPlayers[1];
-    const matchKey = generateMatchKey([player1, player2], [opponent1, opponent2]);
-
-    if (previousRoundMatches.has(matchKey)) {
-        console.log(`Match ${matchKey} already occurred. Skipping.`);
-        return false; // If opponents have already been paired together in the last round, skip it
-    }
-
-    return true; // Unique opponents
-}
 
 // Function to check the remaining players for opponents after pairing all possible unique pairs
-function checkOpponentMatchups(unmatchedPlayers) {
-    if (unmatchedPlayers.length < 4) {
-        console.error("Not enough players to form a valid matchup.");
-        return false;
-    }
 
-    const [player1, player2, opponent1, opponent2] = unmatchedPlayers;
-
-    const matchKey = generateMatchKey([player1, player2], [opponent1, opponent2]);
-
-    if (previousRoundMatches.has(matchKey)) {
-        console.log(`Match ${matchKey} already occurred. Allowing repeat due to lack of unique options.`);
-        return true; // Allow the match even if it already occurred
-    }
-
-    previousRoundMatches.add(matchKey);
-    console.log(`Match ${matchKey} is a valid new match.`);
-    return true;
-}
 
 // Function to shuffle an array
 function shuffleArray(array) {
@@ -556,6 +556,12 @@ function shuffleArray(array) {
 
 // Append matches and sit-out player information to the display
 function appendMatchDisplay(matches, sitOutPlayers) {
+    // Safety check to prevent errors with undefined or empty matches
+    if (!matches || !Array.isArray(matches) || matches.length === 0) {
+        console.warn("No matches to display. Returning from appendMatchDisplay.");
+        return;
+    }
+
     const matchDisplay = document.getElementById('matchDisplay');
     const roundContainer = document.createElement('div');
     roundContainer.classList.add('round-container', currentRound % 2 === 0 ? 'even-round' : 'odd-round');
@@ -830,11 +836,10 @@ function appendMatchDisplay(matches, sitOutPlayers) {
 
     alert("Scores submitted! Starting the next round...");
     generateNextRound();
-    autosave();
+    autoSave();
 }
 
 
-// Function to generate the next round after submitting scores
 // Function to generate the next round after submitting scores
 function generateNextRound() {
     const matchDisplay = document.getElementById('matchDisplay');
@@ -845,22 +850,15 @@ function generateNextRound() {
     roundHeader.textContent = `Round ${currentRound}`;
     roundContainer.appendChild(roundHeader);
     resetPreviousRoundPairs();
-    const teams = generatePairsAndMatches(); // Ensure this returns the correct teams structure
-
-    appendMatchDisplay(teams, []); // Ensure you're passing the right structure
-
-    showSubmitButton();
-    showPodiumButton();
-    autosave();
+    
+    // Call generatePairsAndMatches function which generates teams internally
+    // We don't need to capture its return value as it doesn't return anything
+    generatePairsAndMatches();
+    
+    autoSave();
 }
 
 
-
-
-function hasPreviousPair(player1, player2) {
-    const pairKey = generatePairKey(player1, player2);
-    return extendedPairHistory[pairKey] > 0;
-}
 
 
 // Reset history and enable rematches while keeping the last round's pairs
@@ -898,8 +896,16 @@ function updateSitOutDisplay(sitOutPlayers) {
         document.getElementById('matchDisplay').appendChild(sitOutDisplay);
     }
 
-    const sitOutPlayerNames = sitOutPlayers.map(player => player.name).join(', ');
-    sitOutDisplay.textContent = `Sitting out: ${sitOutPlayerNames || 'None'}`;
+    if (!sitOutPlayers || sitOutPlayers.length === 0) {
+        sitOutDisplay.innerHTML = '<strong>🎉 Everyone is playing! 🎉</strong>';
+        sitOutDisplay.classList.add('all-playing');
+    } else {
+        const sitOutPlayerNames = sitOutPlayers.map(player => 
+            `<span class="sitting-player">${player.name}</span>`
+        ).join(' ');
+        sitOutDisplay.innerHTML = `<strong>Sitting out:</strong> ${sitOutPlayerNames}`;
+        sitOutDisplay.classList.remove('all-playing');
+    }
 }
 
 
@@ -937,63 +943,11 @@ function generatePairsAndMatches() {
 }
 
 
-
-
-
-
-
-
-// Utility function to generate or update match counter
-function updateMatchCounter(matchKey) {
-    if (matchCounter[matchKey] === undefined) {
-        matchCounter[matchKey] = 1; // First occurrence
-    } else {
-        matchCounter[matchKey] += 1; // Increment count if match exists
-    }
-}
-
-// Create matches dynamically based on pairs
-
-// Reset the eligibility, sit-out status, and match history at the end of each round
-function prepareNextRound() {
-    resetEligibilityAndSitOut();
-    resetPreviousRoundPairs();
-}
-
-
 function playRound() {
     currentRound = 1;
     generatePairsAndMatches();
-    showSubmitButton();
-    showPodiumButton(); // Add the podium button for the first round
+    autoSave();
 }
-
-function showSubmitButton() {
-    let submitButton = document.getElementById('submitScoresBtn');
-    if (!submitButton) {
-        submitButton = document.createElement('button');
-        submitButton.id = 'submitScoresBtn';
-        submitButton.textContent = 'Submit Scores / Next Round';
-        submitButton.addEventListener('click', submitScores);
-        document.querySelector('.round-setup').appendChild(submitButton);
-    }
-    submitButton.style.display = 'inline-block';
-}
-
-function showPodiumButton() {
-    let podiumButton = document.getElementById('showPodiumBtn');
-    if (!podiumButton) {
-        podiumButton = document.createElement('button');
-        podiumButton.id = 'showPodiumBtn';
-        podiumButton.textContent = 'Show Podium';
-        document.querySelector('.round-setup').appendChild(podiumButton);
-
-        // Add the event listener for showing the podium
-        podiumButton.addEventListener('click', showPodium);
-    }
-    podiumButton.style.display = 'inline-block'; // Ensure it is displayed
-}
-
 
 function updateVersus(player, opponent) {
     if (!player.versus) {
@@ -1015,10 +969,13 @@ function updateTeammates(player, teammate) {
 
 
 function showPodium() {
-        displayCurrentDate();
-
+    displayCurrentDate();
+    
     const podiumDisplay = document.getElementById('podiumDisplay');
     podiumDisplay.classList.add('active'); // Show podium display
+    
+    // Set default active sort button
+    setDefaultActiveSortButton();
 
     // Initially sort and display by Victory Points
     const sortedPlayers = sortByVictoryPoints(players);
@@ -1325,35 +1282,65 @@ function importData(event) {
 
 
 // Event Listener for Match History Button
-document.getElementById('matchesPlayed').addEventListener('click', showMatchHistory);
+document.getElementById('matchesPlayed').addEventListener('click', () => {
+    console.log("Match History button clicked");
+    showMatchHistory();
+});
 
 // Close Match History Button
 document.getElementById('closeMatchHistoryBtn').addEventListener('click', () => {
-    document.getElementById('matchHistoryDisplay').classList.remove('active');
+    console.log("Close Match History button clicked");
+    const matchHistoryDisplay = document.getElementById('matchHistoryDisplay');
+    
+    // Clear both the style and class
+    matchHistoryDisplay.style.visibility = 'hidden';
+    matchHistoryDisplay.style.opacity = '0';
+    matchHistoryDisplay.style.display = 'none';
+    matchHistoryDisplay.classList.remove('active');
 });
 
 // Function to Show Match History
 function showMatchHistory() {
+    console.log("showMatchHistory function called");
     const matchHistoryDisplay = document.getElementById('matchHistoryDisplay');
     const matchHistoryContent = document.getElementById('matchHistoryContent');
+
+    // Make sure the element exists
+    if (!matchHistoryDisplay) {
+        console.error("Match history display element not found!");
+        return;
+    }
 
     // Clear previous history
     matchHistoryContent.innerHTML = '';
 
+    // Add direct style manipulation in addition to class
+    matchHistoryDisplay.style.visibility = 'visible';
+    matchHistoryDisplay.style.opacity = '1';
+    matchHistoryDisplay.style.display = 'flex';
+    
+    // Add active class for CSS transitions
+    matchHistoryDisplay.classList.add('active');
+
     if (matches.length === 0) {
-        matchHistoryContent.innerHTML = '<p>No matches have been played yet.</p>';
+        matchHistoryContent.innerHTML = '<div class="empty-state">No matches have been played yet.</div>';
     } else {
         // Create a table to display match history
         const table = document.createElement('table');
         table.innerHTML = `
-            <tr>
-                <th>Round</th>
-                <th>Match</th>
-                <th>Team 1</th>
-                <th>Team 2</th>
-                <th>Score</th>
-            </tr>
+            <thead>
+                <tr>
+                    <th>Round</th>
+                    <th>Match</th>
+                    <th>Team 1</th>
+                    <th>Team 2</th>
+                    <th>Score</th>
+                    <th>Winner</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
         `;
+        const tableBody = table.querySelector('tbody');
 
         // Group matches by round and track match occurrences
         const matchColors = {}; // To store a unique color for each repeated match
@@ -1385,67 +1372,94 @@ function showMatchHistory() {
                 row.style.backgroundColor = matchColors[matchKey];
             }
 
+            // Determine winner
+            let winner = "Tie";
+            if (match.team1Score > match.team2Score) {
+                winner = match.team1.map(player => player.name).join(' & ');
+            } else if (match.team2Score > match.team1Score) {
+                winner = match.team2.map(player => player.name).join(' & ');
+            }
+
             row.innerHTML = `
                 <td>${match.round - 1}</td>
                 <td>Match ${index + 1}</td>
-                <td>${match.team1.map(player => player.name).join(' & ')}</td>
-                <td>${match.team2.map(player => player.name).join(' & ')}</td>
-                <td>${match.team1Score || 0} - ${match.team2Score || 0}</td>
+                <td class="team-cell">${match.team1.map(player => 
+                    `<span class="team1-badge">${player.name}</span>`).join(' & ')}
+                </td>
+                <td class="team-cell">${match.team2.map(player => 
+                    `<span class="team2-badge">${player.name}</span>`).join(' & ')}
+                </td>
+                <td><strong>${match.team1Score || 0} - ${match.team2Score || 0}</strong></td>
+                <td>${winner}</td>
             `;
-            table.appendChild(row);
+            tableBody.appendChild(row);
         });
 
         matchHistoryContent.appendChild(table);
     }
-
-    // Show the pop-up
-    matchHistoryDisplay.classList.add('active');
 }
 
 // Generate a unique color
 function generateUniqueColor(index) {
-    const colors = ['#FFDDC1', '#FFABAB', '#FFC3A0', '#D5AAFF', '#85E3FF', '#B9FBC0', '#FF9CEE'];
+    // More subtle colors for match highlighting
+    const colors = [
+        'rgba(255, 221, 193, 0.3)', // Light peach
+        'rgba(255, 171, 171, 0.3)', // Light pink
+        'rgba(255, 195, 160, 0.3)', // Light coral
+        'rgba(213, 170, 255, 0.3)', // Light lavender
+        'rgba(133, 227, 255, 0.3)', // Light blue
+        'rgba(185, 251, 192, 0.3)', // Light mint
+        'rgba(255, 156, 238, 0.3)'  // Light magenta
+    ];
     return colors[index % colors.length];
 }
 
 document.getElementById('saveAsPictureBtn').addEventListener('click', () => {
     const podiumDiv = document.getElementById('podiumDisplay');
-    const originalStyle = podiumDiv.style.cssText; // Save the original styles
+    
+    // Use the new improved capture function from our inline script
+    if (typeof captureElementAsImage === 'function') {
+        captureElementAsImage(podiumDiv, 'leaderboard');
+    } else {
+        // Fallback to old method if the function doesn't exist
+        const originalStyle = podiumDiv.style.cssText; // Save the original styles
 
-    // Temporarily expand the div to include all scrollable content
-    podiumDiv.style.overflow = 'visible';
-    podiumDiv.style.height = 'auto';
-    podiumDiv.style.maxHeight = 'none';
+        // Temporarily expand the div to include all scrollable content
+        podiumDiv.style.overflow = 'visible';
+        podiumDiv.style.height = 'auto';
+        podiumDiv.style.maxHeight = 'none';
 
-    // Allow table content to render fully by ensuring all rows are visible
-    const tables = podiumDiv.querySelectorAll('table');
-    tables.forEach(table => {
-        table.style.overflow = 'visible';
-        table.style.height = 'auto';
-        table.style.maxHeight = 'none';
-    });
-
-    html2canvas(podiumDiv, {
-        scrollX: 0,
-        scrollY: 0,
-        windowWidth: podiumDiv.scrollWidth,
-        windowHeight: podiumDiv.scrollHeight
-    }).then((canvas) => {
-        // Revert the original styles after rendering
-        podiumDiv.style.cssText = originalStyle;
-
+        // Allow table content to render fully by ensuring all rows are visible
+        const tables = podiumDiv.querySelectorAll('table');
         tables.forEach(table => {
-            table.style.overflow = '';
-            table.style.height = '';
-            table.style.maxHeight = '';
+            table.style.overflow = 'visible';
+            table.style.height = 'auto';
+            table.style.maxHeight = 'none';
         });
 
-        const link = document.createElement('a');
-        link.href = canvas.toDataURL('image/png');
-        const currentDate = new Date().toISOString().slice(0, 10); // Get current date
-        link.download = `podium-${currentDate}.png`;
-        link.click();
-    });
+        html2canvas(podiumDiv, {
+            scrollX: 0,
+            scrollY: 0,
+            windowWidth: podiumDiv.scrollWidth,
+            windowHeight: podiumDiv.scrollHeight,
+            scale: 2 // Higher resolution
+        }).then((canvas) => {
+            // Revert the original styles after rendering
+            podiumDiv.style.cssText = originalStyle;
+
+            tables.forEach(table => {
+                table.style.overflow = '';
+                table.style.height = '';
+                table.style.maxHeight = '';
+            });
+
+            const link = document.createElement('a');
+            link.href = canvas.toDataURL('image/png');
+            const currentDate = new Date().toISOString().slice(0, 10); // Get current date
+            link.download = `leaderboard-${currentDate}.png`;
+            link.click();
+        });
+    }
 });
 
 
@@ -1481,6 +1495,9 @@ function enablePlayerStatsEditing() {
 
     const playerStatsTable = document.getElementById('playerStatsTable');
     const rows = playerStatsTable.querySelectorAll('tr');
+    
+    // Add mobile-edit class to the table to optimize for mobile
+    playerStatsTable.classList.add('mobile-edit-mode');
 
     rows.forEach((row, index) => {
         // Skip header row
@@ -1497,56 +1514,68 @@ function enablePlayerStatsEditing() {
 
         const cells = row.querySelectorAll('td');
 
-        // Convert static columns to inputs
-        cells[2].innerHTML = `<input type="number" value="${player.gamesPlayed || 0}" min="0" data-stat="gamesPlayed" data-player="${playerName}" style="width: 50px;">`;
-        cells[3].innerHTML = `<input type="number" value="${player.victoryPoints || 0}" min="0" data-stat="victoryPoints" data-player="${playerName}" style="width: 50px;">`;
-        cells[5].innerHTML = `<input type="number" value="${player.picklePoints || 0}" min="0" data-stat="picklePoints" data-player="${playerName}" style="width: 50px;">`;
+        // Convert static columns to inputs with better mobile styling
+        cells[2].innerHTML = `<input type="number" value="${player.gamesPlayed || 0}" min="0" data-stat="gamesPlayed" data-player="${playerName}" class="stat-input">`;
+        cells[3].innerHTML = `<input type="number" value="${player.victoryPoints || 0}" min="0" data-stat="victoryPoints" data-player="${playerName}" class="stat-input">`;
+        cells[5].innerHTML = `<input type="number" value="${player.picklePoints || 0}" min="0" data-stat="picklePoints" data-player="${playerName}" class="stat-input">`;
 
-        // Display Pickle Point Avg as non-editable (derived from stats)
-        const picklePointAvg = player.gamesPlayed > 0 ? (player.picklePoints / player.gamesPlayed).toFixed(2) : 0;
-        cells[6].textContent = picklePointAvg;
+        // Add editable teammates with better styling
+        const teammatesCell = cells[8]; // Changed from 7 to 8 to match the Teammates column
+        let teammatesHtml = '<div class="edit-relations-container">';
+        if (player.teammates) {
+            Object.entries(player.teammates).forEach(([name, count]) => {
+                teammatesHtml += `
+                    <div class="relation-item">
+                        <span class="relation-name">${name}</span>
+                        <input type="number" value="${count || 0}" min="0" data-type="teammates" data-name="${name}" data-player="${playerName}" class="relation-input">
+                    </div>
+                `;
+            });
+        }
 
-        // Add editable teammates
-        const teammatesCell = cells[7];
-        teammatesCell.innerHTML = Object.entries(player.teammates || {})
-            .map(([name, count]) =>
-                `<div>${name} x<input type="number" value="${count || 0}" min="0" data-type="teammates" data-name="${name}" data-player="${playerName}" style="width: 50px;"></div>`
-            ).join(''); // Group teammates neatly in separate divs
-
-        // Add "Add Teammate" dropdown
+        // Add "Add Teammate" dropdown with better styling
         const availableTeammates = players
-            .filter(p => p.name !== player.name && !(p.name in player.teammates))
+            .filter(p => p.name !== player.name && (!player.teammates || !(p.name in player.teammates)))
             .map(p => `<option value="${p.name}">${p.name}</option>`)
             .join('');
-        teammatesCell.innerHTML += `
-            <div>
-                <select data-action="add-teammate" data-player="${playerName}" style="width: 100%;">
+        teammatesHtml += `
+            <div class="add-relation">
+                <select data-action="add-teammate" data-player="${playerName}" class="add-relation-select">
                     <option value="" disabled selected>Add Teammate</option>
                     ${availableTeammates}
                 </select>
             </div>
-        `;
+        </div>`;
+        teammatesCell.innerHTML = teammatesHtml;
 
-        // Add editable versus opponents
-        const versusCell = cells[8];
-        versusCell.innerHTML = Object.entries(player.versus || {})
-            .map(([name, count]) =>
-                `<div>${name} x<input type="number" value="${count || 0}" min="0" data-type="versus" data-name="${name}" data-player="${playerName}" style="width: 50px;"></div>`
-            ).join(''); // Group versus counts neatly in separate divs
+        // Add editable versus opponents with better styling
+        const versusCell = cells[9]; // Changed from 8 to 9 to match the Versus column
+        let versusHtml = '<div class="edit-relations-container">';
+        if (player.versus) {
+            Object.entries(player.versus).forEach(([name, count]) => {
+                versusHtml += `
+                    <div class="relation-item">
+                        <span class="relation-name">${name}</span>
+                        <input type="number" value="${count || 0}" min="0" data-type="versus" data-name="${name}" data-player="${playerName}" class="relation-input">
+                    </div>
+                `;
+            });
+        }
 
-        // Add "Add Opponent" dropdown
+        // Add "Add Opponent" dropdown with better styling
         const availableOpponents = players
-            .filter(p => p.name !== player.name && !(p.name in player.versus))
+            .filter(p => p.name !== player.name && (!player.versus || !(p.name in player.versus)))
             .map(p => `<option value="${p.name}">${p.name}</option>`)
             .join('');
-        versusCell.innerHTML += `
-            <div>
-                <select data-action="add-opponent" data-player="${playerName}" style="width: 100%;">
+        versusHtml += `
+            <div class="add-relation">
+                <select data-action="add-opponent" data-player="${playerName}" class="add-relation-select">
                     <option value="" disabled selected>Add Opponent</option>
                     ${availableOpponents}
                 </select>
             </div>
-        `;
+        </div>`;
+        versusCell.innerHTML = versusHtml;
     });
 
     // Add event listeners for the dropdowns
@@ -1556,7 +1585,8 @@ function enablePlayerStatsEditing() {
             const teammateName = event.target.value;
             if (teammateName) {
                 const player = players.find(p => p.name === playerName);
-                player.teammates[teammateName] = 0; // Add with a default value of 0
+                if (!player.teammates) player.teammates = {};
+                player.teammates[teammateName] = 1; // Add with a default value of 1
                 enablePlayerStatsEditing(); // Re-render the table
             }
         });
@@ -1568,7 +1598,8 @@ function enablePlayerStatsEditing() {
             const opponentName = event.target.value;
             if (opponentName) {
                 const player = players.find(p => p.name === playerName);
-                player.versus[opponentName] = 0; // Add with a default value of 0
+                if (!player.versus) player.versus = {};
+                player.versus[opponentName] = 1; // Add with a default value of 1
                 enablePlayerStatsEditing(); // Re-render the table
             }
         });
@@ -1587,7 +1618,6 @@ function enablePlayerStatsEditing() {
 
 function savePlayerStats() {
     const inputs = document.querySelectorAll('#playerStatsTable input');
-    const dropdowns = document.querySelectorAll('#playerStatsTable select');
 
     inputs.forEach(input => {
         const playerName = input.dataset.player; // Get player name from the data attribute
@@ -1607,6 +1637,7 @@ function savePlayerStats() {
             player[stat] = value;
         } else if (type === 'teammates') {
             // Update teammates
+            if (!player.teammates) player.teammates = {};
             if (value > 0) {
                 player.teammates[name] = value;
             } else {
@@ -1614,6 +1645,7 @@ function savePlayerStats() {
             }
         } else if (type === 'versus') {
             // Update versus
+            if (!player.versus) player.versus = {};
             if (value > 0) {
                 player.versus[name] = value;
             } else {
@@ -1622,26 +1654,8 @@ function savePlayerStats() {
         }
     });
 
-    // Handle new teammates and opponents added via dropdowns
-    dropdowns.forEach(dropdown => {
-        const playerName = dropdown.dataset.player;
-        const action = dropdown.dataset.action;
-        const selectedPlayerName = dropdown.value;
-
-        if (!selectedPlayerName) return; // Skip if no player was selected
-
-        const player = players.find(p => p.name === playerName);
-        if (!player) {
-            console.error(`Player not found for name "${playerName}"`);
-            return;
-        }
-
-        if (action === 'add-teammate') {
-            player.teammates[selectedPlayerName] = 1; // Add with default count of 1
-        } else if (action === 'add-opponent') {
-            player.versus[selectedPlayerName] = 1; // Add with default count of 1
-        }
-    });
+    // Remove mobile-edit class from the table
+    document.getElementById('playerStatsTable').classList.remove('mobile-edit-mode');
 
     // Refresh the table to remove inputs and display updated stats
     const sortedPlayers = sortByVictoryPoints(players); // Sort players by Victory Points
@@ -1658,17 +1672,16 @@ function savePlayerStats() {
 
     alert('Player stats updated successfully!');
     autoSave();
-
 }
 
 function cancelPlayerStatsEditing() {
     const confirmCancel = confirm('Are you sure you want to exit without saving? Unsaved changes will be lost.');
     if (!confirmCancel) {
-        // Revert button to "Edit Player Stats"
-    const editStatsButton = document.getElementById('editPlayerStatsBtn');
-    editStatsButton.textContent = 'Edit Player Stats';
-    editStatsButton.onclick = enablePlayerStatsEditing;
-        return; }
+        return;
+    }
+
+    // Remove mobile-edit class from the table
+    document.getElementById('playerStatsTable').classList.remove('mobile-edit-mode');
 
     // Restore original data
     players.length = 0;
@@ -1683,7 +1696,9 @@ function cancelPlayerStatsEditing() {
     editStatsButton.textContent = 'Edit Player Stats';
     editStatsButton.onclick = enablePlayerStatsEditing;
 
-
+    // Reset Close Button functionality
+    const closeButton = document.getElementById('closePodiumBtn');
+    closeButton.onclick = closePodium;
 
     alert('Edits canceled. Original stats restored.');
 }
@@ -1979,8 +1994,16 @@ function updateSitOutDisplayForRound(roundContainer, sitOutPlayers) {
     });
 
     // Display updated sit-out players
-    const sitOutPlayerNames = sitOutPlayers.map(player => player.name).join(', ') || 'None';
-    sitOutDiv.textContent = `Sitting out: ${sitOutPlayerNames}`;
+    if (!sitOutPlayers || sitOutPlayers.length === 0) {
+        sitOutDiv.innerHTML = '<strong>🎉 Everyone is playing! 🎉</strong>';
+        sitOutDiv.classList.add('all-playing');
+    } else {
+        const sitOutPlayerNames = sitOutPlayers.map(player => 
+            `<span class="sitting-player">${player.name}</span>`
+        ).join(' ');
+        sitOutDiv.innerHTML = `<strong>Sitting out:</strong> ${sitOutPlayerNames}`;
+        sitOutDiv.classList.remove('all-playing');
+    }
 }
 
 function toggleEditRound(roundContainer, editRoundButton) {
@@ -2192,3 +2215,97 @@ function reorderMatchNumbers(roundContainer) {
 
 
 window.onload = restoreState;
+
+// Add this near the beginning of the file with the other event listeners
+document.addEventListener('DOMContentLoaded', function() {
+    // Add event listeners for buttons with new IDs
+    document.getElementById('showPodiumBtn').addEventListener('click', showPodium);
+    document.getElementById('floatingLeaderboardBtn').addEventListener('click', showPodium);
+    document.getElementById('scrollToCurrentRound').addEventListener('click', scrollToCurrentRound);
+    document.getElementById('clearBtn').addEventListener('click', clearState);
+    document.getElementById('captureAllBtn').addEventListener('click', captureAllContent);
+    
+    // Set up scroll event handling
+    window.addEventListener('scroll', handleScroll);
+});
+
+// Function to handle scroll events
+function handleScroll() {
+    const backToTopBtn = document.getElementById('backToTopBtn');
+    const floatingLeaderboardBtn = document.getElementById('floatingLeaderboardBtn');
+    const currentRoundBtn = document.getElementById('scrollToCurrentRound');
+    const leaderboardOriginal = document.getElementById('showPodiumBtn');
+    
+    // Get scroll position
+    const scrollPos = window.scrollY || document.documentElement.scrollTop;
+    
+    // Calculate when to show floating leaderboard button
+    // Only show when the original is out of view
+    if (leaderboardOriginal) {
+        const leaderboardPos = leaderboardOriginal.getBoundingClientRect().top;
+        if (leaderboardPos < 0) {
+            floatingLeaderboardBtn.classList.add('visible');
+        } else {
+            floatingLeaderboardBtn.classList.remove('visible');
+        }
+    }
+    
+    // Show back to top button
+    if (scrollPos > 200) {
+        backToTopBtn.style.display = "flex";
+    } else {
+        backToTopBtn.style.display = "none";
+    }
+    
+    // Show current round button
+    if (scrollPos > 300) {
+        currentRoundBtn.style.display = "flex";
+    } else {
+        currentRoundBtn.style.display = "none";
+    }
+}
+
+// Function to scroll to the current round
+function scrollToCurrentRound() {
+    const roundContainers = document.querySelectorAll('.round-container');
+    if (roundContainers.length > 0) {
+        // Get the last round container (current round)
+        const currentRoundContainer = roundContainers[roundContainers.length - 1];
+        
+        // Scroll to it with smooth animation
+        currentRoundContainer.scrollIntoView({ behavior: 'smooth' });
+    }
+}
+
+// Function to capture both leaderboard and match history as images
+function captureAllContent() {
+    // First capture the leaderboard (show it if not already visible)
+    const podiumDiv = document.getElementById('podiumDisplay');
+    if (!podiumDiv.classList.contains('active')) {
+        showPodium(); // Show the podium first
+    }
+    
+    // Capture leaderboard after a slight delay to ensure it's fully rendered
+    setTimeout(() => {
+        // Capture the leaderboard
+        captureElementAsImage(podiumDiv, 'leaderboard');
+        
+        // Show match history
+        const matchHistoryDisplay = document.getElementById('matchHistoryDisplay');
+        if (!matchHistoryDisplay.classList.contains('active')) {
+            showMatchHistory();
+        }
+        
+        // Capture match history after a slight delay
+        setTimeout(() => {
+            captureElementAsImage(matchHistoryDisplay, 'match-history');
+            
+            // Optional: close both views after capture is complete
+            setTimeout(() => {
+                closePodium();
+                document.getElementById('closeMatchHistoryBtn').click();
+                alert('Leaderboard and Match History have been saved as images.');
+            }, 500);
+        }, 500);
+    }, 500);
+}
