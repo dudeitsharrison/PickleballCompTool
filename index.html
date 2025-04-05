@@ -3,20 +3,31 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pickleball Tournament Tracker</title>
+    <title>Pickleball Competition Tool</title>
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0" />
 </head>
 <body>
     <div class="container">
-        <h1 id="title">Pickleball Tournament Tracker</h1>
+        <h1 id="title">🥒 Pickleball Competition Tool</h1>
 
         <!-- Player Input Section -->
-        <div class="navigation">
+        <section class="navigation">
             <textarea id="playerInput" placeholder="Enter player names separated by commas or line breaks..."></textarea>
+            <div id="playerCount">Player Count: 0</div>
             <div class="navigation-controls">
-                <button id="addPlayersBtn" class="btn-primary">
-                    <span class="material-symbols-rounded">person_add</span> Add Players
+                <!-- First row - Most important buttons first -->
+                <button id="startTournament" class="btn-success">
+                    <span class="material-symbols-rounded">sports_tennis</span>
+                    START TOURNAMENT
+                </button>
+                <button id="showPodiumBtn" class="btn-primary">
+                    <span class="material-symbols-rounded">leaderboard</span>
+                    LEADERBOARD
+                </button>
+                <button id="addPlayersBtn">
+                    <span class="material-symbols-rounded">group_add</span>
+                    ADD PLAYERS
                 </button>
                 <div class="court-select-container">
                     <label for="courtSelect">Courts:</label>
@@ -27,34 +38,39 @@
                         <option value="4">4 Courts</option>
                         <option value="5">5 Courts</option>
                         <option value="6">6 Courts</option>
-                        <option value="7">7 Courts</option>
-                        <option value="8">8 Courts</option>
                     </select>
                 </div>
-                <button id="generatePairsBtn" class="btn-success">
-                    <span class="material-symbols-rounded">sports_tennis</span> Start Tournament
+                <!-- Second row - Secondary actions -->
+                <button id="matchesPlayed">
+                    <span class="material-symbols-rounded">history</span>
+                    MATCH HISTORY
                 </button>
-                <button id="showPodiumElemtn" onclick="showPodium()" class="btn-primary">
-                    <span class="material-symbols-rounded">emoji_events</span> Leaderboard
+                <button id="captureAllBtn" class="capture-all-btn">
+                    <div class="photo-icon-container">
+                        <span class="material-symbols-rounded">photo_library</span>
+                        <span class="material-symbols-rounded camera-icon">photo_camera</span>
+                    </div>
+                    CAPTURE ALL
                 </button>
-                <button id="matchesPlayed" class="btn-primary">
-                    <span class="material-symbols-rounded">history</span> Match History
-                </button>
-                <h5 id="playerCount" class="compStats"></h5>
             </div>
+            
+            <!-- Import/Export Controls, separated from main navigation -->
             <div class="import-export-controls">
-                <button id="exportBtn" class="btn-primary">
-                    <span class="material-symbols-rounded">download</span> Export Data
+                <button id="exportBtn">
+                    <span class="material-symbols-rounded">download</span>
+                    EXPORT DATA
                 </button>
                 <label for="importFile" class="file-input-label">
-                    <span class="material-symbols-rounded">upload</span> Import Data
-                    <input type="file" id="importFile" class="hidden" />
+                    <span class="material-symbols-rounded">upload</span>
+                    IMPORT DATA
+                    <input type="file" id="importFile" class="hidden" accept=".json">
                 </label>
-                <button id="clearOldComp" onclick="clearState()" class="btn-danger">
-                    <span class="material-symbols-rounded">delete</span> Clear Data
+                <button id="clearBtn" class="btn-danger">
+                    <span class="material-symbols-rounded">delete</span>
+                    CLEAR DATA
                 </button>
             </div>
-        </div>
+        </section>
 
         <!-- Round Setup Section -->
         <div class="round-setup">
@@ -81,7 +97,7 @@
         </button>
 
         <!-- Floating Leaderboard Button -->
-        <button id="toggleLeaderboard" class="toggle-btn leaderboard-btn" aria-label="Show leaderboard">
+        <button id="floatingLeaderboardBtn" class="toggle-btn leaderboard-btn" aria-label="Show leaderboard">
             <span class="material-symbols-rounded">emoji_events</span>
         </button>
 
@@ -96,7 +112,7 @@
 
         <!-- Podium Display Section -->
         <div id="podiumDisplay" class="podium-container">
-            <h2>Tournament Leaderboard</h2>
+            <h2>Pickle Board</h2>
             <div id="dateDisplay"></div>
             
             <button id="saveAsPictureBtn" class="save-picture-btn">
@@ -125,6 +141,13 @@
                     <div class="player-name" id="silver"></div>
                 </div>
                 <div class="podium-place gold">
+                    <div class="confetti-container">
+                        <div class="confetti"></div>
+                        <div class="confetti"></div>
+                        <div class="confetti"></div>
+                        <div class="confetti"></div>
+                        <div class="confetti"></div>
+                    </div>
                     <div class="placementtitle">🥇</div>
                     <div class="player-name" id="gold"></div>
                 </div>
@@ -159,6 +182,9 @@
         <!-- Match History Modal -->
         <div id="matchHistoryDisplay">
             <h2>Match History</h2>
+            <button id="saveMatchHistoryAsPictureBtn" class="save-picture-btn">
+                <span class="material-symbols-rounded">photo_camera</span> Save as Image
+            </button>
             <div id="matchHistoryContent"></div>
             <button id="closeMatchHistoryBtn">
                 <span class="material-symbols-rounded">close</span>
@@ -166,18 +192,123 @@
         </div>
 
         <!-- Back to top button -->
-        <button id="backToTopBtn" onclick="scrollTop()" class="back-to-top-btn">
+        <button id="backToTopBtn" class="back-to-top-btn">
             <span class="material-symbols-rounded">arrow_upward</span>
         </button>
+        
+        <!-- Debug toggle button -->
+        <button id="toggleDebugBtn" class="toggle-debug-btn">
+            <span class="material-symbols-rounded">settings</span>
+        </button>
+        
+        <!-- Debug area container -->
+        <div id="debugAreaContainer" style="display: none;">
+            <div class="debug-header">
+                <h4>Debug Log</h4>
+                <button id="copyDebugBtn" class="copy-debug-btn">
+                    <span class="material-symbols-rounded">content_copy</span>
+                </button>
+            </div>
+            <textarea id="debugArea" readonly></textarea>
+        </div>
     </div>
 
     <script>
-        function scrollTop() { 
+        // Define the scroll to top function and make it globally accessible
+        window.scrollTop = function() { 
             document.body.scrollTop = document.documentElement.scrollTop = 0; 
         }
         
-        // Use the handleScroll function defined in script.js
-        window.onscroll = handleScroll;
+        // Add event listener to the back to top button
+        document.getElementById('backToTopBtn').addEventListener('click', scrollTop);
+        
+        // Add event listener for the debug toggle button
+        document.getElementById('toggleDebugBtn').addEventListener('click', function() {
+            const debugArea = document.getElementById('debugAreaContainer');
+            debugArea.style.display = debugArea.style.display === 'none' ? 'block' : 'none';
+        });
+        
+        // Add event listener for the copy debug button
+        document.getElementById('copyDebugBtn').addEventListener('click', function() {
+            const debugText = document.getElementById('debugArea').value;
+            if (debugText) {
+                navigator.clipboard.writeText(debugText)
+                    .then(() => {
+                        // Visual feedback that copy was successful
+                        const copyBtn = document.getElementById('copyDebugBtn');
+                        copyBtn.innerHTML = '<span class="material-symbols-rounded">check</span>';
+                        setTimeout(() => {
+                            copyBtn.innerHTML = '<span class="material-symbols-rounded">content_copy</span>';
+                        }, 1500);
+                    })
+                    .catch(err => {
+                        console.error('Failed to copy: ', err);
+                        alert('Failed to copy debug log to clipboard');
+                    });
+            }
+        });
+        
+        // Function to capture all content of an element as an image
+        function captureElementAsImage(element, filename) {
+            // Add the photo-capture-mode class to ensure all content is visible
+            element.classList.add('photo-capture-mode');
+            
+            // Save the original styles
+            const originalStyle = element.style.cssText;
+            
+            // Capture all content with html2canvas
+            html2canvas(element, {
+                scrollX: 0,
+                scrollY: 0,
+                windowWidth: element.scrollWidth,
+                windowHeight: element.scrollHeight,
+                scale: 2, // Higher resolution
+                useCORS: true,
+                allowTaint: true,
+                backgroundColor: '#FFFFFF'
+            }).then((canvas) => {
+                // Remove the photo-capture-mode class and restore original styles
+                element.classList.remove('photo-capture-mode');
+                element.style.cssText = originalStyle;
+                
+                // Create download link
+                const link = document.createElement('a');
+                link.href = canvas.toDataURL('image/png');
+                const currentDate = new Date().toISOString().slice(0, 10);
+                link.download = `${filename}-${currentDate}.png`;
+                link.click();
+            });
+        }
+        
+        // Add event listener for the Match History save as image button
+        document.getElementById('saveMatchHistoryAsPictureBtn').addEventListener('click', function() {
+            const matchHistoryDisplay = document.getElementById('matchHistoryDisplay');
+            captureElementAsImage(matchHistoryDisplay, 'match-history');
+        });
+        
+        // Add event listener for the Capture All button
+        document.getElementById('captureAllBtn').addEventListener('click', function() {
+            // Show both displays temporarily
+            const podiumDisplay = document.getElementById('podiumDisplay');
+            const matchHistoryDisplay = document.getElementById('matchHistoryDisplay');
+            
+            // First show the podium and capture it
+            podiumDisplay.classList.add('active');
+            captureElementAsImage(podiumDisplay, 'leaderboard');
+            
+            // Then show the match history and capture it (after a slight delay)
+            setTimeout(function() {
+                podiumDisplay.classList.remove('active');
+                matchHistoryDisplay.classList.add('active');
+                
+                captureElementAsImage(matchHistoryDisplay, 'match-history');
+                
+                // Hide match history after another delay
+                setTimeout(function() {
+                    matchHistoryDisplay.classList.remove('active');
+                }, 500);
+            }, 1000);
+        });
     </script>
     <script src="script.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
