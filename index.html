@@ -3,138 +3,183 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pickleball Competition</title>
+    <title>Pickleball Tournament Tracker</title>
     <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0" />
 </head>
-<body background="picklecompbackground.webp">
+<body>
     <div class="container">
-        <h1 id="title">Pickleball Competition</h1>
+        <h1 id="title">Pickleball Tournament Tracker</h1>
 
         <!-- Player Input Section -->
         <div class="navigation">
-            <button id="clearOldComp" onclick="clearState()">Clear Old Competition Data</button>
-            <textarea id="playerInput" placeholder="Enter player names separated by commas or returns..."></textarea>
-
-            <button id="addPlayersBtn">Add Players</button>
-            <label for="courtSelect">How many courts?</label>
-            <select id="courtSelect">
-                <option value="1">1 Court</option>
-                <option value="2">2 Courts</option>
-                <option value="3">3 Courts</option>
-                <option value="4">4 Courts</option>
-                <option value="5">5 Courts</option>
-                <option value="6">6 Courts</option>
-                <option value="7">7 Courts</option>
-                <option value="8">8 Courts</option>
-                <option value="9">9 Courts</option>
-                <option value="10">10 Courts</option>
-            </select>
-            <button id="generatePairsBtn">Let's Play Pickle!</button>
-            <button id="showPodiumElemtn" onclick="showPodium()">&#127942;</button>
-
-            </br><h5 class="compStats" id="playerCount"></h5>
-            <button class="compStats" id="matchesPlayed">Match History</button>
-
+            <textarea id="playerInput" placeholder="Enter player names separated by commas or line breaks..."></textarea>
+            <div class="navigation-controls">
+                <button id="addPlayersBtn" class="btn-primary">
+                    <span class="material-symbols-rounded">person_add</span> Add Players
+                </button>
+                <div class="court-select-container">
+                    <label for="courtSelect">Courts:</label>
+                    <select id="courtSelect">
+                        <option value="1">1 Court</option>
+                        <option value="2">2 Courts</option>
+                        <option value="3">3 Courts</option>
+                        <option value="4">4 Courts</option>
+                        <option value="5">5 Courts</option>
+                        <option value="6">6 Courts</option>
+                        <option value="7">7 Courts</option>
+                        <option value="8">8 Courts</option>
+                    </select>
+                </div>
+                <button id="generatePairsBtn" class="btn-success">
+                    <span class="material-symbols-rounded">sports_tennis</span> Start Tournament
+                </button>
+                <button id="showPodiumElemtn" onclick="showPodium()" class="btn-primary">
+                    <span class="material-symbols-rounded">emoji_events</span> Leaderboard
+                </button>
+                <button id="matchesPlayed" class="btn-primary">
+                    <span class="material-symbols-rounded">history</span> Match History
+                </button>
+                <h5 id="playerCount" class="compStats"></h5>
+            </div>
+            <div class="import-export-controls">
+                <button id="exportBtn" class="btn-primary">
+                    <span class="material-symbols-rounded">download</span> Export Data
+                </button>
+                <label for="importFile" class="file-input-label">
+                    <span class="material-symbols-rounded">upload</span> Import Data
+                    <input type="file" id="importFile" class="hidden" />
+                </label>
+                <button id="clearOldComp" onclick="clearState()" class="btn-danger">
+                    <span class="material-symbols-rounded">delete</span> Clear Data
+                </button>
+            </div>
         </div>
 
+        <!-- Round Setup Section -->
+        <div class="round-setup">
+            <!-- Dynamically populated by JS -->
+        </div>
 
-        <!-- Floating Player List Section -->
+        <!-- Floating Player List Panel -->
         <div id="playerListContainer" class="floating-panel">
-            <button id="togglePlayerList" class="toggle-btn">&#x1F3C3;&#8680;</button>
             <h2>Players</h2>
             <div id="playerListContainerTable">
                 <table id="playerTable">
                     <thead>
                         <tr>
                             <th>Name</th>
-                            <th>Eligibility</th>
-                            <th>Actions</th>
+                            <th>Status</th>
                         </tr>
                     </thead>
                     <tbody id="playerList"></tbody>
                 </table>
             </div>
         </div>
+        <button id="togglePlayerList" class="toggle-btn" aria-label="Toggle player list">
+            <span class="material-symbols-rounded">people</span>
+        </button>
 
-        <div id="editMatchModal" class="modal">
-            <div class="modal-content">
-                <h3>Edit Match</h3>
-                <div id="editMatchForm"></div>
-                <button id="saveMatchChangesBtn">Save Changes</button>
-                <button id="closeMatchModalBtn">Cancel</button>
-            </div>
-        </div>
+        <!-- Floating Leaderboard Button -->
+        <button id="toggleLeaderboard" class="toggle-btn leaderboard-btn" aria-label="Show leaderboard">
+            <span class="material-symbols-rounded">emoji_events</span>
+        </button>
 
-
+        <!-- Current Round Button -->
+        <button id="scrollToCurrentRound" class="round-nav-btn" aria-label="Scroll to current round">
+            <span class="material-symbols-rounded">arrow_downward</span>
+            <span class="btn-text">Current Round</span>
+        </button>
 
         <!-- Match Display Section -->
-        <div id="matchDisplay"></div>
+        <div id="matchDisplay" class="match-display"></div>
 
-
-        <!-- Podium Display Section (Hidden initially) -->
-        <!-- Podium Display Section (Hidden initially) -->
+        <!-- Podium Display Section -->
         <div id="podiumDisplay" class="podium-container">
-            <button id="saveAsPictureBtn" class="save-picture-btn">Save as Picture</button>
-            <button id="editPlayerStatsBtn" onclick="enablePlayerStatsEditing()">Edit Player Stats</button>
-
-
-            <h2>The Podium</h2>
+            <h2>Tournament Leaderboard</h2>
             <div id="dateDisplay"></div>
+            
+            <button id="saveAsPictureBtn" class="save-picture-btn">
+                <span class="material-symbols-rounded">photo_camera</span> Save as Image
+            </button>
+            <button id="editPlayerStatsBtn" onclick="enablePlayerStatsEditing()">
+                <span class="material-symbols-rounded">edit</span> Edit Player Stats
+            </button>
+            <button id="closePodiumBtn">
+                <span class="material-symbols-rounded">close</span>
+            </button>
 
             <!-- Sorting Buttons -->
             <div class="sorting-buttons">
                 <button id="sortVictoryPoints">Victory Points</button>
                 <button id="sortPicklePoints">Pickle Points</button>
-                <button id="sortWinPercentage">Win Percentage</button>
-                <button id="sortPicklePointAvg">Pickle Points Average</button>
+                <button id="sortWinPercentage">Win %</button>
+                <button id="sortPicklePointAvg">Pickle Points Avg</button>
                 <button id="sortPickleDifferential">Pickle Differential</button>
             </div>
 
             <!-- Podium Standings -->
             <div class="podium">
                 <div class="podium-place silver">
-                    <div class="placementtitle" id="king">&#x1F451;</div>
+                    <div class="placementtitle">🥈</div>
                     <div class="player-name" id="silver"></div>
-                    <div class="medals" id="silvermedal">&#x1F948;</div>
                 </div>
                 <div class="podium-place gold">
-                    <div class="placementtitle" id="goat">&#x1F410;</div>
+                    <div class="placementtitle">🥇</div>
                     <div class="player-name" id="gold"></div>
-                    <div class="medals" id="goldmedal">&#x1F947;</div>
                 </div>
                 <div class="podium-place bronze">
-                    <div class="placementtitle" id="king">&#x1F3D3;</div>
-
+                    <div class="placementtitle">🥉</div>
                     <div class="player-name" id="bronze"></div>
-                    <div class="medals" id="bronzemedal">&#x1F949;</div>
                 </div>
             </div>
 
             <!-- Player Stats Table -->
             <table id="playerStatsTable">
-                <!-- Columns for stats: Rank, Name, Games Played, etc. -->
+                <thead>
+                    <tr>
+                        <th>Rank</th>
+                        <th>Name</th>
+                        <th>Games</th>
+                        <th>Victory Pts</th>
+                        <th>Win %</th>
+                        <th>Pickle Pts</th>
+                        <th>Differential</th>
+                        <th>Pt Avg</th>
+                        <th>Teammates</th>
+                        <th>Versus</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Dynamically filled by JavaScript -->
+                </tbody>
             </table>
-
-            <!-- Close Button -->
-            <button id="closePodiumBtn">Close Podium</button>
         </div>
 
-        <div id="matchHistoryDisplay" class="hidden">
+        <!-- Match History Modal -->
+        <div id="matchHistoryDisplay">
             <h2>Match History</h2>
             <div id="matchHistoryContent"></div>
-            <button id="closeMatchHistoryBtn">Close</button>
+            <button id="closeMatchHistoryBtn">
+                <span class="material-symbols-rounded">close</span>
+            </button>
         </div>
 
-        <!-- Save/Load Section -->
-        <div class="save-load">
-            <button id="exportBtn">Export to JSON</button>
-            <input type="file" id="importFile" />
-        </div>
-        <button onclick="scrollTop">Scroll to Top</button>
-        <script>function scrollTop() { document.body.scrollTop = document.documentElement.scrollTop = 0; }</script>
+        <!-- Back to top button -->
+        <button id="backToTopBtn" onclick="scrollTop()" class="back-to-top-btn">
+            <span class="material-symbols-rounded">arrow_upward</span>
+        </button>
+    </div>
 
-        <script src="script.js"></script>
-        <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
-
+    <script>
+        function scrollTop() { 
+            document.body.scrollTop = document.documentElement.scrollTop = 0; 
+        }
+        
+        // Use the handleScroll function defined in script.js
+        window.onscroll = handleScroll;
+    </script>
+    <script src="script.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 </body>
 </html>
