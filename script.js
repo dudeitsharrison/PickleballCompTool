@@ -2223,7 +2223,8 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('floatingLeaderboardBtn').addEventListener('click', showPodium);
     document.getElementById('scrollToCurrentRound').addEventListener('click', scrollToCurrentRound);
     document.getElementById('clearBtn').addEventListener('click', clearState);
-    document.getElementById('captureAllBtn').addEventListener('click', captureAllContent);
+    // Commenting out duplicate event listener - already defined in HTML
+    // document.getElementById('captureAllBtn').addEventListener('click', captureAllContent);
     
     // Set up scroll event handling
     window.addEventListener('scroll', handleScroll);
