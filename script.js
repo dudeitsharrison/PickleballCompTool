@@ -15,11 +15,42 @@ const globalPairHistory = new Set(); // Track all pairs across rounds
 const matchPlayCounter = {}; // Tracks unique matches across rounds
 
 
-document.getElementById('submit-log').addEventListener('click', function() {
-    const debugLog = document.getElementById('debug-log').value;
-    const comment = document.getElementById('comment').value;
-    const name = document.getElementById('name').value;
-    const contact = document.getElementById('contact').value;
+
+
+
+// Get the modal
+var modal = document.getElementById("debug-log-modal");
+
+// Get the button that opens the modal
+var btn = document.getElementById("open-modal");
+
+// Get the <span> element that closes the modal
+var span = document.getElementsByClassName("close")[0];
+
+// When the user clicks the button, open the modal
+btn.onclick = function() {
+    document.getElementById('modal-debug-log').value = document.getElementById('debug-log').value;
+    modal.style.display = "block";
+}
+
+// When the user clicks on <span> (x), close the modal
+span.onclick = function() {
+    modal.style.display = "none";
+}
+
+// When the user clicks anywhere outside of the modal, close it
+window.onclick = function(event) {
+    if (event.target == modal) {
+        modal.style.display = "none";
+    }
+}
+
+// Submit the log data from the modal
+document.getElementById('submit-modal-log').addEventListener('click', function() {
+    const debugLog = document.getElementById('modal-debug-log').value;
+    const comment = document.getElementById('modal-comment').value;
+    const name = document.getElementById('modal-name').value;
+    const contact = document.getElementById('modal-contact').value;
     const timestamp = new Date().toISOString();
 
     const title = encodeURIComponent('Bug Report');
@@ -33,7 +64,15 @@ document.getElementById('submit-log').addEventListener('click', function() {
 
     const issueLink = `https://github.com/dudeitsharrison/PickleballCompTool/issues/new?title=${title}&body=${body}`;
     window.open(issueLink, '_blank');
+
+    // Close the modal after submission
+    modal.style.display = "none";
 });
+
+
+
+
+
 
 
 
