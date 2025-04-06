@@ -15,6 +15,26 @@ const globalPairHistory = new Set(); // Track all pairs across rounds
 const matchPlayCounter = {}; // Tracks unique matches across rounds
 
 
+document.getElementById('submit-log').addEventListener('click', function() {
+    const debugLog = document.getElementById('debug-log').value;
+    const comment = document.getElementById('comment').value;
+    const name = document.getElementById('name').value;
+    const contact = document.getElementById('contact').value;
+    const timestamp = new Date().toISOString();
+
+    const title = encodeURIComponent('Bug Report');
+    const body = encodeURIComponent(
+        `**Timestamp:** ${timestamp}\n\n` +
+        `**Debug Log:**\n\`\`\`\n${debugLog}\n\`\`\`\n\n` +
+        `**Comment:** ${comment}\n\n` +
+        `**Name:** ${name}\n\n` +
+        `**Contact:** ${contact}`
+    );
+
+    const issueLink = `https://github.com/dudeitsharrison/PickleballCompTool/issues/new?title=${title}&body=${body}`;
+    window.open(issueLink, '_blank');
+});
+
 
 
 
