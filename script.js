@@ -3729,7 +3729,6 @@ function handleScroll() {
     const backToTopBtn = document.getElementById('backToTopBtn');
     const floatingLeaderboardBtn = document.getElementById('floatingLeaderboardBtn');
     const currentRoundBtn = document.getElementById('scrollToCurrentRound');
-    const leaderboardOriginal = document.getElementById('showPodiumBtn');
     
     // Get scroll position
     const scrollPos = window.scrollY || document.documentElement.scrollTop;
@@ -3754,15 +3753,10 @@ function handleScroll() {
         // Get the last round container (current round)
         const currentRoundContainer = roundContainers[roundContainers.length - 1];
         const containerRect = currentRoundContainer.getBoundingClientRect();
-        const windowHeight = window.innerHeight;
         
-        // Only hide the button if the round is fully visible and reasonably centered
-        const isRoundCentered = 
-            containerRect.top > 100 && 
-            containerRect.bottom < windowHeight - 100 &&
-            containerRect.height < windowHeight - 200;
-            
-        if (isRoundCentered) {
+        // Only hide the button if the current round is at or near the top of the viewport
+        // Show the button if the top of the round is below the viewport or far down
+        if (containerRect.top >= 0 && containerRect.top <= 100) {
             currentRoundBtn.style.display = "none";
         } else {
             currentRoundBtn.style.display = "flex";
@@ -3780,8 +3774,14 @@ function scrollToCurrentRound() {
         // Get the last round container (current round)
         const currentRoundContainer = roundContainers[roundContainers.length - 1];
         
-        // Scroll to it with smooth animation, but only when manually triggered
-        currentRoundContainer.scrollIntoView({ behavior: 'smooth' });
+        // Scroll to position the round at the top of the viewport with some padding
+        const yOffset = 20; // 20px padding from top
+        const y = currentRoundContainer.getBoundingClientRect().top + window.pageYOffset - yOffset;
+        
+        window.scrollTo({
+            top: y,
+            behavior: 'smooth'
+        });
     }
 }
 
