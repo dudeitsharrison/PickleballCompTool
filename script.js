@@ -1,79 +1,292 @@
+﻿/**
+ * Toast notification system
+ */
+function showToast(message, type = 'info', duration = 5000) {
+    const toastContainer = document.getElementById('toastContainer');
+    
+    // Create toast element
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type}`;
+    
+    // Determine icon based on type
+    let iconName;
+    switch(type) {
+        case 'success':
+            iconName = 'check_circle';
+            break;
+        case 'error':
+            iconName = 'error';
+            break;
+        default:
+            iconName = 'info';
+    }
+    
+    // Create toast content
+    toast.innerHTML = `
+        <span class="toast-icon material-symbols-rounded">${iconName}</span>
+        <div class="toast-message">${message}</div>
+        <button class="toast-close">
+            <span class="material-symbols-rounded">close</span>
+        </button>
+    `;
+    
+    // Add to container
+    toastContainer.appendChild(toast);
+    
+    // Add event listener to close button
+    const closeButton = toast.querySelector('.toast-close');
+    closeButton.addEventListener('click', () => {
+        toast.style.animation = 'toast-out 0.3s ease forwards';
+        setTimeout(() => {
+            toast.remove();
+        }, 300);
+    });
+    
+    // Auto-remove after duration
+    setTimeout(() => {
+        if (toast.parentNode) {
+            toast.style.animation = 'toast-out 0.3s ease forwards';
+            setTimeout(() => {
+                if (toast.parentNode) {
+                    toast.remove();
+                }
+            }, 300);
+        }
+    }, duration);
+}
+
+// Override the native alert to use our toast system
+const originalAlert = window.alert;
+window.alert = function(message) {
+    // Determine if it's an error message by checking keywords
+    const errorKeywords = ['error', 'invalid', 'failed', 'unable', 'not enough', 'cannot'];
+    const successKeywords = ['success', 'updated', 'saved', 'submitted'];
+    
+    let messageType = 'info';
+    
+    // Check if the message contains any error keywords
+    if (errorKeywords.some(keyword => message.toLowerCase().includes(keyword))) {
+        messageType = 'error';
+    } 
+    // Check if it contains success keywords
+    else if (successKeywords.some(keyword => message.toLowerCase().includes(keyword))) {
+        messageType = 'success';
+    }
+    
+    showToast(message, messageType);
+    
+    // Optionally, you can still log to console
+    console.log(`Toast (${messageType}): ${message}`);
+};
+
 const players = [];
-let currentRound = 1;
+let currentRound = 0; // Will be incremented when first round is displayed
 let matches = []; // Store matches here for reference in scoring
 let isFirstRound = true; // Track if it's the first round
-let pairHistory = {}; // Track pair history to avoid repeating the same pair
+// Unified pair tracking class
+class PairTracker {
+    constructor() {
+        this.pairCounts = {}; // Tracks how many times each pair has played together (extendedPairHistory)
+        this.recentRounds = []; // Array of Sets, one for each recent round (recentPairHistory)
+        this.previousRoundPairs = new Set(); // Store previous round's pairs
+        this.globalPairs = new Set(); // All pairs ever created (globalPairHistory)
+        this.maxRecentRounds = 3; // Number of most recent rounds to track
+    }
+
+    // Generate a unique key for a player pair
+    generateKey(player1, player2) {
+        // Double-check player validity
+        if (!player1 || !player2 || typeof player1 !== 'object' || typeof player2 !== 'object' ||
+            !player1.name || !player2.name) {
+            console.error("Invalid players provided to PairTracker.generateKey:", player1, player2);
+            return null;  // Return null to indicate an invalid pair key
+        }
+        return [player1.name, player2.name].sort().join('-');
+    }
+
+    // Add a pair to history and update all tracking data
+    addPair(player1, player2) {
+        const pairKey = this.generateKey(player1, player2);
+        
+        // Update pair counts
+        this.pairCounts[pairKey] = (this.pairCounts[pairKey] || 0) + 1;
+        
+        // Add to global pairs
+        this.globalPairs.add(pairKey);
+        
+        // Add to recent rounds history
+        this.addToRecentRounds(pairKey);
+        
+        return pairKey;
+    }
+
+    // Add a pair to recent rounds history
+    addToRecentRounds(pairKey) {
+        // Ensure we have at least one round
+        if (this.recentRounds.length === 0) {
+            this.recentRounds.push(new Set());
+        }
+        
+        // Add to the current round
+        const currentRoundSet = this.recentRounds[0];
+        currentRoundSet.add(pairKey);
+        
+        logDebugMessage(`Added pair ${pairKey} to current round, now has ${currentRoundSet.size} pairs`);
+    }
+
+    // Start a new round - shift all tracking data
+    startNewRound() {
+        // Move current pairs to previousRoundPairs
+        this.previousRoundPairs = this.recentRounds.length > 0 ? 
+            new Set(this.recentRounds[0]) : new Set();
+        
+        // Add a new empty set for the current round
+        this.recentRounds.unshift(new Set());
+        
+        // Limit the history size
+        if (this.recentRounds.length > this.maxRecentRounds) {
+            this.recentRounds.pop();
+        }
+        
+        logDebugMessage(`Started new round, tracking ${this.recentRounds.length} recent rounds`);
+    }
+
+    // Check if a pair exists in recent rounds
+    isPairRecent(player1, player2) {
+        const pairKey = this.generateKey(player1, player2);
+        
+        for (const roundSet of this.recentRounds) {
+            if (roundSet.has(pairKey)) {
+                return true;
+            }
+        }
+        
+        return false;
+    }
+
+    // Get the count of times a pair has played together
+    getPairCount(player1, player2) {
+        const pairKey = this.generateKey(player1, player2);
+        return this.pairCounts[pairKey] || 0;
+    }
+
+    // Remove a pair from recent rounds
+    removePair(player1, player2) {
+        const pairKey = this.generateKey(player1, player2);
+        
+        // Remove from each round's history
+        let removed = false;
+        this.recentRounds.forEach((set, index) => {
+            if (set.has(pairKey)) {
+                set.delete(pairKey);
+                removed = true;
+                logDebugMessage(`Removed pair ${pairKey} from round ${index + 1} history`);
+            }
+        });
+        
+        // Remove from previous round pairs if present
+        if (this.previousRoundPairs.has(pairKey)) {
+            this.previousRoundPairs.delete(pairKey);
+            removed = true;
+            logDebugMessage(`Removed pair ${pairKey} from previous round pairs`);
+        }
+        
+        // Clean up empty sets
+        this.recentRounds = this.recentRounds.filter(set => set.size > 0);
+        
+        return removed;
+    }
+
+    // Reset all pair history
+    resetAll() {
+        this.pairCounts = {};
+        this.recentRounds = [];
+        this.previousRoundPairs.clear();
+        this.globalPairs.clear();
+        logDebugMessage("Reset all pair history tracking");
+    }
+
+    // Reset recent history but keep previous round pairs
+    resetRecent() {
+        // Keep the pair counts but start fresh with recent rounds
+        this.recentRounds = [];
+        this.startNewRound();
+        logDebugMessage("Reset recent pair history tracking");
+    }
+
+    // Log the pair history for debugging
+    logHistory() {
+        logDebugMessage("=== Pair History ===");
+        logDebugMessage(`Recent rounds tracked: ${this.recentRounds.length}`);
+        this.recentRounds.forEach((set, idx) => {
+            logDebugMessage(`  Round ${idx+1}: ${Array.from(set).join(', ')}`);
+        });
+        
+        logDebugMessage("Previous round pairs:");
+        Array.from(this.previousRoundPairs).forEach(pair => {
+            logDebugMessage(`  ${pair}`);
+        });
+        
+        logDebugMessage("Pair counts (played together):");
+        Object.entries(this.pairCounts)
+            .sort((a, b) => b[1] - a[1]) // Sort by count (descending)
+            .forEach(([key, count]) => {
+                if (count > 0) {
+                    logDebugMessage(`  ${key}: ${count} times`);
+                }
+            });
+        
+        logDebugMessage("===================");
+    }
+}
+
+// Create a global instance of the pair tracker
+const pairTracker = new PairTracker();
+
+// Match tracking
+const matchHistory = new Set(); // Track all matches that have been played
+
 let previousRoundOpponents = []; // Store previous round's opponents for comparison
-let previousRoundPairs = new Set(); // Store previous round's pairs
-const matchHistory = new Set();
 let previousRoundMatches = new Set();
 const matchCounter = {}; // Object to store match counts
-const recentPairHistory = []; // Array to store pair history for recent rounds
-const extendedPairHistory = {};// Object to store pair counts for all pairs
-const globalPairHistory = new Set(); // Track all pairs across rounds
-// Counter to track the number of times each match has been played
 const matchPlayCounter = {}; // Tracks unique matches across rounds
 
+// Add at the top with other global variables
+let currentSortingMethod = 'victoryPoints'; // Default sorting method
 
-
-
+// Add to the global variables section
+let customSortConfig = {
+    primaryStat: 'victoryPoints',
+    tiebreakers: ['winPercentage', 'pickleDifferential', 'picklePoints', 'picklePointAvg']
+};
 
 document.getElementById('addPlayersBtn').addEventListener('click', addPlayers);
-document.getElementById('startTournament').addEventListener('click', generatePairsAndMatches);
+document.getElementById('startTournament').addEventListener('click', playRound);
 document.getElementById('togglePlayerList').addEventListener('click', togglePlayerList);
 document.getElementById('exportBtn').addEventListener('click', exportData);
 document.getElementById('importFile').addEventListener('change', importData);
 document.getElementById('clearBtn').addEventListener('click', clearState);
 
-// Event listeners for sorting buttons
-document.getElementById('sortVictoryPoints').addEventListener('click', () => {
-    // Highlight active button
-    clearActiveSortingButtons();
-    document.getElementById('sortVictoryPoints').classList.add('active');
-    
-    const sortedPlayers = sortByVictoryPoints(players);
-    displayPodium(sortedPlayers); // Update podium based on new sort
-    displayPlayerStatsTable(sortedPlayers); // Update table based on new sort
-});
+// Consolidated event listeners for sorting buttons
+const sortButtons = [
+    { id: 'sortVictoryPoints', method: 'victoryPoints' },
+    { id: 'sortPicklePoints', method: 'picklePoints' },
+    { id: 'sortWinPercentage', method: 'winPercentage' },
+    { id: 'sortPicklePointAvg', method: 'picklePointAvg' },
+    { id: 'sortPickleDifferential', method: 'pickleDifferential' }
+];
 
-document.getElementById('sortPicklePoints').addEventListener('click', () => {
-    // Highlight active button
-    clearActiveSortingButtons();
-    document.getElementById('sortPicklePoints').classList.add('active');
-    
-    const sortedPlayers = sortByPicklePoints(players);
-    displayPodium(sortedPlayers); // Update podium based on new sort
-    displayPlayerStatsTable(sortedPlayers); // Update table based on new sort
-});
-
-document.getElementById('sortWinPercentage').addEventListener('click', () => {
-    // Highlight active button
-    clearActiveSortingButtons();
-    document.getElementById('sortWinPercentage').classList.add('active');
-    
-    const sortedPlayers = sortByWinPercentage(players);
-    displayPodium(sortedPlayers); // Update podium based on new sort
-    displayPlayerStatsTable(sortedPlayers); // Update table based on new sort
-});
-
-document.getElementById('sortPicklePointAvg').addEventListener('click', () => {
-    // Highlight active button
-    clearActiveSortingButtons();
-    document.getElementById('sortPicklePointAvg').classList.add('active');
-    
-    const sortedPlayers = sortByPicklePointAvg(players);
-    displayPodium(sortedPlayers); // Update podium based on new sort
-    displayPlayerStatsTable(sortedPlayers); // Update table based on new sort
-});
-
-document.getElementById('sortPickleDifferential').addEventListener('click', () => {
-    // Highlight active button
-    clearActiveSortingButtons();
-    document.getElementById('sortPickleDifferential').classList.add('active');
-    
-    const sortedPlayers = sortByPickleDifferential(players);
-    displayPodium(sortedPlayers); // Update podium based on new sort
-    displayPlayerStatsTable(sortedPlayers); // Update table based on new sort
+// Add event listeners to all sort buttons
+sortButtons.forEach(button => {
+    document.getElementById(button.id).addEventListener('click', () => {
+        clearActiveSortingButtons();
+        document.getElementById(button.id).classList.add('active');
+        
+        currentSortingMethod = button.method;
+        const sortedPlayers = sortPlayers(players, currentSortingMethod);
+        displayPodium(sortedPlayers);
+        displayPlayerStatsTable(sortedPlayers);
+    });
 });
 
 // Helper function to clear active class from all sorting buttons
@@ -86,6 +299,7 @@ function clearActiveSortingButtons() {
 function setDefaultActiveSortButton() {
     clearActiveSortingButtons();
     document.getElementById('sortVictoryPoints').classList.add('active');
+    currentSortingMethod = 'victoryPoints';
 }
 
 
@@ -235,29 +449,187 @@ function updatePlayerList() {
     }
 }
 
+/**
+ * Helper function to handle common player update operations
+ * @param {Function} updateAction - The function to perform the actual update
+ */
+function handlePlayerUpdate(updateAction) {
+    if (updateAction()) {
+        updatePlayerList();
+        autoSave();
+        return true;
+    }
+    return false;
+}
+
+/**
+ * Updates all references to a player's name throughout the application
+ * @param {string} oldName - The player's original name
+ * @param {string} newName - The player's new name
+ */
+function updatePlayerNameReferences(oldName, newName) {
+    logDebugMessage(`Updating references from "${oldName}" to "${newName}"`);
+    
+    // Update pair tracker's pairCounts
+    Object.keys(pairTracker.pairCounts).forEach(pairKey => {
+        if (pairKey.includes(oldName)) {
+            const count = pairTracker.pairCounts[pairKey];
+            const names = pairKey.split('-');
+            const newPairKey = names.map(name => name === oldName ? newName : name).sort().join('-');
+            
+            // Create new key with updated name
+            pairTracker.pairCounts[newPairKey] = count;
+            // Delete the old key
+            delete pairTracker.pairCounts[pairKey];
+            logDebugMessage(`Updated pair history: ${pairKey} -> ${newPairKey}`);
+        }
+    });
+    
+    // Update versus stats in all players
+    players.forEach(player => {
+        if (player.versus && player.versus[oldName]) {
+            // Create entry with new name
+            player.versus[newName] = player.versus[oldName];
+            // Delete entry with old name
+            delete player.versus[oldName];
+            logDebugMessage(`Updated versus stats for ${player.name}: ${oldName} -> ${newName}`);
+        }
+        
+        // Update teammate references
+        if (player.teammates && player.teammates[oldName]) {
+            // Create entry with new name
+            player.teammates[newName] = player.teammates[oldName];
+            // Delete entry with old name
+            delete player.teammates[oldName];
+            logDebugMessage(`Updated teammate stats for ${player.name}: ${oldName} -> ${newName}`);
+        }
+    });
+    
+    // Update stored matches
+    matches.forEach(match => {
+        // Update team1 player names
+        match.team1.forEach(player => {
+            if (player.name === oldName) {
+                player.name = newName;
+            }
+        });
+        
+        // Update team2 player names
+        match.team2.forEach(player => {
+            if (player.name === oldName) {
+                player.name = newName;
+            }
+        });
+    });
+    
+    // Update other data structures like recent pair history and global pairs
+    function updateSetKeys(setObj) {
+        if (setObj && setObj instanceof Set) {
+                // Convert set to array, update relevant pairs, and convert back to set
+            const pairsArray = Array.from(setObj);
+            setObj.clear();
+                
+                pairsArray.forEach(pairKey => {
+                    if (pairKey.includes(oldName)) {
+                        const names = pairKey.split('-');
+                        const newPairKey = names.map(name => name === oldName ? newName : name).sort().join('-');
+                    setObj.add(newPairKey);
+                    logDebugMessage(`Updated pair key: ${pairKey} -> ${newPairKey}`);
+                    } else {
+                    setObj.add(pairKey);
+                    }
+                });
+            }
+    }
+    
+    // Update recent rounds sets
+    pairTracker.recentRounds.forEach(roundSet => {
+        updateSetKeys(roundSet);
+    });
+    
+    // Update global pairs set
+    updateSetKeys(pairTracker.globalPairs);
+    
+    // Update previous round pairs set
+    updateSetKeys(pairTracker.previousRoundPairs);
+    
+    // Update match history
+    updateSetKeys(matchHistory);
+    
+    // Update the displayed rounds on the page
+    updateDisplayedPlayerNames(oldName, newName);
+}
+
+/**
+ * Updates player names in the currently displayed rounds and matches on the page
+ * @param {string} oldName - The player's original name
+ * @param {string} newName - The player's new name
+ */
+function updateDisplayedPlayerNames(oldName, newName) {
+    // Update all player name references in the DOM
+    const playerElements = document.querySelectorAll('.team1-player, .team2-player');
+    
+    playerElements.forEach(element => {
+        if (element.textContent.trim() === oldName) {
+            element.textContent = newName;
+            logDebugMessage(`Updated displayed player name: ${oldName} -> ${newName}`);
+        }
+    });
+    
+    // Update sit-out player displays
+    const sitOutDivs = document.querySelectorAll('.sit-out-players');
+    sitOutDivs.forEach(div => {
+        if (div.textContent.includes(oldName)) {
+            div.textContent = div.textContent.replace(oldName, newName);
+            logDebugMessage(`Updated sit-out display: ${oldName} -> ${newName}`);
+        }
+    });
+    
+    // If match history modal is open, update it as well
+    const matchHistoryContent = document.getElementById('matchHistoryContent');
+    if (matchHistoryContent) {
+        const historyPlayerElements = matchHistoryContent.querySelectorAll('.player-name');
+        historyPlayerElements.forEach(element => {
+            if (element.textContent.trim() === oldName) {
+                element.textContent = newName;
+            }
+        });
+    }
+}
 
 function editPlayer(index) {
-    const player = players[index];
-    const newName = prompt("Edit player name:", player.name);
-    if (newName) {
-        player.name = newName;
-        updatePlayerList();
-    }
-
-    autoSave();
+    return handlePlayerUpdate(() => {
+        const player = players[index];
+        const oldName = player.name;
+        const newName = prompt("Edit player name:", oldName);
+        
+        if (newName && newName !== oldName) {
+            // Update the player's name
+            player.name = newName;
+            
+            // Update all references to this player throughout the application
+            updatePlayerNameReferences(oldName, newName);
+            
+            return true;
+        }
+        return false;
+    });
 }
 
 function removePlayer(index) {
-    if (confirm("Are you sure you want to remove this player?")) {
+    return handlePlayerUpdate(() => {
+        if (!confirm("Are you sure you want to remove this player?")) {
+            return false;
+        }
+        
         const player = players[index];
         if (confirm("Do you want to keep the player's stats?")) {
             player.eligible = false;
         } else {
             players.splice(index, 1);
         }
-        updatePlayerList();
-    }
-    autoSave();
+        return true;
+    });
 }
 
 function togglePlayerList() {
@@ -277,29 +649,42 @@ function togglePlayerList() {
 
 // Function to determine which players need to sit out
 
-document.getElementById('startTournament').addEventListener('click', generatePairsAndMatches);
+document.getElementById('startTournament').addEventListener('click', playRound);
 
 
 // Function to create teams while minimizing repetitive pairing
-const previousPairs = new Set(); // Track previous pairs
-
-// Generate all pairs with minimal encounters, sorted by encounter count
 
 
 
 
 // Generate a unique key for a player pair
 function generatePairKey(player1, player2) {
-    return [player1.name, player2.name].sort().join('-');
+    // Validate players before calling generateKey
+    if (!player1 || !player2 || typeof player1 !== 'object' || typeof player2 !== 'object' || 
+        !player1.name || !player2.name) {
+        console.error("Invalid players provided to generatePairKey:", player1, player2);
+        return null;  // Return null to indicate an invalid pair key
+    }
+    return pairTracker.generateKey(player1, player2);
 }
 
 
 
 // Function to generate match key (team1 vs team2)
 function generateMatchKey(team1, team2) {
-    if (!Array.isArray(team1) || !Array.isArray(team2)) {
-        console.error("Expected team1 and team2 to be arrays, but found:", team1, team2);
-        return ""; // Return empty string or handle error as needed
+    // Validate teams and team members
+    if (!Array.isArray(team1) || !Array.isArray(team2) || 
+        team1.length !== 2 || team2.length !== 2) {
+        console.error("Invalid teams provided to generateMatchKey:", team1, team2);
+        return null;
+    }
+    
+    // Make sure all team members have valid name properties
+    for (const player of [...team1, ...team2]) {
+        if (!player || typeof player !== 'object' || !player.name) {
+            console.error("Invalid player in generateMatchKey:", player);
+            return null;
+        }
     }
 
     const team1Names = team1.map(player => player.name).sort().join("-");
@@ -309,8 +694,7 @@ function generateMatchKey(team1, team2) {
 
 // Track pair encounters globally
 function updatePairEncounter(player1, player2) {
-    const pairKey = generatePairKey(player1, player2);
-    extendedPairHistory[pairKey] = (extendedPairHistory[pairKey] || 0) + 1;
+    pairTracker.addPair(player1, player2);
 }
 
 
@@ -328,9 +712,18 @@ function createMatchesForRound(eligiblePlayers, maxMatches) {
 function isValidMatch(team1, team2) {
     const matchKey = generateMatchKey(team1, team2);
 
+    // Debug the state of previousRoundMatches
+    logDebugMessage(`Checking match ${matchKey}, previousRoundMatches has ${previousRoundMatches.size} items: ${Array.from(previousRoundMatches).join(', ')}`);
+
     // Check if match was already attempted
     if (attemptedMatches.has(matchKey)) {
         logDebugMessage(`Match ${matchKey} already attempted.`);
+        return false;
+    }
+
+    // Check if this match was played in the previous round
+    if (previousRoundMatches.has(matchKey)) {
+        logDebugMessage(`Match ${matchKey} was played in the previous round, avoiding immediate repeat.`);
         return false;
     }
 
@@ -479,7 +872,12 @@ function isValidMatch(team1, team2) {
     }
 
     // Step 2: Check if all possible pairs have been used at least once
-    const allPairsUsed = Array.from(allPossiblePairKeys).every(pairKey => extendedPairHistory[pairKey] > 0);
+    const allPairsUsed = Array.from(allPossiblePairKeys).every(pairKey => {
+        const names = pairKey.split('-');
+        const player1 = players.find(p => p.name === names[0]);
+        const player2 = players.find(p => p.name === names[1]);
+        return player1 && player2 && pairTracker.getPairCount(player1, player2) > 0;
+    });
     logDebugMessage(`All possible pairs used at least once: ${allPairsUsed}`);
 
     // Create a list of all potential pairs with their history info
@@ -489,22 +887,22 @@ function isValidMatch(team1, team2) {
             const player1 = players[i];
             const player2 = players[j];
             const pairKey = generatePairKey(player1, player2);
-            const pairCount = extendedPairHistory[pairKey] || 0;
-            const isRecentlyPaired = isPairInRecentHistory(pairKey);
+            const pairCount = pairTracker.getPairCount(player1, player2);
+            const isRecentPair = pairTracker.isPairRecent(player1, player2);
             
             potentialPairs.push({
                 player1,
                 player2,
                 pairKey,
                 pairCount,
-                isRecentlyPaired
+                isRecentPair
             });
         }
     }
     
     // Step 3: First, add pairs that meet the ideal criteria
     for (const pair of potentialPairs) {
-        if ((allPairsUsed && !pair.isRecentlyPaired) || pair.pairCount === 0) {
+        if ((allPairsUsed && !pair.isRecentPair) || pair.pairCount === 0) {
             pairs.push({
                 player1: pair.player1,
                 player2: pair.player2,
@@ -524,8 +922,8 @@ function isValidMatch(team1, team2) {
         // 2. Fewest occurrences overall
         potentialPairs.sort((a, b) => {
             // First prioritize pairs not in recent history
-            if (a.isRecentlyPaired !== b.isRecentlyPaired) {
-                return a.isRecentlyPaired ? 1 : -1;
+            if (a.isRecentPair !== b.isRecentPair) {
+                return a.isRecentPair ? 1 : -1;
             }
             // Then sort by pair count
             return a.pairCount - b.pairCount;
@@ -572,17 +970,6 @@ function isValidMatch(team1, team2) {
 }
 
 
-
-
-
-// Ensure teammate repetition is avoided
-function hasPreviousPair(player1, player2) {
-    const pairKey = generatePairKey(player1, player2);
-    return extendedPairHistory[pairKey] > 0;
-}
-
-
-
 // Utility function to log errors or invalid cases clearly
 function logErrorIf(condition, message) {
     if (condition) {
@@ -593,63 +980,58 @@ function logErrorIf(condition, message) {
 
 
 function resetPreviousRoundPairs() {
-    logDebugMessage("Resetting previous round pairs");
-    previousRoundPairs.clear(); // Clear only pairs from the immediate previous round
+    // Just clear the previous round pairs without affecting the round history structure
+    pairTracker.previousRoundPairs.clear();
+    logDebugMessage("Reset previous round pairs");
 }
 
 // Function to reset recent pair history when needed
 function resetRecentPairHistory() {
-    logDebugMessage("Resetting recent pair history");
-    
-    // Clear the recentPairHistory array
-    if (recentPairHistory && recentPairHistory.length > 0) {
-        recentPairHistory.length = 0;
-        logDebugMessage("Recent pair history has been reset");
-    } else {
-        logDebugMessage("No recent pair history to reset");
-    }
+    pairTracker.resetRecent();
 }
 
 // Helper function to check if a pair is in recent history
 function isPairInRecentHistory(pairKey) {
-    logDebugMessage(`Checking if pair ${pairKey} is in recent history with ${recentPairHistory.length} rounds of history`);
-    for (let i = 0; i < recentPairHistory.length; i++) {
-        const historySet = recentPairHistory[i];
-        if (historySet && historySet.has(pairKey)) {
-            logDebugMessage(`Pair ${pairKey} found in recent history round ${i+1}`);
-            return true;
-        }
+    const names = pairKey.split('-');
+    if (names.length !== 2) {
+        logDebugMessage(`Invalid pair key format: ${pairKey}`);
+        return false;
     }
-    logDebugMessage(`Pair ${pairKey} not found in recent history`);
+    
+    const player1 = players.find(p => p.name === names[0]);
+    const player2 = players.find(p => p.name === names[1]);
+    
+    if (!player1 || !player2) {
+        logDebugMessage(`Could not find players for pair key: ${pairKey}`);
     return false;
+    }
+    
+    return pairTracker.isPairRecent(player1, player2);
 }
 
 // Helper function to add a pair to recent history
 function addPairToRecentHistory(pairKey) {
-    logDebugMessage(`Adding pair ${pairKey} to recent history`);
-    
-    // Ensure we have a valid recentPairHistory array
-    if (!recentPairHistory) {
-        recentPairHistory = [];
-        logDebugMessage(`Created new recentPairHistory array`);
+    // Handle null/invalid pair keys
+    if (!pairKey) {
+        logDebugMessage(`Cannot add invalid pair key to recent history`);
+        return;
     }
     
-    // Limit the history size to the number of players
-    if (recentPairHistory.length >= players.length) {
-        const removedSet = recentPairHistory.shift(); // Remove the oldest round
-        logDebugMessage(`Removed oldest history round with ${removedSet ? removedSet.size : 0} pairs`);
+    const names = pairKey.split('-');
+    if (names.length !== 2) {
+        logDebugMessage(`Invalid pair key format: ${pairKey}`);
+        return;
     }
     
-    // Add a new set for this round if needed
-    if (recentPairHistory.length === 0 || !recentPairHistory[recentPairHistory.length - 1]) {
-        recentPairHistory.push(new Set());
-        logDebugMessage(`Added new Set for current round`);
+    const player1 = players.find(p => p.name === names[0]);
+    const player2 = players.find(p => p.name === names[1]);
+    
+    if (!player1 || !player2) {
+        logDebugMessage(`Could not find players for pair key: ${pairKey}`);
+        return;
     }
     
-    // Add the pair key to the most recent round's set
-    const currentRoundSet = recentPairHistory[recentPairHistory.length - 1];
-    currentRoundSet.add(pairKey);
-    logDebugMessage(`Added pair ${pairKey} to round ${recentPairHistory.length}, now has ${currentRoundSet.size} pairs`);
+    pairTracker.addPair(player1, player2);
 }
 
 
@@ -677,21 +1059,26 @@ function appendMatchDisplay(matches, sitOutPlayers) {
         return;
     }
 
+    // Increment the round number before creating the round display
+    currentRound++;
+    
     const matchDisplay = document.getElementById('matchDisplay');
     const roundContainer = document.createElement('div');
     roundContainer.classList.add('round-container', currentRound % 2 === 0 ? 'even-round' : 'odd-round');
+    
+    // Add a data attribute for the round number for easier reference
+    roundContainer.setAttribute('data-round', currentRound);
 
     const roundHeader = document.createElement('h3');
     roundHeader.textContent = `Round ${currentRound}`;
     roundContainer.appendChild(roundHeader);
 
-      // Add Edit Round button
+    // Add Edit Round button
     const editRoundButton = document.createElement('button');
     editRoundButton.textContent = 'Edit Round';
     editRoundButton.classList.add('edit-round-btn');
     editRoundButton.addEventListener('click', () => toggleEditRound(roundContainer, editRoundButton));
     roundContainer.appendChild(editRoundButton);
-
 
     // Add "Add Match" button
     const addMatchButton = document.createElement('button');
@@ -760,16 +1147,16 @@ function appendMatchDisplay(matches, sitOutPlayers) {
             }
 
             const pair1Key = generatePairKey(team1Players[0], team1Players[1]);
-            if (previousRoundPairs.has(pair1Key)) {
-                previousRoundPairs.delete(pair1Key);
+            if (pairTracker.previousRoundPairs.has(pair1Key)) {
+                pairTracker.previousRoundPairs.delete(pair1Key);
                 logDebugMessage(`Removed Team 1 pair from previous round pairs.`);
             }
             // Also remove from recent history
             removePairFromRecentHistory(pair1Key);
             
             const pair2Key = generatePairKey(team2Players[0], team2Players[1]);
-            if (previousRoundPairs.has(pair2Key)) {
-                previousRoundPairs.delete(pair2Key);
+            if (pairTracker.previousRoundPairs.has(pair2Key)) {
+                pairTracker.previousRoundPairs.delete(pair2Key);
                 logDebugMessage(`Removed Team 2 pair from previous round pairs.`);
             }
             // Also remove from recent history
@@ -778,35 +1165,28 @@ function appendMatchDisplay(matches, sitOutPlayers) {
             autoSave();
         });
 
+        roundContainer.appendChild(matchDiv);
+    });
 
-
-
-
-            roundContainer.appendChild(matchDiv);
-            });
-
+    // Add section for sit-out players if any
+    if (sitOutPlayers && sitOutPlayers.length > 0) {
+        const sitOutDiv = document.createElement('div');
+        sitOutDiv.classList.add('sit-out-players');
+        sitOutDiv.textContent = `Sitting out: ${sitOutPlayers.map(p => p.name).join(', ')}`;
+        roundContainer.appendChild(sitOutDiv);
+    }
     
-        // Add section for sit-out players if none exists
-        // Add section for sit-out players if any
-        if (sitOutPlayers && sitOutPlayers.length > 0) {
-            const sitOutDiv = document.createElement('div');
-            sitOutDiv.classList.add('sit-out-players');
-            sitOutDiv.textContent = `Sitting out: ${sitOutPlayers.map(p => p.name).join(', ')}`;
-            roundContainer.appendChild(sitOutDiv);
-        }
-    // Add "Add Match" button
-        const addSubmitScoresButton = document.createElement('button');
-        addSubmitScoresButton.textContent = 'Submit Scores';
-        addSubmitScoresButton.classList.add('submit-scores-btn');
-        addSubmitScoresButton.addEventListener('click', () => { submitScores(); });
-        roundContainer.appendChild(addSubmitScoresButton);
+    // Add "Submit Scores" button
+    const addSubmitScoresButton = document.createElement('button');
+    addSubmitScoresButton.textContent = 'Submit Scores';
+    addSubmitScoresButton.classList.add('submit-scores-btn');
+    addSubmitScoresButton.addEventListener('click', () => { submitScores(); });
+    roundContainer.appendChild(addSubmitScoresButton);
 
+    updateSitOutDisplay(sitOutPlayers);
 
-            updateSitOutDisplay(sitOutPlayers);
-
-        matchDisplay.appendChild(roundContainer);
-        currentRound++; // Move to the next round after display
-        logDebugMessage(`Round ${currentRound} displayed successfully.`);
+    matchDisplay.appendChild(roundContainer);
+    logDebugMessage(`Round ${currentRound} displayed successfully.`);
     
     // After all match displays are appended
     if (window.attachKeypadToInputs) {
@@ -820,7 +1200,18 @@ function appendMatchDisplay(matches, sitOutPlayers) {
 
     function submitScores() {
         const roundContainer = document.querySelector('.round-container:last-child');
+        if (!roundContainer) {
+            console.error("No round container found for submitting scores");
+            return;
+        }
+        
         const currentMatches = Array.from(roundContainer.querySelectorAll('.match:not([data-skipped="true"])'));
+        
+        // Get the actual round number from the data attribute or header
+        const roundNumber = parseInt(roundContainer.getAttribute('data-round')) || 
+                           (roundContainer.querySelector('h3') ? 
+                            parseInt(roundContainer.querySelector('h3').textContent.replace('Round ', '')) : 
+                            currentRound);
         
         // First, check for valid scores
         let allScoresValid = true;
@@ -839,6 +1230,9 @@ function appendMatchDisplay(matches, sitOutPlayers) {
             return;
         }
         
+        // Clear the previous round's matches
+        previousRoundMatches.clear();
+        
         // Update players' stats and match history
         currentMatches.forEach((matchDiv, index) => {
             if (matchDiv.getAttribute('data-skipped') === 'true') return;
@@ -848,9 +1242,17 @@ function appendMatchDisplay(matches, sitOutPlayers) {
             const team1Score = parseInt(matchDiv.querySelector(`input[data-team="1"]`).value) || 0;
             const team2Score = parseInt(matchDiv.querySelector(`input[data-team="2"]`).value) || 0;
             
-            // Update match history
+            // Log for debugging
+            console.log(`Saving match for Round ${roundNumber}, Match ${index + 1}: ${team1Players.map(p => p.name).join(' & ')} vs ${team2Players.map(p => p.name).join(' & ')}`);
+            
+            // Store the match key for this round to avoid immediate repeats
+            const matchKey = generateMatchKey(team1Players, team2Players);
+            previousRoundMatches.add(matchKey);
+            logDebugMessage(`Added match ${matchKey} to previous round matches`);
+            
+            // Update match history - use the exact round number from the container
             matches.push({
-                round: currentRound,
+                round: roundNumber,
                 team1: team1Players,
                 team2: team2Players,
                 team1Score,
@@ -965,17 +1367,11 @@ function appendMatchDisplay(matches, sitOutPlayers) {
 
 // Function to generate the next round after submitting scores
 function generateNextRound() {
-    const matchDisplay = document.getElementById('matchDisplay');
-    const roundContainer = document.createElement('div');
-    roundContainer.classList.add('round-container', currentRound % 2 === 0 ? 'even-round' : 'odd-round');
-
-    const roundHeader = document.createElement('h3');
-    roundHeader.textContent = `Round ${currentRound}`;
-    roundContainer.appendChild(roundHeader);
+    // Call startNewRound to properly shift history before clearing previous round pairs
+    pairTracker.startNewRound();
     resetPreviousRoundPairs();
     
     // Call generatePairsAndMatches function which generates teams internally
-    // We don't need to capture its return value as it doesn't return anything
     generatePairsAndMatches();
     
     autoSave();
@@ -986,21 +1382,11 @@ function generateNextRound() {
 
 // Reset history and enable rematches while keeping the last round's pairs
 function resetPairAndMatchHistory() {
-    logDebugMessage("Resetting pair and match history while keeping the previous round pairs.");
-
-    // Keep only the pairs from the immediate previous round
-    previousRoundPairs.clear();
-
-    // Reset the extended pair history, preserving the most recent pairs
-    Object.keys(extendedPairHistory).forEach(pairKey => {
-        if (!previousRoundPairs.has(pairKey)) {
-            extendedPairHistory[pairKey] = 0; // Reset count for non-recent pairs
-        }
-    });
-
-    // Clear other histories as needed
-    recentPairHistory.length = 0; // Clear recent pairs
-    matchHistory.clear(); // Reset unique matches
+    pairTracker.resetAll();
+    matchHistory.clear();
+    matchPlayCounter = {};
+    // We intentionally don't clear previousRoundMatches to avoid immediate repeat matches
+    logDebugMessage("Reset all pair and match history while preserving previous round matches");
 }
 
 
@@ -1036,7 +1422,7 @@ function updateSitOutDisplay(sitOutPlayers) {
 // Update main function to generate pairs and display matches
 function generatePairsAndMatches() {
     clearDebugArea();
-    logDebugMessage("Starting pair generation for Round " + currentRound + "...");
+    logDebugMessage(`Starting pair generation for Round ${currentRound + 1}...`);
 
     resetEligibilityAndSitOut();
 
@@ -1067,7 +1453,9 @@ function generatePairsAndMatches() {
 
 
 function playRound() {
-    currentRound = 1;
+    currentRound = 0; // Set to 0 since appendMatchDisplay will increment it to 1
+    // Initialize pair tracking for the first round
+    pairTracker.startNewRound();
     generatePairsAndMatches();
     autoSave();
 }
@@ -1115,21 +1503,73 @@ function displayPodium(sortedPlayers) {
 
 function displayPlayerStatsTable(sortedPlayers) {
     const playerStatsTable = document.getElementById('playerStatsTable');
-    playerStatsTable.innerHTML = `
-        <tr>
-            <th>Rank</th>
-            <th>Name</th>
-            <th>Games Played</th>
-            <th>Victory Points</th>
-            <th>Win Percentage</th>
-            <th>Pickle Points</th>
-            <th>Pickle Differential</th>
-            <th>Pickle Point Avg</th>
-            <th>Teammates</th>
-            <th>Versus</th>
-        </tr>
-    `;
-
+    
+    // Define column order based on current sorting method
+    const getColumnOrder = () => {
+        // These columns are always first/last
+        const fixedFirstColumns = ['Rank', 'Name', 'Games Played'];
+        const fixedLastColumns = ['Teammates', 'Versus'];
+        
+        // These are the columns that can be rearranged
+        let statColumns = [];
+        
+        // Order the stat columns based on the current sorting method (primary stat first)
+        switch(currentSortingMethod) {
+            case 'victoryPoints':
+                statColumns = ['Victory Points', 'Win Percentage', 'Pickle Differential', 'Pickle Points', 'Pickle Point Avg'];
+                break;
+            case 'picklePoints':
+                statColumns = ['Pickle Points', 'Victory Points', 'Pickle Differential', 'Win Percentage', 'Pickle Point Avg'];
+                break;
+            case 'winPercentage':
+                statColumns = ['Win Percentage', 'Victory Points', 'Pickle Differential', 'Pickle Points', 'Pickle Point Avg'];
+                break;
+            case 'picklePointAvg':
+                statColumns = ['Pickle Point Avg', 'Pickle Points', 'Victory Points', 'Win Percentage', 'Pickle Differential'];
+                break;
+            case 'pickleDifferential':
+                statColumns = ['Pickle Differential', 'Victory Points', 'Pickle Points', 'Win Percentage', 'Pickle Point Avg'];
+                break;
+            case 'custom':
+                // For custom sort, put primary stat first, then tiebreakers in their order
+                const statMapping = {
+                    'victoryPoints': 'Victory Points',
+                    'winPercentage': 'Win Percentage',
+                    'picklePoints': 'Pickle Points',
+                    'pickleDifferential': 'Pickle Differential',
+                    'picklePointAvg': 'Pickle Point Avg'
+                };
+                
+                // Add primary stat first
+                statColumns.push(statMapping[customSortConfig.primaryStat]);
+                
+                // Add tiebreakers in their order
+                customSortConfig.tiebreakers.forEach(tiebreaker => {
+                    if (tiebreaker !== customSortConfig.primaryStat) { // Skip primary stat if it's in tiebreakers
+                        statColumns.push(statMapping[tiebreaker]);
+                    }
+                });
+                break;
+            default:
+                statColumns = ['Victory Points', 'Win Percentage', 'Pickle Points', 'Pickle Differential', 'Pickle Point Avg'];
+        }
+        
+        return [...fixedFirstColumns, ...statColumns, ...fixedLastColumns];
+    };
+    
+    // Get the column order based on current sorting method
+    const columnOrder = getColumnOrder();
+    
+    // Create table header with ordered columns
+    let headerHTML = '<tr>';
+    columnOrder.forEach(column => {
+        headerHTML += `<th>${column}</th>`;
+    });
+    headerHTML += '</tr>';
+    
+    playerStatsTable.innerHTML = headerHTML;
+    
+    // Create the rows with data in the correct order
     sortedPlayers.forEach((player, index) => {
         if (!player.teammates || typeof player.teammates !== 'object') {
             console.warn(`Player "${player.name}" has invalid teammates. Resetting to empty object.`);
@@ -1156,204 +1596,341 @@ function displayPlayerStatsTable(sortedPlayers) {
             ? (player.picklePoints / player.gamesPlayed) 
             : 0;
             
+        // Create an object with all possible columns and their values
+        const cellValues = {
+            'Rank': index + 1,
+            'Name': player.name,
+            'Games Played': player.gamesPlayed,
+            'Victory Points': player.victoryPoints,
+            'Win Percentage': `${winPercentage.toFixed(2)}%`,
+            'Pickle Points': player.picklePoints,
+            'Pickle Differential': player.pickleDifferential,
+            'Pickle Point Avg': picklePointAvg.toFixed(2),
+            'Teammates': teammatesDisplay,
+            'Versus': versusDisplay
+        };
 
+        // Create table row in the correct order
         const row = document.createElement('tr');
-        row.innerHTML = `
-            <td>${index + 1}</td>
-            <td>${player.name}</td>
-            <td>${player.gamesPlayed}</td>
-            <td>${player.victoryPoints}</td>
-            <td>${winPercentage.toFixed(2)}%</td>
-            <td>${player.picklePoints}</td>
-            <td>${player.pickleDifferential}</td>
-            <td>${picklePointAvg.toFixed(2)}</td>
-            <td>${teammatesDisplay}</td>
-            <td>${versusDisplay}</td>
-        `;
+        columnOrder.forEach(column => {
+            const cell = document.createElement('td');
+            
+            // Use innerHTML for columns that may contain HTML (like teammates and versus)
+            if (column === 'Teammates' || column === 'Versus') {
+                cell.innerHTML = cellValues[column];
+            } else {
+                // Apply special styling to primary sort column and tiebreakers
+                const statColumnMapping = {
+                    'victoryPoints': 'Victory Points',
+                    'winPercentage': 'Win Percentage',
+                    'picklePoints': 'Pickle Points',
+                    'pickleDifferential': 'Pickle Differential',
+                    'picklePointAvg': 'Pickle Point Avg'
+                };
+                
+                // Apply special styling to the primary sort column
+                if ((currentSortingMethod === 'victoryPoints' && column === 'Victory Points') ||
+                    (currentSortingMethod === 'picklePoints' && column === 'Pickle Points') ||
+                    (currentSortingMethod === 'winPercentage' && column === 'Win Percentage') ||
+                    (currentSortingMethod === 'pickleDifferential' && column === 'Pickle Differential') ||
+                    (currentSortingMethod === 'picklePointAvg' && column === 'Pickle Point Avg') ||
+                    (currentSortingMethod === 'custom' && column === statColumnMapping[customSortConfig.primaryStat])) {
+                    cell.classList.add('primary-sort-column');
+                }
+                
+                // Add highlighting for custom sort tiebreakers
+                if (currentSortingMethod === 'custom') {
+                    // Highlight tiebreakers with decreasing intensity
+                    customSortConfig.tiebreakers.forEach((tiebreaker, index) => {
+                        if (column === statColumnMapping[tiebreaker] && tiebreaker !== customSortConfig.primaryStat) {
+                            // Add tiebreaker class with index for styling
+                            cell.classList.add('tiebreaker-column');
+                            cell.dataset.tiebreakerIndex = index + 1; // +1 because index starts at 0
+                        }
+                    });
+                }
+                
+                cell.textContent = cellValues[column];
+            }
+            row.appendChild(cell);
+        });
+        
         playerStatsTable.appendChild(row);
     });
 }
 
 
-// Sorting functions with improved tie-breaking
-function sortByVictoryPoints(players) {
+// Helper function to calculate win percentage
+function getWinPercentage(player) {
+    return player.gamesPlayed ? player.victoryPoints / player.gamesPlayed : 0;
+}
+
+// Helper function to calculate pickle point average
+function getPicklePointAvg(player) {
+    return player.gamesPlayed ? player.picklePoints / player.gamesPlayed : 0;
+}
+
+// Helper function for win percentage with minimum games threshold
+function getQualifiedWinPercentage(player, minGames = 2) {
+    if (player.gamesPlayed < minGames) {
+        return -1; // Rank players with fewer than minimum games lower
+    }
+    return player.gamesPlayed ? player.victoryPoints / player.gamesPlayed : 0;
+}
+
+// Helper function to get the appropriate value function for a stat type
+function getSortValueFn(statType) {
+    switch(statType) {
+        case 'winPercentage': return player => getQualifiedWinPercentage(player, 2);
+        case 'picklePointAvg': return getPicklePointAvg;
+        default: return null;
+    }
+}
+
+// Define sorting configurations
+const sortConfigs = {
+    victoryPoints: {
+        primaryStat: 'victoryPoints',
+        tiebreakers: ['winPercentage', 'pickleDifferential', 'picklePoints', 'picklePointAvg']
+    },
+    picklePoints: {
+        primaryStat: 'picklePoints',
+        tiebreakers: ['picklePointAvg', 'winPercentage', 'pickleDifferential']
+    },
+    winPercentage: {
+        primaryStat: 'winPercentage',
+        tiebreakers: ['victoryPoints', 'pickleDifferential', 'picklePoints']
+    },
+    picklePointAvg: {
+        primaryStat: 'picklePointAvg',
+        tiebreakers: ['picklePoints', 'winPercentage', 'pickleDifferential']
+    },
+    pickleDifferential: {
+        primaryStat: 'pickleDifferential',
+        tiebreakers: ['victoryPoints', 'winPercentage', 'picklePoints']
+    }
+};
+
+// Unified function to sort players by any method
+function sortPlayers(players, sortMethod) {
+    const config = sortConfigs[sortMethod];
+    if (!config) return players.slice();
+    
     return players.slice().sort((a, b) => {
-        // Primary sort: Victory Points
-        if (b.victoryPoints !== a.victoryPoints) {
-            return b.victoryPoints - a.victoryPoints;
+        // Primary sort
+        const primaryValueA = a[config.primaryStat] || 0;
+        const primaryValueB = b[config.primaryStat] || 0;
+        if (primaryValueB !== primaryValueA) {
+            return primaryValueB - primaryValueA;
         }
         
-        // Tie-breaker 1: Win Percentage (victories per game played)
-        const winPercentA = a.gamesPlayed ? a.victoryPoints / a.gamesPlayed : 0;
-        const winPercentB = b.gamesPlayed ? b.victoryPoints / b.gamesPlayed : 0;
-        if (winPercentB !== winPercentA) {
-            return winPercentB - winPercentA;
+        // Tiebreakers
+        for (const tiebreaker of config.tiebreakers) {
+            const tieValueA = a[tiebreaker] || 0;
+            const tieValueB = b[tiebreaker] || 0;
+            if (tieValueB !== tieValueA) {
+                return tieValueB - tieValueA;
+            }
         }
         
-        // Tie-breaker 2: Pickle Differential
-        if ((b.pickleDifferential || 0) !== (a.pickleDifferential || 0)) {
-            return (b.pickleDifferential || 0) - (a.pickleDifferential || 0);
-        }
-        
-        // Tie-breaker 3: Total Pickle Points
-        if (b.picklePoints !== a.picklePoints) {
-            return b.picklePoints - a.picklePoints;
-        }
-        
-        // Tie-breaker 4: Average Pickle Points per game
-        const avgA = a.gamesPlayed ? a.picklePoints / a.gamesPlayed : 0;
-        const avgB = b.gamesPlayed ? b.picklePoints / b.gamesPlayed : 0;
-        if (avgB !== avgA) {
-            return avgB - avgA;
-        }
-        
-        // Tie-breaker 5: Games Played (more games = higher rank for equal stats)
-        return b.gamesPlayed - a.gamesPlayed;
+        return 0;
     });
+}
+
+// Generic sort function that takes a primary sort property and custom value getter function
+function sortPlayersByProperty(players, primaryProperty, getValueFn = null) {
+    return players.slice().sort((a, b) => {
+        // Primary sort based on the provided property or custom function
+        if (getValueFn) {
+            const valueA = getValueFn(a);
+            const valueB = getValueFn(b);
+            if (valueB !== valueA) {
+                return valueB - valueA;
+            }
+        } else if (b[primaryProperty] !== a[primaryProperty]) {
+            // Handle null or undefined values with || 0
+            return (b[primaryProperty] || 0) - (a[primaryProperty] || 0);
+        }
+        
+        // Handle custom sorting configuration
+        if (currentSortingMethod === 'custom') {
+            // Apply the custom tiebreakers in the order specified
+            for (const tiebreaker of customSortConfig.tiebreakers) {
+                // Skip if this is the same as the primary property
+                if (tiebreaker === primaryProperty) continue;
+                
+                if (tiebreaker === 'winPercentage') {
+                    const winPercentA = getWinPercentage(a);
+                    const winPercentB = getWinPercentage(b);
+                    if (winPercentB !== winPercentA) {
+                        return winPercentB - winPercentA;
+                    }
+                } else if (tiebreaker === 'picklePointAvg') {
+                    const avgA = getPicklePointAvg(a);
+                    const avgB = getPicklePointAvg(b);
+                    if (avgB !== avgA) {
+                        return avgB - avgA;
+                    }
+                } else if (tiebreaker === 'pickleDifferential') {
+                    if ((b.pickleDifferential || 0) !== (a.pickleDifferential || 0)) {
+                        return (b.pickleDifferential || 0) - (a.pickleDifferential || 0);
+                    }
+                } else if (tiebreaker === 'picklePoints') {
+                    if (b.picklePoints !== a.picklePoints) {
+                        return b.picklePoints - a.picklePoints;
+                    }
+                } else if (tiebreaker === 'victoryPoints') {
+                    if (b.victoryPoints !== a.victoryPoints) {
+                        return b.victoryPoints - a.victoryPoints;
+                    }
+                }
+            }
+            
+            // Games played as final tiebreaker for custom sort
+            if (b.gamesPlayed !== a.gamesPlayed) {
+                return b.gamesPlayed - a.gamesPlayed;
+            }
+        }
+        // Apply different tiebreaker sequences based on primary sort
+        else if (primaryProperty === 'victoryPoints' || getValueFn === getWinPercentage || getValueFn === getQualifiedWinPercentage) {
+            // Victory Points and Win Percentage sorts use similar tiebreaker sequences
+            
+            // Skip primary property check if it's the main sort criteria
+            if (primaryProperty !== 'victoryPoints' && b.victoryPoints !== a.victoryPoints) {
+                return b.victoryPoints - a.victoryPoints;
+            }
+            
+            // Skip win percentage check if it's the main sort criteria
+            if (getValueFn !== getWinPercentage && getValueFn !== getQualifiedWinPercentage) {
+                const winPercentA = getWinPercentage(a);
+                const winPercentB = getWinPercentage(b);
+                if (winPercentB !== winPercentA) {
+                    return winPercentB - winPercentA;
+                }
+            }
+            
+            // Pickle Differential
+            if ((b.pickleDifferential || 0) !== (a.pickleDifferential || 0)) {
+                return (b.pickleDifferential || 0) - (a.pickleDifferential || 0);
+            }
+            
+            // Pickle Points
+            if (b.picklePoints !== a.picklePoints) {
+                return b.picklePoints - a.picklePoints;
+            }
+            
+            // Pickle Point Average
+            const avgA = getPicklePointAvg(a);
+            const avgB = getPicklePointAvg(b);
+            if (avgB !== avgA) {
+                return avgB - avgA;
+            }
+        } 
+        else if (primaryProperty === 'picklePoints' || primaryProperty === 'picklePointAvg') {
+            // Pickle Points and Pickle Point Avg sorts use similar tiebreaker sequences
+            
+            // Skip pickle points check if it's the main sort criteria
+            if (primaryProperty !== 'picklePoints' && b.picklePoints !== a.picklePoints) {
+                return b.picklePoints - a.picklePoints;
+            }
+            
+            // Skip pickle point average check if it's the main sort criteria
+            if (primaryProperty !== 'picklePointAvg' && getValueFn !== getPicklePointAvg) {
+                const avgA = getPicklePointAvg(a);
+                const avgB = getPicklePointAvg(b);
+                if (avgB !== avgA) {
+                    return avgB - avgA;
+                }
+            }
+            
+            // Victory Points
+            if (b.victoryPoints !== a.victoryPoints) {
+                return b.victoryPoints - a.victoryPoints;
+            }
+            
+            // Win Percentage
+            const winPercentA = getWinPercentage(a);
+            const winPercentB = getWinPercentage(b);
+            if (winPercentB !== winPercentA) {
+                return winPercentB - winPercentA;
+            }
+            
+            // Pickle Differential
+            if ((b.pickleDifferential || 0) !== (a.pickleDifferential || 0)) {
+                return (b.pickleDifferential || 0) - (a.pickleDifferential || 0);
+            }
+        }
+        else if (primaryProperty === 'pickleDifferential') {
+            // For pickle differential sort, put pickle points before win percentage
+            
+            // Victory Points
+            if (b.victoryPoints !== a.victoryPoints) {
+                return b.victoryPoints - a.victoryPoints;
+            }
+            
+            // Pickle Points (more directly related to differential)
+            if (b.picklePoints !== a.picklePoints) {
+                return b.picklePoints - a.picklePoints;
+            }
+            
+            // Win Percentage
+            const winPercentA = getWinPercentage(a);
+            const winPercentB = getWinPercentage(b);
+            if (winPercentB !== winPercentA) {
+                return winPercentB - winPercentA;
+            }
+            
+            // Pickle Point Average
+            const avgA = getPicklePointAvg(a);
+            const avgB = getPicklePointAvg(b);
+            if (avgB !== avgA) {
+                return avgB - avgA;
+            }
+        }
+        
+        // Games Played tiebreaker - depends on sort type
+        if (b.gamesPlayed !== a.gamesPlayed) {
+            // For win percentage and pickle point average sorts, more games is more meaningful
+            if (primaryProperty === 'winPercentage' || primaryProperty === 'picklePointAvg' || 
+                getValueFn === getWinPercentage || getValueFn === getQualifiedWinPercentage || 
+                getValueFn === getPicklePointAvg) {
+                return b.gamesPlayed - a.gamesPlayed; // More games = higher rank for percentage stats
+            }
+            // For counting stats (raw numbers), more games can be an advantage, so consider equal
+            // or even rank fewer games higher as it's more efficient
+            return b.gamesPlayed - a.gamesPlayed; // Still default to more games = higher rank
+        }
+        
+        // Final tie-breaker: Alphabetical by name (if all stats are identical)
+        return a.name.localeCompare(b.name);
+    });
+}
+
+// Preserve backward compatibility with existing code
+function sortByVictoryPoints(players) {
+    return sortPlayers(players, 'victoryPoints');
 }
 
 function sortByPicklePoints(players) {
-    return players.slice().sort((a, b) => {
-        // Primary sort: Pickle Points
-        if (b.picklePoints !== a.picklePoints) {
-            return b.picklePoints - a.picklePoints;
-        }
-        
-        // Tie-breaker 1: Victory Points
-        if (b.victoryPoints !== a.victoryPoints) {
-            return b.victoryPoints - a.victoryPoints;
-        }
-        
-        // Tie-breaker 2: Pickle Differential
-        if ((b.pickleDifferential || 0) !== (a.pickleDifferential || 0)) {
-            return (b.pickleDifferential || 0) - (a.pickleDifferential || 0);
-        }
-        
-        // Tie-breaker 3: Average Pickle Points per game
-        const avgA = a.gamesPlayed ? a.picklePoints / a.gamesPlayed : 0;
-        const avgB = b.gamesPlayed ? b.picklePoints / b.gamesPlayed : 0;
-        if (avgB !== avgA) {
-            return avgB - avgA;
-        }
-        
-        // Tie-breaker 4: Win Percentage
-        const winPercentA = a.gamesPlayed ? a.victoryPoints / a.gamesPlayed : 0;
-        const winPercentB = b.gamesPlayed ? b.victoryPoints / b.gamesPlayed : 0;
-        if (winPercentB !== winPercentA) {
-            return winPercentB - winPercentA;
-        }
-        
-        // Tie-breaker 5: Games Played (more games = higher rank for equal stats)
-        return b.gamesPlayed - a.gamesPlayed;
-    });
+    return sortPlayers(players, 'picklePoints');
 }
 
 function sortByWinPercentage(players) {
-    return players.slice().sort((a, b) => {
-        // Primary sort: Win Percentage
-        const winPercentA = a.gamesPlayed ? a.victoryPoints / a.gamesPlayed : 0;
-        const winPercentB = b.gamesPlayed ? b.victoryPoints / b.gamesPlayed : 0;
-        if (winPercentB !== winPercentA) {
-            return winPercentB - winPercentA;
-        }
-        
-        // Tie-breaker 1: Victory Points (total wins)
-        if (b.victoryPoints !== a.victoryPoints) {
-            return b.victoryPoints - a.victoryPoints;
-        }
-        
-        // Tie-breaker 2: Pickle Differential
-        if ((b.pickleDifferential || 0) !== (a.pickleDifferential || 0)) {
-            return (b.pickleDifferential || 0) - (a.pickleDifferential || 0);
-        }
-        
-        // Tie-breaker 3: Pickle Points
-        if (b.picklePoints !== a.picklePoints) {
-            return b.picklePoints - a.picklePoints;
-        }
-        
-        // Tie-breaker 4: Average Pickle Points
-        const avgA = a.gamesPlayed ? a.picklePoints / a.gamesPlayed : 0;
-        const avgB = b.gamesPlayed ? b.picklePoints / b.gamesPlayed : 0;
-        if (avgB !== avgA) {
-            return avgB - avgA;
-        }
-        
-        // Tie-breaker 5: Games Played (more games is better with equal stats)
-        return b.gamesPlayed - a.gamesPlayed;
-    });
+    return sortPlayers(players, 'winPercentage');
 }
 
 function sortByPicklePointAvg(players) {
-    return players.slice().sort((a, b) => {
-        // Primary sort: Average Pickle Points
-        const avgA = a.gamesPlayed ? a.picklePoints / a.gamesPlayed : 0;
-        const avgB = b.gamesPlayed ? b.picklePoints / b.gamesPlayed : 0;
-        if (avgB !== avgA) {
-            return avgB - avgA;
-        }
-        
-        // Tie-breaker 1: Pickle Points (total)
-        if (b.picklePoints !== a.picklePoints) {
-            return b.picklePoints - a.picklePoints;
-        }
-        
-        // Tie-breaker 2: Victory Points
-        if (b.victoryPoints !== a.victoryPoints) {
-            return b.victoryPoints - a.victoryPoints;
-        }
-        
-        // Tie-breaker 3: Win Percentage
-        const winPercentA = a.gamesPlayed ? a.victoryPoints / a.gamesPlayed : 0;
-        const winPercentB = b.gamesPlayed ? b.victoryPoints / b.gamesPlayed : 0;
-        if (winPercentB !== winPercentA) {
-            return winPercentB - winPercentA;
-        }
-        
-        // Tie-breaker 4: Pickle Differential
-        if ((b.pickleDifferential || 0) !== (a.pickleDifferential || 0)) {
-            return (b.pickleDifferential || 0) - (a.pickleDifferential || 0);
-        }
-        
-        // Tie-breaker 5: Games Played (more games is better with equal stats)
-        return b.gamesPlayed - a.gamesPlayed;
-    });
+    return sortPlayers(players, 'picklePointAvg');
 }
 
 function sortByPickleDifferential(players) {
-    return players.slice().sort((a, b) => {
-        // Primary sort: Pickle Differential
-        if ((b.pickleDifferential || 0) !== (a.pickleDifferential || 0)) {
-            return (b.pickleDifferential || 0) - (a.pickleDifferential || 0);
-        }
-        
-        // Tie-breaker 1: Victory Points
-        if (b.victoryPoints !== a.victoryPoints) {
-            return b.victoryPoints - a.victoryPoints;
-        }
-        
-        // Tie-breaker 2: Win Percentage
-        const winPercentA = a.gamesPlayed ? a.victoryPoints / a.gamesPlayed : 0;
-        const winPercentB = b.gamesPlayed ? b.victoryPoints / b.gamesPlayed : 0;
-        if (winPercentB !== winPercentA) {
-            return winPercentB - winPercentA;
-        }
-        
-        // Tie-breaker 3: Pickle Points
-        if (b.picklePoints !== a.picklePoints) {
-            return b.picklePoints - a.picklePoints;
-        }
-        
-        // Tie-breaker 4: Average Pickle Points
-        const avgA = a.gamesPlayed ? a.picklePoints / a.gamesPlayed : 0;
-        const avgB = b.gamesPlayed ? b.picklePoints / b.gamesPlayed : 0;
-        if (avgB !== avgA) {
-            return avgB - avgA;
-        }
-        
-        // Tie-breaker 5: Games Played (more games is better with equal stats)
-        return b.gamesPlayed - a.gamesPlayed;
-    });
+    return sortPlayers(players, 'pickleDifferential');
+}
+
+// Add this function to sort by custom configuration
+function sortByCustomConfig(players) {
+    currentSortingMethod = 'custom';
+    return sortPlayers(players, customSortConfig.primaryStat);
 }
 
 
@@ -1522,12 +2099,13 @@ function exportData() {
         matches,
         currentRound,
         isFirstRound,
-        pairHistory,
-        previousRoundPairs: Array.from(previousRoundPairs),
+        // Pair tracking data from pairTracker
+        pairCounts: pairTracker.pairCounts,
+        previousRoundPairs: Array.from(pairTracker.previousRoundPairs),
+        recentRounds: pairTracker.recentRounds.map(set => Array.from(set)), // Convert Sets to arrays
+        globalPairs: Array.from(pairTracker.globalPairs),
+        // Match tracking
         matchHistory: Array.from(matchHistory),
-        recentPairHistory: recentPairHistory.map(set => Array.from(set)), // Convert Sets to arrays for saving
-        extendedPairHistory,
-        globalPairHistory: Array.from(globalPairHistory),
         matchPlayCounter,
     };
 
@@ -1545,106 +2123,141 @@ function exportData() {
     URL.revokeObjectURL(url); // Clean up to avoid memory leaks
 }
 
-function importData(event) {
-    const file = event.target.files[0];
+function importData() {
+    const fileInput = document.getElementById('importFile');
+    const file = fileInput.files[0];
+    
+    if (file) {
     const reader = new FileReader();
 
-    reader.onload = () => {
-        try {
-            const importedData = JSON.parse(reader.result);
-            
-            // Check if it's the old format (just players array) or new format (full state object)
-            if (Array.isArray(importedData)) {
-                // Old format - just players
-                players.length = 0; // Clear current players
-                players.push(...importedData);
-                updatePlayerList();
-                alert("Players imported successfully. Note: Match history was not found in this file.");
-            } else {
-                // New format - full game state
-                // Restore players
-                players.length = 0;
-                players.push(...(importedData.players || []).map(player => ({
-                    ...player, // Ensure all properties are restored
-                })));
-
-                // Restore match history
-                matches.length = 0;
-                if (importedData.matches && Array.isArray(importedData.matches)) {
-                    matches.push(...importedData.matches);
+        reader.onload = function(e) {
+            try {
+                const importedData = JSON.parse(e.target.result);
+                
+                // Validate data structure
+                if (!importedData.players || !importedData.matches) {
+                    throw new Error("Invalid data format: missing players or matches.");
                 }
                 
-                // Restore other game state
-                currentRound = importedData.currentRound || 1;
+                // Clear existing state
+                players = []; // Clear players array
+                matches = []; // Clear matches array
+                
+                // Import players with their properties
+                importedData.players.forEach(playerData => {
+                    // Create a new player with the imported data
+                    const player = {
+                        name: playerData.name,
+                        eligible: playerData.eligible !== undefined ? playerData.eligible : true,
+                        manualSitOut: playerData.manualSitOut !== undefined ? playerData.manualSitOut : false,
+                        gamesPlayed: playerData.gamesPlayed || 0,
+                        roundsSatOut: playerData.roundsSatOut || 0,
+                        victoryPoints: playerData.victoryPoints || 0,
+                        picklePoints: playerData.picklePoints || 0,
+                        pickleDifferential: playerData.pickleDifferential || 0,
+                        satOutLastRound: playerData.satOutLastRound || false
+                    };
+                    
+                    // Ensure teammates and versus objects exist
+                    player.teammates = playerData.teammates || {};
+                    player.versus = playerData.versus || {};
+                    
+                    players.push(player);
+                });
+                
+                // Import matches
+                importedData.matches.forEach(matchData => {
+                    // Recreate match objects with references to actual player objects
+                    const team1 = matchData.team1.map(playerData => {
+                        return players.find(p => p.name === playerData.name) || playerData;
+                    });
+                    
+                    const team2 = matchData.team2.map(playerData => {
+                        return players.find(p => p.name === playerData.name) || playerData;
+                    });
+                    
+                    matches.push({
+                        round: matchData.round,
+                        team1,
+                        team2,
+                        team1Score: matchData.team1Score,
+                        team2Score: matchData.team2Score
+                    });
+                });
+                
+                // Import round number and first round flag
+                currentRound = importedData.currentRound || 0;
                 isFirstRound = importedData.isFirstRound !== undefined ? importedData.isFirstRound : true;
 
-                // Clear and restore pairHistory
-                Object.keys(pairHistory).forEach(key => delete pairHistory[key]);
-                if (importedData.pairHistory) {
-                    Object.assign(pairHistory, importedData.pairHistory);
+                // Reset and import pair history data
+                pairTracker.resetAll();
+                
+                // Import pair tracking data
+                if (importedData.pairCounts) {
+                    pairTracker.pairCounts = importedData.pairCounts;
                 }
-
-                // Clear and restore previousRoundPairs
-                previousRoundPairs.clear();
-                if (importedData.previousRoundPairs && Array.isArray(importedData.previousRoundPairs)) {
-                    importedData.previousRoundPairs.forEach(item => previousRoundPairs.add(item));
+                
+                if (importedData.previousRoundPairs) {
+                    pairTracker.previousRoundPairs = new Set(importedData.previousRoundPairs);
                 }
-
-                // Clear and restore matchHistory
-                matchHistory.clear();
-                if (importedData.matchHistory && Array.isArray(importedData.matchHistory)) {
-                    importedData.matchHistory.forEach(item => matchHistory.add(item));
+                
+                if (importedData.recentRounds) {
+                    // Convert arrays back to Sets
+                    pairTracker.recentRounds = importedData.recentRounds.map(roundArray => 
+                        new Set(roundArray)
+                    );
                 }
-
-                // Clear and restore recentPairHistory
-                recentPairHistory.length = 0;
-                if (importedData.recentPairHistory && Array.isArray(importedData.recentPairHistory)) {
-                    importedData.recentPairHistory.forEach(savedSet => {
-                        recentPairHistory.push(new Set(savedSet)); // Convert arrays back to Sets
-                    });
+                
+                if (importedData.globalPairs) {
+                    pairTracker.globalPairs = new Set(importedData.globalPairs);
                 }
-
-                // Clear and restore extendedPairHistory
-                Object.keys(extendedPairHistory).forEach(key => delete extendedPairHistory[key]);
-                if (importedData.extendedPairHistory) {
-                    Object.assign(extendedPairHistory, importedData.extendedPairHistory);
+                
+                // Import match history data
+                if (importedData.matchHistory) {
+                    matchHistory = new Set(importedData.matchHistory);
                 }
-
-                // Clear and restore globalPairHistory
-                globalPairHistory.clear();
-                if (importedData.globalPairHistory && Array.isArray(importedData.globalPairHistory)) {
-                    importedData.globalPairHistory.forEach(item => globalPairHistory.add(item));
-                }
-
-                // Clear and restore matchPlayCounter
-                Object.keys(matchPlayCounter).forEach(key => delete matchPlayCounter[key]);
+                
+                // Import match play counter if it exists
                 if (importedData.matchPlayCounter) {
                     Object.assign(matchPlayCounter, importedData.matchPlayCounter);
                 }
 
-                // Update UI with imported data
+                // Support for legacy format
+                if (importedData.extendedPairHistory && !importedData.pairCounts) {
+                    pairTracker.pairCounts = importedData.extendedPairHistory;
+                }
+                
+                if (importedData.globalPairHistory && !importedData.globalPairs) {
+                    pairTracker.globalPairs = new Set(importedData.globalPairHistory);
+                }
+                
+                if (importedData.recentPairHistory && !importedData.recentRounds) {
+                    pairTracker.recentRounds = importedData.recentPairHistory.map(roundArray => 
+                        new Set(roundArray)
+                    );
+                }
+                
+                // Update UI
                 updatePlayerList();
                 
-                // Update player stats table if needed
-                const sortedPlayers = sortByVictoryPoints(players);
-                displayPodium(sortedPlayers);
-                displayPlayerStatsTable(sortedPlayers);
+                // If matches have been played, show the podium
+                if (matches.length > 0) {
+                    showPodium();
+                }
                 
-                // Save the imported state to localStorage
-                autoSave();
+                alert("Data imported successfully!");
                 
-                alert("Game state imported successfully with match history and all settings.");
-            }
+                // Reload the page to refresh the UI
+                window.location.reload();
+                
         } catch (error) {
             console.error("Error importing data:", error);
-            alert("Error importing data. The file may be corrupted or in an invalid format.");
+                alert(`Error importing data: ${error.message}`);
         }
     };
 
     reader.readAsText(file);
-    
-    // Reset the input field to allow re-importing the same file
-    event.target.value = '';
+    }
 }
 
 
@@ -1766,11 +2379,9 @@ function showMatchHistory() {
                 winner = match.team2.map(player => player.name).join(' & ');
             }
             
-            // Display round number (adjusted for 0-based rounds)
-            const displayRound = match.round <= 0 ? match.round : match.round - 1;
-
+            // Display the actual round number - DO NOT adjust it
             row.innerHTML = `
-                <td>${displayRound}</td>
+                <td>${match.round}</td>
                 <td>Match ${displayIndex + 1}</td>
                 <td class="team-cell">${match.team1.map(player => 
                     `<span class="team1-badge">${player.name}</span>`).join(' & ')}
@@ -2113,13 +2724,16 @@ function autoSave() {
         matches,
         currentRound,
         isFirstRound,
-        pairHistory,
-        previousRoundPairs: Array.from(previousRoundPairs),
+        // Pair tracking data from pairTracker
+        pairCounts: pairTracker.pairCounts,
+        previousRoundPairs: Array.from(pairTracker.previousRoundPairs),
+        recentRounds: pairTracker.recentRounds.map(set => Array.from(set)), // Convert Sets to arrays
+        globalPairs: Array.from(pairTracker.globalPairs),
+        // Match tracking
         matchHistory: Array.from(matchHistory),
-        recentPairHistory: recentPairHistory.map(set => Array.from(set)), // Convert Sets to arrays for saving
-        extendedPairHistory,
-        globalPairHistory: Array.from(globalPairHistory),
         matchPlayCounter,
+        // Previous round matches to prevent consecutive repeat matches
+        previousRoundMatches: Array.from(previousRoundMatches),
     };
 
     localStorage.setItem('pickleballCompetitionState', JSON.stringify(state));
@@ -2146,28 +2760,70 @@ function restoreState() {
             // Restore other data
             matches.length = 0;
             matches.push(...(savedState.matches || []));
-            currentRound = savedState.currentRound || 1;
+            
+            // Get the highest round number from matches to set currentRound correctly
+            currentRound = savedState.currentRound || 0;
+            if (matches.length > 0) {
+                const maxRoundInMatches = Math.max(...matches.map(m => m.round || 0));
+                // Set currentRound to at least the highest round number in matches
+                currentRound = Math.max(currentRound, maxRoundInMatches);
+            }
+            
             isFirstRound = savedState.isFirstRound !== undefined ? savedState.isFirstRound : true;
 
-            Object.keys(pairHistory).forEach(key => delete pairHistory[key]);
-            Object.assign(pairHistory, savedState.pairHistory || {});
+            // Reset and restore pair tracker data
+            pairTracker.resetAll();
+            
+            // Restore pair tracking data from new format
+            if (savedState.pairCounts) {
+                pairTracker.pairCounts = savedState.pairCounts;
+            }
+            
+            if (savedState.previousRoundPairs) {
+                pairTracker.previousRoundPairs = new Set(savedState.previousRoundPairs);
+            }
+            
+            if (savedState.recentRounds) {
+                pairTracker.recentRounds = savedState.recentRounds.map(roundArray => 
+                    new Set(roundArray)
+                );
+            }
+            
+            if (savedState.globalPairs) {
+                pairTracker.globalPairs = new Set(savedState.globalPairs);
+            }
+            
+            // Support for legacy format
+            if (savedState.extendedPairHistory && !savedState.pairCounts) {
+                pairTracker.pairCounts = savedState.extendedPairHistory;
+            }
+            
+            if (savedState.globalPairHistory && !savedState.globalPairs) {
+                pairTracker.globalPairs = new Set(savedState.globalPairHistory);
+            }
+            
+            if (savedState.recentPairHistory && !savedState.recentRounds) {
+                pairTracker.recentRounds = savedState.recentPairHistory.map(roundArray => 
+                    new Set(roundArray)
+                );
+            }
+            
+            // Restore previous round matches to prevent consecutive repeat matches
+            previousRoundMatches.clear();
+            if (savedState.previousRoundMatches) {
+                savedState.previousRoundMatches.forEach(match => previousRoundMatches.add(match));
+                logDebugMessage(`Restored ${previousRoundMatches.size} previous round matches`);
+            }
+            
+            // Ensure the pair tracking has a current round initialized
+            if (pairTracker.recentRounds.length === 0) {
+                pairTracker.startNewRound();
+                logDebugMessage("Initialized round tracking after restore");
+            }
 
-            previousRoundPairs.clear();
-            (savedState.previousRoundPairs || []).forEach(item => previousRoundPairs.add(item));
-
+            // Restore match history and counter
             matchHistory.clear();
             (savedState.matchHistory || []).forEach(item => matchHistory.add(item));
-
-            recentPairHistory.length = 0;
-            (savedState.recentPairHistory || []).forEach(savedSet => {
-                recentPairHistory.push(new Set(savedSet)); // Convert arrays back to Sets
-            });
-
-            Object.keys(extendedPairHistory).forEach(key => delete extendedPairHistory[key]);
-            Object.assign(extendedPairHistory, savedState.extendedPairHistory || {});
-
-            globalPairHistory.clear();
-            (savedState.globalPairHistory || []).forEach(item => globalPairHistory.add(item));
 
             Object.keys(matchPlayCounter).forEach(key => delete matchPlayCounter[key]);
             Object.assign(matchPlayCounter, savedState.matchPlayCounter || {});
@@ -2231,26 +2887,14 @@ function clearState() {
     // Clear matches array without reassigning
     matches.length = 0;
 
-    currentRound = 1;
+    currentRound = 0; // Changed from 1 to 0
     isFirstRound = true;
 
-    // Clear pairHistory without reassigning
-    Object.keys(pairHistory).forEach(key => delete pairHistory[key]);
-
-    // Clear previousRoundPairs without reassigning
-    previousRoundPairs.clear();
+    // Reset pair tracker
+    pairTracker.resetAll();
 
     // Clear matchHistory without reassigning
     matchHistory.clear();
-
-    // Clear recentPairHistory without reassigning
-    recentPairHistory.length = 0;
-
-    // Clear extendedPairHistory without reassigning
-    Object.keys(extendedPairHistory).forEach(key => delete extendedPairHistory[key]);
-
-    // Clear globalPairHistory without reassigning
-    globalPairHistory.clear();
 
     // Clear matchPlayCounter without reassigning
     Object.keys(matchPlayCounter).forEach(key => delete matchPlayCounter[key]);
@@ -2387,14 +3031,14 @@ function addMatch(roundContainer, sitOutPlayers) {
         const team2PairKey = generatePairKey(match.team2[0], match.team2[1]);
         
         // Add pairs to extended history
-        if (!previousRoundPairs.has(team1PairKey)) {
-            previousRoundPairs.add(team1PairKey);
+        if (!pairTracker.previousRoundPairs.has(team1PairKey)) {
+            pairTracker.previousRoundPairs.add(team1PairKey);
             addPairToRecentHistory(team1PairKey);
             logDebugMessage(`Added team 1 pair ${team1PairKey} to recent history`);
         }
         
-        if (!previousRoundPairs.has(team2PairKey)) {
-            previousRoundPairs.add(team2PairKey);
+        if (!pairTracker.previousRoundPairs.has(team2PairKey)) {
+            pairTracker.previousRoundPairs.add(team2PairKey);
             addPairToRecentHistory(team2PairKey);
             logDebugMessage(`Added team 2 pair ${team2PairKey} to recent history`);
         }
@@ -2514,16 +3158,16 @@ function addMatch(roundContainer, sitOutPlayers) {
             }
 
             const pair1Key = generatePairKey(team1Players[0], team1Players[1]);
-            if (previousRoundPairs.has(pair1Key)) {
-                previousRoundPairs.delete(pair1Key);
+            if (pairTracker.previousRoundPairs.has(pair1Key)) {
+                pairTracker.previousRoundPairs.delete(pair1Key);
                 logDebugMessage(`Removed Team 1 pair from previous round pairs.`);
             }
             // Also remove from recent history
             removePairFromRecentHistory(pair1Key);
             
             const pair2Key = generatePairKey(team2Players[0], team2Players[1]);
-            if (previousRoundPairs.has(pair2Key)) {
-                previousRoundPairs.delete(pair2Key);
+            if (pairTracker.previousRoundPairs.has(pair2Key)) {
+                pairTracker.previousRoundPairs.delete(pair2Key);
                 logDebugMessage(`Removed Team 2 pair from previous round pairs.`);
             }
             // Also remove from recent history
@@ -2743,14 +3387,15 @@ function cancelRoundEdits(roundContainer, editRoundButton, cancelButton) {
     // Restore the original state for each match
     originalState.forEach((matchData, index) => {
         const matchDiv = matches[index];
-        matchDiv.querySelector('[data-team="1"] p').innerHTML =
-            `Team 1: ${matchData.team1.map(player => `<span class="team1-player">${player}</span>`).join(' & ')}`;
-        matchDiv.querySelector('[data-team="2"] p').innerHTML =
-            `Team 2: ${matchData.team2.map(player => `<span class="team2-player">${player}</span>`).join(' & ')}`;
+        // Restore team data with object structure for reRenderRound
+        matchDiv.team1 = matchData.team1.map(name => ({ name }));
+        matchDiv.team2 = matchData.team2.map(name => ({ name }));
+        
+        // Restore scores
         matchDiv.querySelector('.team-score[data-team="1"]').value = matchData.team1Score;
         matchDiv.querySelector('.team-score[data-team="2"]').value = matchData.team2Score;
 
-        // Disable score inputs to match normal mode
+        // Ensure score inputs are enabled
         matchDiv.querySelectorAll('.team-score').forEach(input => {
             input.disabled = false;
         });
@@ -2764,6 +3409,9 @@ function cancelRoundEdits(roundContainer, editRoundButton, cancelButton) {
 
     // Clear the stored original state from the round container
     delete roundContainer.dataset.originalState;
+    
+    // Use reRenderRound to update the display
+    reRenderRound(roundContainer);
 
     alert('Edits canceled. Round reverted to the original state.');
 }
@@ -2775,16 +3423,59 @@ function saveRoundEdits(roundContainer, editRoundButton) {
     const matches = roundContainer.querySelectorAll('.match');
     const allPlayersInRound = new Set(); // Track players to prevent duplicates
     let isValid = true;
+    
+    // Get the round number
+    const roundNumber = parseInt(roundContainer.getAttribute('data-round')) || currentRound;
+    
+    // Store original team data for rollback
+    const originalMatchData = Array.from(matches).map(matchDiv => {
+        // Get team players from spans, ensuring we have valid player objects
+        const team1Players = Array.from(matchDiv.querySelectorAll('.team1-player'))
+            .map(el => {
+                const playerName = el.textContent.trim();
+                const playerObj = players.find(p => p.name === playerName);
+                if (!playerObj) {
+                    console.warn(`Could not find player object for name: ${playerName} in team 1`);
+                }
+                return playerObj;
+            })
+            .filter(Boolean); // Filter out any undefined players
+            
+        const team2Players = Array.from(matchDiv.querySelectorAll('.team2-player'))
+            .map(el => {
+                const playerName = el.textContent.trim();
+                const playerObj = players.find(p => p.name === playerName);
+                if (!playerObj) {
+                    console.warn(`Could not find player object for name: ${playerName} in team 2`);
+                }
+                return playerObj;
+            })
+            .filter(Boolean); // Filter out any undefined players
+            
+        // Only return if we have valid teams (2 players in each team)
+        if (team1Players.length === 2 && team2Players.length === 2) {
+            return {
+                team1: team1Players,
+                team2: team2Players,
+                team1Score: parseInt(matchDiv.querySelector('.team-score[data-team="1"]').value, 10) || 0,
+                team2Score: parseInt(matchDiv.querySelector('.team-score[data-team="2"]').value, 10) || 0
+            };
+        }
+        console.warn('Invalid team composition detected, skipping rollback for this match');
+        return null;
+    }).filter(Boolean); // Filter out any null match data
 
     matches.forEach((matchDiv, index) => {
         const newTeam1 = Array.from(matchDiv.querySelectorAll('.player-selector[data-team="1"]'))
-            .map(selector => players.find(p => p.name === selector.value));
+            .map(selector => players.find(p => p.name === selector.value))
+            .filter(Boolean); // Filter out any undefined players
 
         const newTeam2 = Array.from(matchDiv.querySelectorAll('.player-selector[data-team="2"]'))
-            .map(selector => players.find(p => p.name === selector.value));
+            .map(selector => players.find(p => p.name === selector.value))
+            .filter(Boolean); // Filter out any undefined players
 
-        if (!newTeam1.length || !newTeam2.length) {
-            alert("Error: Teams must have valid players.");
+        if (newTeam1.length !== 2 || newTeam2.length !== 2) {
+            alert("Error: Each team must have exactly 2 valid players.");
             isValid = false;
             return;
         }
@@ -2811,6 +3502,85 @@ function saveRoundEdits(roundContainer, editRoundButton) {
     });
 
     if (!isValid) return;
+    
+    // Roll back the original match data from pair tracking
+    originalMatchData.forEach(match => {
+        if (!match || !match.team1 || !match.team2 || match.team1.length !== 2 || match.team2.length !== 2) {
+            console.warn('Skipping invalid match data during rollback');
+            return;
+        }
+        
+        try {
+            // Roll back pair tracking
+            const pair1Key = generatePairKey(match.team1[0], match.team1[1]);
+            const pair2Key = generatePairKey(match.team2[0], match.team2[1]);
+            
+            // Remove from previous round pairs
+            if (pair1Key && pairTracker.previousRoundPairs.has(pair1Key)) {
+                pairTracker.previousRoundPairs.delete(pair1Key);
+                logDebugMessage(`Removed Team 1 pair ${pair1Key} from previous round pairs during round edit`);
+            }
+            
+            if (pair2Key && pairTracker.previousRoundPairs.has(pair2Key)) {
+                pairTracker.previousRoundPairs.delete(pair2Key);
+                logDebugMessage(`Removed Team 2 pair ${pair2Key} from previous round pairs during round edit`);
+            }
+            
+            // Remove from recent history
+            if (pair1Key) removePairFromRecentHistory(pair1Key);
+            if (pair2Key) removePairFromRecentHistory(pair2Key);
+            
+            // Update match history tracking
+            const matchKey = generateMatchKey(match.team1, match.team2);
+            if (matchKey && matchHistory.has(matchKey)) {
+                matchHistory.delete(matchKey);
+                logDebugMessage(`Removed match ${matchKey} from match history during round edit`);
+            }
+        } catch (err) {
+            console.error('Error during rollback of match data:', err);
+        }
+    });
+    
+    // Apply the new match data
+    Array.from(matches).forEach(matchDiv => {
+        if (!matchDiv.team1 || !matchDiv.team2 || matchDiv.team1.length !== 2 || matchDiv.team2.length !== 2) {
+            console.warn('Skipping invalid match data during apply');
+            return;
+        }
+        
+        try {
+            const newMatch = {
+                team1: matchDiv.team1,
+                team2: matchDiv.team2,
+                team1Score: matchDiv.team1Score,
+                team2Score: matchDiv.team2Score,
+                round: roundNumber
+            };
+            
+            // Add pairs to tracking
+            const pair1Key = generatePairKey(newMatch.team1[0], newMatch.team1[1]);
+            const pair2Key = generatePairKey(newMatch.team2[0], newMatch.team2[1]);
+            
+            // Add to pair tracker history
+            if (pair1Key) addPairToRecentHistory(pair1Key);
+            if (pair2Key) addPairToRecentHistory(pair2Key);
+            
+            // Add to previous round pairs
+            if (pair1Key) pairTracker.previousRoundPairs.add(pair1Key);
+            if (pair2Key) pairTracker.previousRoundPairs.add(pair2Key);
+            
+            // Update match history tracking
+            const matchKey = generateMatchKey(newMatch.team1, newMatch.team2);
+            if (matchKey) {
+                matchHistory.add(matchKey);
+                updateMatchPlayCounter(matchKey);
+            }
+            
+            logDebugMessage(`Applied new pairs for edited match: Team 1: ${newMatch.team1.map(p => p.name).join(' & ')}, Team 2: ${newMatch.team2.map(p => p.name).join(' & ')}`);
+        } catch (err) {
+            console.error('Error during apply of new match data:', err);
+        }
+    });
 
     // Update sitting-out players
     const allPlayers = players.map(p => p.name);
@@ -2830,6 +3600,13 @@ function saveRoundEdits(roundContainer, editRoundButton) {
 
     // Re-render round
     reRenderRound(roundContainer);
+    
+    // Save changes to local storage
+    autoSave();
+    
+    // Log pair history for debugging
+    logPairHistory();
+    
     alert('Round edits saved!');
 }
 
@@ -2840,15 +3617,50 @@ function saveRoundEdits(roundContainer, editRoundButton) {
 
 
 function reRenderRound(roundContainer) {
-    const matches = roundContainer.querySelectorAll('.match');
-
-    matches.forEach((matchDiv, index) => {
-        const match = matches[index];
-
+    const roundMatches = roundContainer.querySelectorAll('.match');
+    
+    // Get the round number if available
+    const roundNumber = parseInt(roundContainer.querySelector('h3')?.textContent.replace('Round ', '')) || null;
+    
+    roundMatches.forEach((matchDiv, index) => {
+        let matchData;
+        
+        // First check if this is a match element with team1/team2 properties (during editing)
+        if (matchDiv.team1 && matchDiv.team2) {
+            matchData = matchDiv;
+        } 
+        // Otherwise look for the match in the main matches array by round and index
+        else if (roundNumber) {
+            // Get match from global matches array by round and index
+            matchData = matches.find(m => 
+                m.round === roundNumber && 
+                parseInt(matchDiv.getAttribute('data-match')) === parseInt(m.originalIndex || index)
+            );
+        }
+        
+        // If no match data found, skip this match
+        if (!matchData) {
+            console.warn(`No match data found for round ${roundNumber}, match index ${index}`);
+            return;
+        }
+        
+        // Update the displayed match information
         matchDiv.querySelector('[data-team="1"] p').innerHTML =
-            `Team 1: ${match.team1.map(player => `<span class="team1-player">${player.name}</span>`).join(' & ')}`;
+            `Team 1: ${matchData.team1.map(player => `<span class="team1-player">${player.name}</span>`).join(' & ')}`;
         matchDiv.querySelector('[data-team="2"] p').innerHTML =
-            `Team 2: ${match.team2.map(player => `<span class="team2-player">${player.name}</span>`).join(' & ')}`;
+            `Team 2: ${matchData.team2.map(player => `<span class="team2-player">${player.name}</span>`).join(' & ')}`;
+        
+        // Update scores if they exist
+        const team1ScoreInput = matchDiv.querySelector('.team-score[data-team="1"]');
+        const team2ScoreInput = matchDiv.querySelector('.team-score[data-team="2"]');
+        
+        if (team1ScoreInput && matchData.team1Score !== undefined) {
+            team1ScoreInput.value = matchData.team1Score;
+        }
+        
+        if (team2ScoreInput && matchData.team2Score !== undefined) {
+            team2ScoreInput.value = matchData.team2Score;
+        }
 
         // Ensure score inputs remain editable
         matchDiv.querySelectorAll('.team-score').forEach(input => (input.disabled = false));
@@ -2901,6 +3713,30 @@ document.addEventListener('DOMContentLoaded', function() {
     window.addEventListener('scroll', handleScroll);
     
     initNumericKeypad();
+    
+    // Load custom sort config if available
+    loadCustomSortConfig();
+    
+    // Add custom sort button to the sorting buttons
+    const sortingButtons = document.querySelector('.sorting-buttons');
+    const customSortBtn = document.createElement('button');
+    customSortBtn.id = 'sortCustom';
+    customSortBtn.innerHTML = '<span class="material-symbols-rounded">tune</span> Custom Sort';
+    sortingButtons.appendChild(customSortBtn);
+    
+    // Add event listener for custom sort button
+    document.getElementById('sortCustom').addEventListener('click', () => {
+        clearActiveSortingButtons();
+        document.getElementById('sortCustom').classList.add('active');
+        
+        currentSortingMethod = 'custom';
+        const sortedPlayers = sortByCustomConfig(players);
+        displayPodium(sortedPlayers);
+        displayPlayerStatsTable(sortedPlayers);
+        
+        // Show custom sort configuration modal
+        showCustomSortModal();
+    });
 });
 
 // Function to handle scroll events
@@ -2995,8 +3831,14 @@ function editMatch(matchIndex) {
     // Store the original match data for reverting in case of cancellation
     const originalMatch = JSON.parse(JSON.stringify(match));
     
+    // Store original index to help with re-rendering
+    if (match.originalIndex === undefined) {
+        match.originalIndex = matchIndex;
+    }
+    
     // Debugging info about original match state
     console.log("Original match before editing:", JSON.stringify({
+        round: match.round,
         team1Names: match.team1.map(p => p.name),
         team2Names: match.team2.map(p => p.name),
         team1Score: match.team1Score,
@@ -3019,7 +3861,7 @@ function editMatch(matchIndex) {
     dialog.className = 'edit-match-dialog';
     dialog.innerHTML = `
         <div class="edit-match-content">
-            <h3>Edit Match</h3>
+            <h3>Edit Match (Round ${match.round})</h3>
             <div class="team-edit-section">
                 <h4>Team 1</h4>
                 <select id="team1-player1">
@@ -3089,9 +3931,15 @@ function editMatch(matchIndex) {
             return;
         }
 
-        if (team1Player1 === team1Player2 || team2Player1 === team2Player2 ||
-            [team1Player1, team1Player2].includes(team2Player1) ||
-            [team1Player1, team1Player2].includes(team2Player2)) {
+        // Only check for duplicates within the same team
+        if (team1Player1 === team1Player2 || team2Player1 === team2Player2) {
+            alert('Players cannot be on the same team with themselves');
+            return;
+        }
+
+        // Check if a player appears in both teams
+        const allPlayers = new Set([team1Player1.name, team1Player2.name, team2Player1.name, team2Player2.name]);
+        if (allPlayers.size !== 4) {
             alert('Each player can only appear once in a match');
             return;
         }
@@ -3130,31 +3978,14 @@ function editMatch(matchIndex) {
             // 1. Update match history display
             showMatchHistory();
             
-            // 2. Update current round display if needed
-            const currentRoundContainer = document.querySelector(`.round-container[data-round="${match.round}"]`);
-            if (currentRoundContainer) {
-                reRenderRound(currentRoundContainer);
-            }
+            // 2. Update the main round displays
+            updateMainDisplayFromMatchEdit(match);
             
-            // 3. Update player stats and leaderboard
-            const activeSort = document.querySelector('.sort-btn.active');
-            let sortFunction = sortByVictoryPoints; // Default sort
-            
-            // Determine which sort function to use based on active button
-            if (activeSort) {
-                const sortType = activeSort.getAttribute('data-sort');
-                if (sortType === 'pickle-points') sortFunction = sortByPicklePoints;
-                else if (sortType === 'win-percentage') sortFunction = sortByWinPercentage;
-                else if (sortType === 'pickle-point-avg') sortFunction = sortByPicklePointAvg;
-                else if (sortType === 'pickle-differential') sortFunction = sortByPickleDifferential;
-            }
-            
-            const sortedPlayers = sortFunction(players);
-            displayPodium(sortedPlayers);
-            displayPlayerStatsTable(sortedPlayers);
-            
-            // 4. Save changes to local storage
+            // 3. Save changes to local storage
             autoSave();
+            
+            // 4. Force a complete re-render of all match rounds to ensure synchronization
+            forceUpdateAllRounds();
             
             console.log("Match updated successfully:", match);
             alert('Match updated successfully!');
@@ -3171,6 +4002,124 @@ function editMatch(matchIndex) {
     document.getElementById('cancel-match-edit').addEventListener('click', function() {
         dialog.remove();
     });
+}
+
+/**
+ * Updates the main display when a match is edited in the match history
+ * @param {Object} match - The edited match
+ */
+function updateMainDisplayFromMatchEdit(match) {
+    console.log(`Updating main display for match in round ${match.round}, originalIndex: ${match.originalIndex}`);
+    
+    // Instead of trying to find and update specific matches which might fail,
+    // let's use the forceUpdateAllRounds function to ensure all displays are updated
+    forceUpdateAllRounds();
+    
+    // Additionally ensure that all specific score displays are updated
+    // This targets any standalone score displays that might not be caught by forceUpdateAllRounds
+    document.querySelectorAll('.score-display, .score-text, .team-score').forEach(element => {
+        const matchId = element.getAttribute('data-match');
+        const teamId = element.getAttribute('data-team');
+        const roundNum = element.closest('.round-container')?.getAttribute('data-round');
+        
+        // Try to match by match ID if available
+        if (matchId && teamId) {
+            const matchIndex = parseInt(matchId);
+            
+            // If this element references the match we're updating
+            if (match.originalIndex === matchIndex || 
+                (roundNum && parseInt(roundNum) === match.round && matchIndex === match.originalIndex % 10)) {
+                
+                // Update the score display
+                if (teamId === '1') {
+                    if (element.tagName === 'INPUT') {
+                        element.value = match.team1Score;
+                    } else {
+                        element.textContent = `Score: ${match.team1Score}`;
+                    }
+                } else if (teamId === '2') {
+                    if (element.tagName === 'INPUT') {
+                        element.value = match.team2Score;
+                    } else {
+                        element.textContent = `Score: ${match.team2Score}`;
+                    }
+                }
+            }
+        }
+    });
+    
+    // Update winner highlighting in all rounds
+    document.querySelectorAll('.round-container').forEach(container => {
+        const roundNum = parseInt(container.getAttribute('data-round'));
+        
+        // Only process the container for the round containing our edited match
+        if (roundNum === match.round) {
+            // Find matches that might be our edited match
+            container.querySelectorAll('.match').forEach(matchDiv => {
+                const matchIndex = parseInt(matchDiv.getAttribute('data-match'));
+                
+                // Check if this could be our match by index or by team overlap
+                    const team1Names = Array.from(matchDiv.querySelectorAll('.team1-player'))
+                        .map(el => el.textContent.trim());
+                    const team2Names = Array.from(matchDiv.querySelectorAll('.team2-player'))
+                        .map(el => el.textContent.trim());
+                    
+                    const editedTeam1Names = match.team1.map(p => p.name);
+                    const editedTeam2Names = match.team2.map(p => p.name);
+                    
+                // Check for team overlap
+                const hasTeam1Overlap = team1Names.some(name => editedTeam1Names.includes(name));
+                const hasTeam2Overlap = team2Names.some(name => editedTeam2Names.includes(name));
+                
+                if (matchIndex === match.originalIndex || (hasTeam1Overlap && hasTeam2Overlap)) {
+                    // This is likely our match - update the winner highlighting
+                    const team1Container = matchDiv.querySelector(`.team[data-team="1"]`);
+                    const team2Container = matchDiv.querySelector(`.team[data-team="2"]`);
+                    
+                    if (team1Container && team2Container) {
+                        // Update score displays if they're in a different format
+                        const scoreEl1 = team1Container.querySelector('.score-display');
+                        const scoreEl2 = team2Container.querySelector('.score-display');
+                        
+                        if (scoreEl1) scoreEl1.textContent = `Score: ${match.team1Score}`;
+                        if (scoreEl2) scoreEl2.textContent = `Score: ${match.team2Score}`;
+                        
+                        // Remove all winner/tie classes
+                        team1Container.classList.remove('winner-team', 'tie-team');
+                        team2Container.classList.remove('winner-team', 'tie-team');
+                        
+                        // Add classes based on new scores
+                        if (match.team1Score > match.team2Score) {
+                            team1Container.classList.add('winner-team');
+                        } else if (match.team2Score > match.team1Score) {
+                            team2Container.classList.add('winner-team');
+                        } else {
+                            team1Container.classList.add('tie-team');
+                            team2Container.classList.add('tie-team');
+                        }
+                    }
+                }
+            });
+        }
+    });
+    
+    // Update leaderboard with latest player stats
+    const activeSort = document.querySelector('.sorting-buttons button.active');
+    let sortFunction = sortByVictoryPoints; // Default sort
+    
+    // Determine which sort function to use based on active button
+    if (activeSort) {
+        if (activeSort.id === 'sortPicklePoints') sortFunction = sortByPicklePoints;
+        else if (activeSort.id === 'sortWinPercentage') sortFunction = sortByWinPercentage;
+        else if (activeSort.id === 'sortPicklePointAvg') sortFunction = sortByPicklePointAvg;
+        else if (activeSort.id === 'sortPickleDifferential') sortFunction = sortByPickleDifferential;
+        else if (activeSort.id === 'sortCustom') sortFunction = sortByCustomConfig;
+    }
+    
+    // Update the podium and player stats table with the latest data
+    const sortedPlayers = sortFunction(players);
+    displayPodium(sortedPlayers);
+    displayPlayerStatsTable(sortedPlayers);
 }
 
 // Helper function to roll back a match's stats from player records
@@ -3252,13 +4201,13 @@ function rollbackMatchStats(match) {
     const pair2Key = generatePairKey(match.team2[0], match.team2[1]);
     
     // Remove from previous round pairs
-    if (previousRoundPairs.has(pair1Key)) {
-        previousRoundPairs.delete(pair1Key);
+    if (pairTracker.previousRoundPairs.has(pair1Key)) {
+        pairTracker.previousRoundPairs.delete(pair1Key);
         logDebugMessage(`Removed Team 1 pair ${pair1Key} from previous round pairs during rollback`);
     }
     
-    if (previousRoundPairs.has(pair2Key)) {
-        previousRoundPairs.delete(pair2Key);
+    if (pairTracker.previousRoundPairs.has(pair2Key)) {
+        pairTracker.previousRoundPairs.delete(pair2Key);
         logDebugMessage(`Removed Team 2 pair ${pair2Key} from previous round pairs during rollback`);
     }
     
@@ -3317,6 +4266,104 @@ function applyMatchStats(match) {
         // Add versus relationships
         match.team1.forEach(opponent => updateVersus(player, opponent));
     });
+    
+    // Add pairs to tracking
+    const pair1Key = generatePairKey(match.team1[0], match.team1[1]);
+    const pair2Key = generatePairKey(match.team2[0], match.team2[1]);
+    
+    // Add to pair tracker history
+    addPairToRecentHistory(pair1Key);
+    addPairToRecentHistory(pair2Key);
+    
+    // Add to previous round pairs
+    pairTracker.previousRoundPairs.add(pair1Key);
+    pairTracker.previousRoundPairs.add(pair2Key);
+    
+    // Update match history tracking
+    const matchKey = generateMatchKey(match.team1, match.team2);
+    matchHistory.add(matchKey);
+    updateMatchPlayCounter(matchKey);
+    
+    logDebugMessage(`Applied stats for match: Team 1: ${match.team1.map(p => p.name).join(' & ')}, Team 2: ${match.team2.map(p => p.name).join(' & ')}`);
+}
+
+// Helper function to update a match display element
+function updateMatchDisplay(matchDiv, match) {
+    // Update team 1 display
+    const team1Element = matchDiv.querySelector('[data-team="1"] p');
+    if (team1Element) {
+        team1Element.innerHTML = `Team 1: ${match.team1.map(p => 
+            `<span class="team1-player">${p.name}</span>`).join(' & ')}`;
+    }
+    
+    // Update team 2 display
+    const team2Element = matchDiv.querySelector('[data-team="2"] p');
+    if (team2Element) {
+        team2Element.innerHTML = `Team 2: ${match.team2.map(p => 
+            `<span class="team2-player">${p.name}</span>`).join(' & ')}`;
+    }
+    
+    // Update scores - make sure we're updating the value property
+    const team1ScoreInput = matchDiv.querySelector('.team-score[data-team="1"]');
+    const team2ScoreInput = matchDiv.querySelector('.team-score[data-team="2"]');
+    
+    if (team1ScoreInput) {
+        team1ScoreInput.value = match.team1Score;
+    }
+    
+    if (team2ScoreInput) {
+        team2ScoreInput.value = match.team2Score;
+    }
+    
+    // Update score displays
+    const team1ScoreDisplay = matchDiv.querySelector('.score-display[data-team="1"]');
+    if (team1ScoreDisplay) {
+        team1ScoreDisplay.textContent = `Score: ${match.team1Score}`;
+    }
+    
+    const team2ScoreDisplay = matchDiv.querySelector('.score-display[data-team="2"]');
+    if (team2ScoreDisplay) {
+        team2ScoreDisplay.textContent = `Score: ${match.team2Score}`;
+    }
+    
+    // Update any other score elements
+    const scoreElements = matchDiv.querySelectorAll('.score, .score-value');
+    scoreElements.forEach(element => {
+        const team = element.getAttribute('data-team');
+        if (team === '1') {
+            element.textContent = match.team1Score;
+        } else if (team === '2') {
+            element.textContent = match.team2Score;
+        }
+    });
+    
+    // Update combined score displays if any (like "10 - 11")
+    const combinedScoreElement = matchDiv.querySelector('.combined-score');
+    if (combinedScoreElement) {
+        combinedScoreElement.textContent = `${match.team1Score} - ${match.team2Score}`;
+    }
+    
+    // Update winner highlighting
+    const team1Container = matchDiv.querySelector(`.team[data-team="1"]`);
+    const team2Container = matchDiv.querySelector(`.team[data-team="2"]`);
+    
+    if (team1Container && team2Container) {
+        // Remove all winner/tie classes
+        team1Container.classList.remove('winner-team', 'tie-team');
+        team2Container.classList.remove('winner-team', 'tie-team');
+        
+        // Add classes based on new scores
+        if (match.team1Score > match.team2Score) {
+            team1Container.classList.add('winner-team');
+        } else if (match.team2Score > match.team1Score) {
+            team2Container.classList.add('winner-team');
+        } else {
+            team1Container.classList.add('tie-team');
+            team2Container.classList.add('tie-team');
+        }
+    }
+    
+    console.log(`Updated match display for Round ${match.round}: Score Team 1: ${match.team1Score}, Team 2: ${match.team2Score}`);
 }
 
 // Document Ready Event
@@ -3678,7 +4725,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 generateNextRound();
             } else {
                 // Start new tournament
-                currentRound = 1;
+                currentRound = 0; // Changed from 1 to 0
                 generatePairsAndMatches();
             }
         });
@@ -3707,72 +4754,51 @@ function logPlayersEligibilityStatus() {
 
 // Utility function to log the pair history for debugging
 function logPairHistory() {
-    logDebugMessage("=== PAIR HISTORY ===");
-    logDebugMessage(`Previous Round Pairs (${previousRoundPairs.size} pairs): ${Array.from(previousRoundPairs).join(', ')}`);
+    pairTracker.logHistory();
     
-    logDebugMessage("Recent Pair History:");
-    recentPairHistory.forEach((set, idx) => {
-        logDebugMessage(`Round ${idx+1}: ${Array.from(set).join(', ')}`);
+    // Additional debug information about recentRounds structure
+    console.log("=== PAIR TRACKING STRUCTURE ===");
+    console.log("Recent rounds (most recent first):");
+    pairTracker.recentRounds.forEach((roundSet, index) => {
+        console.log(`Round set ${index}: ${Array.from(roundSet).join(', ')}`);
+        console.log("Contains pairs:", Array.from(roundSet).map(pair => {
+            const [p1, p2] = pair.split('-');
+            return `${p1} & ${p2}`;
+        }).join(', '));
     });
     
-    logDebugMessage("Extended Pair History:");
-    const entries = Object.entries(extendedPairHistory);
-    entries.sort((a, b) => b[1] - a[1]); // Sort by count, descending
-    entries.forEach(([key, count]) => {
-        if (count > 0) {
-            logDebugMessage(`${key}: ${count} times`);
-        }
-    });
-    logDebugMessage("===================");
+    console.log("Previous round pairs:", Array.from(pairTracker.previousRoundPairs));
+    console.log("Previous round pairs decoded:", Array.from(pairTracker.previousRoundPairs).map(pair => {
+        const [p1, p2] = pair.split('-');
+        return `${p1} & ${p2}`;
+    }).join(', '));
+    
+    console.log("===========================");
 }
 
 // Function to remove a pair from recent history
 function removePairFromRecentHistory(pairKey) {
-    logDebugMessage(`Attempting to remove pair ${pairKey} from recent history`);
-    
-    // Ensure we have a valid recentPairHistory array
-    if (!recentPairHistory || recentPairHistory.length === 0) {
-        logDebugMessage(`No recent pair history exists.`);
+    // Handle null/invalid pair keys
+    if (!pairKey) {
+        logDebugMessage(`Cannot remove invalid pair key from recent history`);
         return false;
     }
     
-    // Check each round's set and remove the pair if found
-    let removed = false;
-    recentPairHistory.forEach((set, index) => {
-        if (set && set.has(pairKey)) {
-            set.delete(pairKey);
-            removed = true;
-            logDebugMessage(`Removed pair ${pairKey} from round ${index + 1} history`);
-        }
-    });
-    
-    // Clean up empty sets in the history without reassigning the array
-    const nonEmptySets = [];
-    for (let i = 0; i < recentPairHistory.length; i++) {
-        if (recentPairHistory[i] && recentPairHistory[i].size > 0) {
-            nonEmptySets.push(recentPairHistory[i]);
-        }
+    const names = pairKey.split('-');
+    if (names.length !== 2) {
+        logDebugMessage(`Invalid pair key format: ${pairKey}`);
+        return false;
     }
     
-    // Clear the array without reassigning it
-    recentPairHistory.length = 0;
+    const player1 = players.find(p => p.name === names[0]);
+    const player2 = players.find(p => p.name === names[1]);
     
-    // Add back non-empty sets
-    for (const set of nonEmptySets) {
-        recentPairHistory.push(set);
+    if (!player1 || !player2) {
+        logDebugMessage(`Could not find players for pair key: ${pairKey}`);
+        return false;
     }
     
-    if (recentPairHistory.length === 0) {
-        logDebugMessage("All recent pair history has been cleared");
-    }
-    
-    // Log the current state of recent pair history
-    logDebugMessage("Recent pair history after removal:");
-    recentPairHistory.forEach((set, idx) => {
-        logDebugMessage(`  Round ${idx+1}: ${Array.from(set).join(', ')}`);
-    });
-    
-    return removed;
+    return pairTracker.removePair(player1, player2);
 }
 
 function createNumericKeypad() {
@@ -3924,5 +4950,345 @@ function initNumericKeypad() {
     observer.observe(document.body, { 
         childList: true, 
         subtree: true 
+    });
+}
+
+// Add function to save custom sort config to localStorage
+function saveCustomSortConfig() {
+    localStorage.setItem('pickleballCustomSortConfig', JSON.stringify(customSortConfig));
+}
+
+// Add function to load custom sort config from localStorage
+function loadCustomSortConfig() {
+    const savedConfig = localStorage.getItem('pickleballCustomSortConfig');
+    if (savedConfig) {
+        try {
+            customSortConfig = JSON.parse(savedConfig);
+        } catch (e) {
+            console.error('Error parsing custom sort config:', e);
+        }
+    }
+}
+
+// Add this function to sort by custom configuration
+function sortByCustomConfig(players) {
+    currentSortingMethod = 'custom';
+    return sortPlayers(players, customSortConfig.primaryStat);
+}
+
+// Function to show custom sort configuration modal
+function showCustomSortModal() {
+    // First, check if modal already exists
+    let modal = document.getElementById('customSortModal');
+    
+    // If not, create it
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'customSortModal';
+        modal.className = 'modal';
+        
+        // Create modal content
+        const modalContent = document.createElement('div');
+        modalContent.className = 'modal-content';
+        
+        // Create header
+        const header = document.createElement('h3');
+        header.textContent = 'Custom Sort Configuration';
+        
+        // Create form
+        const form = document.createElement('div');
+        form.className = 'custom-sort-form';
+        
+        // Create explanation text
+        const explanation = document.createElement('p');
+        explanation.className = 'sort-explanation';
+        explanation.textContent = 'Select your primary stat for sorting and choose the order of tiebreakers (1 = first tiebreaker, 5 = last tiebreaker)';
+        
+        // Primary stat selection
+        const primaryStatSection = document.createElement('div');
+        primaryStatSection.className = 'form-section';
+        
+        const primaryStatLabel = document.createElement('label');
+        primaryStatLabel.textContent = 'Primary Sorting Stat:';
+        primaryStatLabel.htmlFor = 'primaryStat';
+        
+        const primaryStatSelect = document.createElement('select');
+        primaryStatSelect.id = 'primaryStat';
+        primaryStatSelect.name = 'primaryStat';
+        
+        const statOptions = [
+            { value: 'victoryPoints', text: 'Victory Points' },
+            { value: 'winPercentage', text: 'Win Percentage' },
+            { value: 'picklePoints', text: 'Pickle Points' },
+            { value: 'pickleDifferential', text: 'Pickle Differential' },
+            { value: 'picklePointAvg', text: 'Pickle Point Avg' }
+        ];
+        
+        statOptions.forEach(option => {
+            const opt = document.createElement('option');
+            opt.value = option.value;
+            opt.textContent = option.text;
+            if (option.value === customSortConfig.primaryStat) {
+                opt.selected = true;
+            }
+            primaryStatSelect.appendChild(opt);
+        });
+        
+        primaryStatSection.appendChild(primaryStatLabel);
+        primaryStatSection.appendChild(primaryStatSelect);
+        
+        // Tiebreaker section - new numbered approach
+        const tiebreakerSection = document.createElement('div');
+        tiebreakerSection.className = 'form-section';
+        
+        const tiebreakerLabel = document.createElement('div');
+        tiebreakerLabel.className = 'tiebreaker-section-label';
+        tiebreakerLabel.textContent = 'Tiebreaker Order:';
+        
+        tiebreakerSection.appendChild(tiebreakerLabel);
+        
+        // Create a table for better mobile layout
+        const tiebreakerTable = document.createElement('table');
+        tiebreakerTable.className = 'tiebreaker-table';
+        
+        // Add header row
+        const headerRow = document.createElement('tr');
+        const statHeader = document.createElement('th');
+        statHeader.textContent = 'Statistic';
+        const orderHeader = document.createElement('th');
+        orderHeader.textContent = 'Order';
+        headerRow.appendChild(statHeader);
+        headerRow.appendChild(orderHeader);
+        tiebreakerTable.appendChild(headerRow);
+        
+        // Get current tiebreaker order as a map
+        const tiebreakOrderMap = {};
+        customSortConfig.tiebreakers.forEach((tiebreaker, index) => {
+            tiebreakOrderMap[tiebreaker] = index + 1;
+        });
+        
+        // Create dropdown rows for each stat except primary
+        statOptions.forEach(option => {
+            // Skip the primary stat in tiebreakers
+            if (option.value === customSortConfig.primaryStat) {
+                return;
+            }
+            
+            const row = document.createElement('tr');
+            
+            // Stat name cell
+            const statCell = document.createElement('td');
+            statCell.textContent = option.text;
+            
+            // Order dropdown cell
+            const orderCell = document.createElement('td');
+            const orderSelect = document.createElement('select');
+            orderSelect.className = 'tiebreaker-order';
+            orderSelect.dataset.stat = option.value;
+            
+            // Create 1-4 options
+            for (let i = 1; i <= 4; i++) {
+                const orderOpt = document.createElement('option');
+                orderOpt.value = i;
+                orderOpt.textContent = i;
+                
+                // Select current position
+                if (tiebreakOrderMap[option.value] === i) {
+                    orderOpt.selected = true;
+                }
+                
+                orderSelect.appendChild(orderOpt);
+            }
+            
+            orderCell.appendChild(orderSelect);
+            
+            row.appendChild(statCell);
+            row.appendChild(orderCell);
+            tiebreakerTable.appendChild(row);
+        });
+        
+        tiebreakerSection.appendChild(tiebreakerTable);
+        
+        // Add button section
+        const buttonSection = document.createElement('div');
+        buttonSection.className = 'button-section';
+        
+        const saveButton = document.createElement('button');
+        saveButton.id = 'saveCustomSort';
+        saveButton.className = 'btn-success';
+        saveButton.textContent = 'Save & Apply';
+        
+        const cancelButton = document.createElement('button');
+        cancelButton.id = 'cancelCustomSort';
+        cancelButton.textContent = 'Cancel';
+        
+        buttonSection.appendChild(saveButton);
+        buttonSection.appendChild(cancelButton);
+        
+        // Assemble modal
+        form.appendChild(explanation);
+        form.appendChild(primaryStatSection);
+        form.appendChild(tiebreakerSection);
+        
+        modalContent.appendChild(header);
+        modalContent.appendChild(form);
+        modalContent.appendChild(buttonSection);
+        
+        modal.appendChild(modalContent);
+        document.body.appendChild(modal);
+        
+        // Add event listeners
+        document.getElementById('saveCustomSort').addEventListener('click', () => {
+            // Update primary stat
+            customSortConfig.primaryStat = document.getElementById('primaryStat').value;
+            
+            // Get all stats except primary
+            const availableStats = statOptions.map(opt => opt.value).filter(val => val !== customSortConfig.primaryStat);
+            
+            // Create a map of stat -> order
+            const orderMap = {};
+            document.querySelectorAll('.tiebreaker-order').forEach(select => {
+                orderMap[select.dataset.stat] = parseInt(select.value);
+            });
+            
+            // Sort stats by their order
+            availableStats.sort((a, b) => orderMap[a] - orderMap[b]);
+            
+            // Set as tiebreakers
+            customSortConfig.tiebreakers = availableStats;
+            
+            // Save to localStorage
+            saveCustomSortConfig();
+            
+            // Apply sorting
+            const sortedPlayers = sortByCustomConfig(players);
+            displayPodium(sortedPlayers);
+            displayPlayerStatsTable(sortedPlayers);
+            
+            // Close modal
+            modal.classList.remove('active');
+            
+            // Add notice to inform user the custom sort was saved
+            const notice = document.createElement('div');
+            notice.className = 'custom-sort-notice';
+            notice.textContent = 'Custom sort saved! It will be available across sessions.';
+            document.body.appendChild(notice);
+            
+            // Remove notice after 3 seconds
+            setTimeout(() => {
+                notice.classList.add('fade-out');
+                setTimeout(() => {
+                    document.body.removeChild(notice);
+                }, 500);
+            }, 3000);
+        });
+        
+        document.getElementById('cancelCustomSort').addEventListener('click', () => {
+            modal.classList.remove('active');
+        });
+        
+        // Update primary select change behavior
+        document.getElementById('primaryStat').addEventListener('change', function() {
+            // When primary stat changes, rebuild the tiebreaker table
+            const primaryValue = this.value;
+            
+            // Remove existing rows
+            const table = document.querySelector('.tiebreaker-table');
+            while (table.rows.length > 1) {
+                table.deleteRow(1);
+            }
+            
+            // Add new rows, skipping the new primary
+            statOptions.forEach(option => {
+                if (option.value === primaryValue) {
+                    return;
+                }
+                
+                const row = document.createElement('tr');
+                
+                // Stat name cell
+                const statCell = document.createElement('td');
+                statCell.textContent = option.text;
+                
+                // Order dropdown cell
+                const orderCell = document.createElement('td');
+                const orderSelect = document.createElement('select');
+                orderSelect.className = 'tiebreaker-order';
+                orderSelect.dataset.stat = option.value;
+                
+                // Create 1-4 options
+                for (let i = 1; i <= 4; i++) {
+                    const orderOpt = document.createElement('option');
+                    orderOpt.value = i;
+                    orderOpt.textContent = i;
+                    orderSelect.appendChild(orderOpt);
+                }
+                
+                orderCell.appendChild(orderSelect);
+                
+                row.appendChild(statCell);
+                row.appendChild(orderCell);
+                table.appendChild(row);
+            });
+        });
+    }
+    
+    // Show the modal
+    modal.classList.add('active');
+}
+
+// Helper function to force update all round displays
+function forceUpdateAllRounds() {
+    console.log("Forcing update of all round displays");
+    
+    // Get all round containers
+    const roundContainers = document.querySelectorAll('.round-container');
+    
+    // For each round container, re-render all matches
+    roundContainers.forEach((container) => {
+        const roundNumber = parseInt(container.getAttribute('data-round'));
+        
+        // Find all matches for this round
+        const roundMatches = matches.filter(match => match.round === roundNumber);
+        
+        // If we have matches for this round, update all match displays
+        if (roundMatches.length > 0) {
+            const matchDivs = container.querySelectorAll('.match');
+            
+            // Match up the round matches with the match divs as best we can
+            matchDivs.forEach((matchDiv, i) => {
+                // If we have a match for this position, update it
+                if (i < roundMatches.length) {
+                    updateMatchDisplay(matchDiv, roundMatches[i]);
+                }
+            });
+        }
+    });
+    
+    // If any scores display elements are still out of sync, update them
+    matches.forEach((match, index) => {
+        document.querySelectorAll(`[data-match="${index}"]`).forEach(element => {
+            const teamId = element.getAttribute('data-team');
+            
+            // Update score value if this is a score element
+            if (element.classList.contains('score-display') || 
+                element.classList.contains('score-text') ||
+                element.classList.contains('team-score')) {
+                
+                if (teamId === '1') {
+                    if (element.tagName === 'INPUT') {
+                        element.value = match.team1Score;
+                    } else {
+                        element.textContent = match.team1Score;
+                    }
+                } else if (teamId === '2') {
+                    if (element.tagName === 'INPUT') {
+                        element.value = match.team2Score;
+                    } else {
+                        element.textContent = match.team2Score;
+                    }
+                }
+            }
+        });
     });
 }

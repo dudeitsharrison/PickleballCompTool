@@ -243,7 +243,7 @@
                     })
                     .catch(err => {
                         console.error('Failed to copy: ', err);
-                        alert('Failed to copy debug log to clipboard');
+                        showToast('Failed to copy debug log to clipboard', 'error');
                     });
             }
         });
@@ -310,6 +310,10 @@
             }, 1000);
         });
     </script>
+    
+    <!-- Toast Notification Container -->
+    <div id="toastContainer" class="toast-container"></div>
+
     <script src="script.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 </body>
