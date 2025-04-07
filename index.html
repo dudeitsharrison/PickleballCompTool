@@ -12,8 +12,74 @@
     <meta property="og:url" content="">
     <meta property="og:type" content="website">
     
+    <!-- AdSense Verification - Replace content with your actual AdSense publisher ID when provided -->
+    <meta name="google-adsense-account" content="ca-pub-XXXXXXXXXXXXXXXX">
+    
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0" />
+    <style>
+        /* Logo Flip Animation Styles */
+        .logo-flip-container {
+            perspective: 1000px;
+            width: 200px;
+            height: 200px;
+            margin: 0 auto;
+            cursor: pointer;
+        }
+        
+        .logo-flipper {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transition: transform 0.8s;
+            transform-style: preserve-3d;
+        }
+        
+        .logo-flip-container:hover .logo-flipper {
+            transform: rotateY(180deg);
+        }
+        
+        .logo-front, .logo-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .logo-back {
+            transform: rotateY(180deg);
+        }
+        
+        .back-logo {
+            transform: scale(1.2); /* Zoomed in slightly */
+        }
+        
+        /* Header logo specific styles */
+        .header-logo-flip {
+            width: 100px;
+            height: 100px;
+        }
+        
+        .header-logo-flip .logo-flipper {
+            transition: transform 0.6s; /* Slightly faster in header */
+        }
+        
+        #header-logo, #header-logo-back {
+            width: 100%;
+            height: auto;
+            object-fit: contain;
+        }
+        
+        /* Mobile specific styles */
+        @media (max-width: 768px) {
+            .logo-flip-container:active .logo-flipper {
+                transform: rotateY(180deg);
+            }
+        }
+    </style>
     <script>
         // Ensure page starts at the top
         window.onbeforeunload = function() {
@@ -34,7 +100,16 @@
 
     <div id="intro-animation" class="intro-container">
         <div class="intro-content">
-            <img src="Picklepairs.png" alt="Pickle Pairs Logo" class="intro-logo">
+            <div class="logo-flip-container">
+                <div class="logo-flipper">
+                    <div class="logo-front">
+                        <img src="Picklepairs.png" alt="Pickle Pairs Logo" class="intro-logo">
+                    </div>
+                    <div class="logo-back">
+                        <img src="simplelogot.png" alt="Simple Logo" class="intro-logo back-logo">
+                    </div>
+                </div>
+            </div>
             <h1>Pickle Pairs</h1>
             <p class="slogan">Doing Doubles Right</p>
             <div id="startButton" class="start-button">
@@ -49,7 +124,16 @@
 
     <div class="container">
         <div class="header-logo">
-            <img src="Picklepairs.png" alt="Pickle Pairs Logo" id="header-logo">
+            <div class="logo-flip-container header-logo-flip">
+                <div class="logo-flipper">
+                    <div class="logo-front">
+                        <img src="Picklepairs.png" alt="Pickle Pairs Logo" id="header-logo">
+                    </div>
+                    <div class="logo-back">
+                        <img src="simplelogot.png" alt="Simple Logo" id="header-logo-back" class="back-logo">
+                    </div>
+                </div>
+            </div>
             <h1 id="title">Pickle Pairs</h1>
             <p class="subtitle">Doing Doubles Right</p>
         </div>
@@ -320,6 +404,16 @@
             const startButton = document.getElementById('startButton');
             const introAudio = document.getElementById('introAudio');
             const toggleMainAudioBtn = document.getElementById('toggleMainAudioBtn');
+            
+            // Setup logo flip click behavior
+            const logoFlipContainers = document.querySelectorAll('.logo-flip-container');
+            logoFlipContainers.forEach(container => {
+                // We'll keep a simpler implementation that works well with CSS hover
+                container.addEventListener('click', function(e) {
+                    // This is primarily for mobile devices
+                    // Desktop will use CSS :hover state
+                });
+            });
             
             // Check if main audio is muted based on localStorage
             let isMainAudioMuted = localStorage.getItem('isMainAudioMuted') === 'true';
