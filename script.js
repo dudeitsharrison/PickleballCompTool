@@ -1183,8 +1183,6 @@ function appendMatchDisplay(matches, sitOutPlayers) {
     addSubmitScoresButton.addEventListener('click', () => { submitScores(); });
     roundContainer.appendChild(addSubmitScoresButton);
 
-    updateSitOutDisplay(sitOutPlayers);
-
     matchDisplay.appendChild(roundContainer);
     logDebugMessage(`Round ${currentRound} displayed successfully.`);
     
@@ -1384,7 +1382,8 @@ function generateNextRound() {
 function resetPairAndMatchHistory() {
     pairTracker.resetAll();
     matchHistory.clear();
-    matchPlayCounter = {};
+    // Clear matchPlayCounter without reassigning (it's a const)
+    Object.keys(matchPlayCounter).forEach(key => delete matchPlayCounter[key]);
     // We intentionally don't clear previousRoundMatches to avoid immediate repeat matches
     logDebugMessage("Reset all pair and match history while preserving previous round matches");
 }
@@ -1398,23 +1397,13 @@ function updateMatchPlayCounter(matchKey) {
 
 
 function updateSitOutDisplay(sitOutPlayers) {
-    let sitOutDisplay = document.querySelector('.sit-out-players');
-    if (!sitOutDisplay) {
-        sitOutDisplay = document.createElement('div');
-        sitOutDisplay.classList.add('sit-out-players');
-        document.getElementById('matchDisplay').appendChild(sitOutDisplay);
-    }
-
-    if (!sitOutPlayers || sitOutPlayers.length === 0) {
-        sitOutDisplay.innerHTML = '<strong>🎉 Everyone is playing! 🎉</strong>';
-        sitOutDisplay.classList.add('all-playing');
-    } else {
-        const sitOutPlayerNames = sitOutPlayers.map(player => 
-            `<span class="sitting-player">${player.name}</span>`
-        ).join(' ');
-        sitOutDisplay.innerHTML = `<strong>Sitting out:</strong> ${sitOutPlayerNames}`;
-        sitOutDisplay.classList.remove('all-playing');
-    }
+    // Don't create a global sitting out display at the top of the page
+    // Let each round handle its own sitting out display section
+    
+    // This function is now deprecated as each round manages its own sitting out display
+    // We keep it for compatibility with existing code, but it doesn't do anything
+    
+    // Old code removed to prevent creating global sitting out display
 }
 
 
@@ -2046,12 +2035,8 @@ function determineSitOuts() {
         console.log(`Player ${player.name} eligibility updated to: ${player.eligible}, satOutLastRound: ${player.satOutLastRound}`);
     });
 
-    // Step 10: Update the UI with the sit-out players
-    const sitOutDisplay = document.getElementById('sitOutDisplay');
-    if (sitOutDisplay) {
-        const sitOutPlayerNames = sitOutPlayers.map(player => player.name).join(", ");
-        sitOutDisplay.textContent = `Sitting out: ${sitOutPlayerNames}`; // Display sit-out players correctly
-    }
+    // Step 10: No need to update a global UI element here - each round has its own sit-out display
+    // Individual round UI will be updated elsewhere
 
     return sitOutPlayers;
 }
@@ -4669,31 +4654,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
             
-            // Add sitting out player display - create a dedicated section at the top of each round
-            const playersInRound = new Set();
-            roundMatches.forEach(match => {
-                match.team1.forEach(player => playersInRound.add(player));
-                match.team2.forEach(player => playersInRound.add(player));
-            });
-            
-            const sittingOutPlayers = players.filter(player => !playersInRound.has(player));
-            
-            // Create a prominent sitting out display at the top of the round
-            const sitOutDisplay = document.createElement('div');
-            sitOutDisplay.classList.add('sit-out-players');
-            
-            if (sittingOutPlayers.length > 0) {
-                const sitOutPlayerNames = sittingOutPlayers.map(player => 
-                    `<span class="sitting-player">${player.name}</span>`
-                ).join(' ');
-                sitOutDisplay.innerHTML = `<strong>Sitting out this round:</strong> ${sitOutPlayerNames}`;
-            } else {
-                sitOutDisplay.innerHTML = '<strong>🎉 Everyone is playing in this round! 🎉</strong>';
-                sitOutDisplay.classList.add('all-playing');
-            }
-            
-            // Insert at the beginning of the round, right after the header
-            roundContainer.insertBefore(sitOutDisplay, roundContainer.querySelector('h3').nextSibling);
+            // Add sitting out player display - this will be handled by the updateSitOutDisplayForRound function
+            // so we don't need to create a duplicate display here
             
             // Add the round container to the match display
             document.getElementById('matchDisplay').appendChild(roundContainer);
@@ -4722,6 +4684,16 @@ document.addEventListener('DOMContentLoaded', function() {
             
             if (matches.length > 0) {
                 // Continue tournament
+                // Check the last round container to get the actual last round number
+                const lastRoundContainer = document.querySelector('.round-container:last-child');
+                if (lastRoundContainer) {
+                    const lastRoundNumber = parseInt(lastRoundContainer.getAttribute('data-round')) || 0;
+                    
+                    // Ensure currentRound matches the last displayed round
+                    // This ensures the next round gets the correct number (lastRoundNumber + 1)
+                    currentRound = lastRoundNumber;
+                    logDebugMessage(`Adjusted currentRound to ${currentRound} to match last displayed round`);
+                }
                 generateNextRound();
             } else {
                 // Start new tournament
