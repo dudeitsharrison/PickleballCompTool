@@ -443,9 +443,9 @@ function updatePlayerList() {
     
     // Show the leaderboard button if there are players
     if (players.length > 0) {
-        document.getElementById('floatingLeaderboardBtn').classList.add('visible');
+        document.getElementById('floatingLeaderboardBtn').classList.remove('hidden');
     } else {
-        document.getElementById('floatingLeaderboardBtn').classList.remove('visible');
+        document.getElementById('floatingLeaderboardBtn').classList.add('hidden');
     }
 }
 
@@ -3734,28 +3734,41 @@ function handleScroll() {
     // Get scroll position
     const scrollPos = window.scrollY || document.documentElement.scrollTop;
     
-    // Calculate when to show floating leaderboard button
-    // Only show when the original is out of view
-    if (leaderboardOriginal) {
-        const leaderboardPos = leaderboardOriginal.getBoundingClientRect().top;
-        if (leaderboardPos < 0) {
-            floatingLeaderboardBtn.classList.add('visible');
-        } else {
-            floatingLeaderboardBtn.classList.remove('visible');
-        }
+    // Hide leaderboard button only at the very top
+    if (scrollPos <= 50) {
+        floatingLeaderboardBtn.classList.add('hidden');
+    } else {
+        floatingLeaderboardBtn.classList.remove('hidden');
     }
     
-    // Show back to top button
-    if (scrollPos > 200) {
+    // Show back to top button unless we're at the very top
+    if (scrollPos > 50) {
         backToTopBtn.style.display = "flex";
     } else {
         backToTopBtn.style.display = "none";
     }
     
-    // Show current round button
-    if (scrollPos > 300) {
-        currentRoundBtn.style.display = "flex";
+    // Check if current round is in view to determine whether to show the button
+    const roundContainers = document.querySelectorAll('.round-container');
+    if (roundContainers.length > 0) {
+        // Get the last round container (current round)
+        const currentRoundContainer = roundContainers[roundContainers.length - 1];
+        const containerRect = currentRoundContainer.getBoundingClientRect();
+        const windowHeight = window.innerHeight;
+        
+        // Only hide the button if the round is fully visible and reasonably centered
+        const isRoundCentered = 
+            containerRect.top > 100 && 
+            containerRect.bottom < windowHeight - 100 &&
+            containerRect.height < windowHeight - 200;
+            
+        if (isRoundCentered) {
+            currentRoundBtn.style.display = "none";
+        } else {
+            currentRoundBtn.style.display = "flex";
+        }
     } else {
+        // No rounds yet, hide the button
         currentRoundBtn.style.display = "none";
     }
 }
@@ -3767,7 +3780,7 @@ function scrollToCurrentRound() {
         // Get the last round container (current round)
         const currentRoundContainer = roundContainers[roundContainers.length - 1];
         
-        // Scroll to it with smooth animation
+        // Scroll to it with smooth animation, but only when manually triggered
         currentRoundContainer.scrollIntoView({ behavior: 'smooth' });
     }
 }
@@ -4709,7 +4722,9 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Check if leaderboard button should be visible based on player count
     if (players.length > 0) {
-        document.getElementById('floatingLeaderboardBtn').classList.add('visible');
+        document.getElementById('floatingLeaderboardBtn').classList.remove('hidden');
+    } else {
+        document.getElementById('floatingLeaderboardBtn').classList.add('hidden');
     }
     
     console.log("Initialization complete.");

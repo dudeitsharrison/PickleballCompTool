@@ -3,13 +3,39 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pickleball Competition Tool</title>
+    <title>Pickle Pairs | Doing Doubles Right</title>
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0" />
 </head>
 <body>
+    <!-- Add audio elements -->
+    <audio id="introAudio" preload="auto">
+        <source src="picklepairsMain.mp3" type="audio/mpeg">
+        Your browser does not support the audio element.
+    </audio>
+    <audio id="leaderboardAudio" preload="auto">
+        <source src="picklepairsLeaderBoard.mp3" type="audio/mpeg">
+        Your browser does not support the audio element.
+    </audio>
+
+    <div id="intro-animation" class="intro-container">
+        <div class="intro-content">
+            <img src="PickleParty.svg" alt="Pickle Party Logo" class="intro-logo">
+            <h1>Pickle Pairs</h1>
+            <p class="slogan">Doing Doubles Right</p>
+            <div id="startButton" class="start-button">
+                <span class="pickle-icon">🥒</span>
+                <span>Let's Pickle!</span>
+            </div>
+        </div>
+    </div>
+
     <div class="container">
-        <h1 id="title">🥒 Pickleball Competition Tool</h1>
+        <div class="header-logo">
+            <img src="PickleParty.svg" alt="Pickle Party Logo" id="header-logo">
+            <h1 id="title">Pickle Pairs</h1>
+            <p class="subtitle">Doing Doubles Right</p>
+        </div>
 
         <!-- Player Input Section -->
         <section class="navigation">
@@ -52,6 +78,15 @@
                     </div>
                     CAPTURE ALL
                 </button>
+            </div>
+            
+            <!-- Guide Arrow -->
+            <div id="guideArrow" class="guide-arrow">
+                <div class="guide-arrow-content">
+                    <span class="guide-pickle">🥒</span>
+                    <span class="guide-arrow-point material-symbols-rounded">arrow_downward</span>
+                </div>
+                <p class="guide-text">Start here!</p>
             </div>
             
             <!-- Import/Export Controls, separated from main navigation -->
@@ -120,6 +155,9 @@
             </button>
             <button id="editPlayerStatsBtn" onclick="enablePlayerStatsEditing()">
                 <span class="material-symbols-rounded">edit</span> Edit Player Stats
+            </button>
+            <button id="toggleLeaderboardMute" class="toggle-mute-btn">
+                <span class="material-symbols-rounded">volume_up</span>
             </button>
             <button id="closePodiumBtn">
                 <span class="material-symbols-rounded">close</span>
@@ -214,6 +252,220 @@
     </div>
 
     <script>
+        // Intro animation with audio
+        document.addEventListener('DOMContentLoaded', function() {
+            const introContainer = document.getElementById('intro-animation');
+            const introContent = introContainer.querySelector('.intro-content');
+            const startButton = document.getElementById('startButton');
+            const introAudio = document.getElementById('introAudio');
+            
+            // Start the intro animation immediately on page load
+            // This will animate in the logo, title, slogan, and button
+            setTimeout(function() {
+                introContent.classList.add('animate-in');
+            }, 100);
+            
+            // Add click event to start button to begin the transition to the main app
+            startButton.addEventListener('click', function() {
+                // Add the clicked class to trigger the button animation
+                startButton.classList.add('clicked');
+                
+                // Start the audio
+                introAudio.volume = 1.0;
+                introAudio.play().catch(error => {
+                    console.log('Audio playback was prevented by the browser:', error);
+                });
+                
+                // Start fading audio after 7 seconds
+                setTimeout(() => {
+                    // Gradually fade out audio over 3 seconds
+                    const fadeInterval = setInterval(() => {
+                        if (introAudio.volume > 0.1) {
+                            introAudio.volume -= 0.1;
+                        } else {
+                            clearInterval(fadeInterval);
+                            introAudio.pause();
+                            introAudio.currentTime = 0;
+                        }
+                    }, 300); // Decrease volume every 300ms for 3 seconds total fade
+                }, 7000);
+                
+                // Trigger animation out after a short delay to allow button animation to complete
+                setTimeout(function() {
+                    introContainer.classList.add('animate-out');
+                    
+                    // Remove the intro container from DOM after animation completes
+                    setTimeout(function() {
+                        introContainer.style.display = 'none';
+                        
+                        // Show guide arrow after intro animation completes
+                        showGuideArrow();
+                    }, 1000); // Should match the CSS transition duration
+                }, 600);
+            });
+            
+            // Leaderboard audio functionality
+            const leaderboardAudio = document.getElementById('leaderboardAudio');
+            const showPodiumBtn = document.getElementById('showPodiumBtn');
+            const floatingLeaderboardBtn = document.getElementById('floatingLeaderboardBtn');
+            const closePodiumBtn = document.getElementById('closePodiumBtn');
+            const toggleLeaderboardMute = document.getElementById('toggleLeaderboardMute');
+            let isLeaderboardMuted = false;
+            
+            // Function to quickly fade out intro audio
+            function fadeOutIntroAudio() {
+                if (introAudio.paused) return;
+                
+                // Quickly fade out intro audio (200ms)
+                const fadeInterval = setInterval(() => {
+                    if (introAudio.volume > 0.1) {
+                        introAudio.volume -= 0.2; // Faster fade
+                    } else {
+                        clearInterval(fadeInterval);
+                        introAudio.pause();
+                        introAudio.volume = 1.0; // Reset volume for future use
+                    }
+                }, 50); // Very short interval
+            }
+            
+            // Function to play leaderboard audio
+            function playLeaderboardAudio() {
+                // First fade out intro audio if it's playing
+                fadeOutIntroAudio();
+                
+                if (!isLeaderboardMuted) {
+                    leaderboardAudio.volume = 1.0;
+                    leaderboardAudio.currentTime = 0; // Reset to beginning
+                    leaderboardAudio.play().catch(error => {
+                        console.log('Leaderboard audio playback was prevented by the browser:', error);
+                    });
+                }
+            }
+            
+            // Function to stop leaderboard audio with fade out
+            function stopLeaderboardAudio() {
+                if (leaderboardAudio.paused) return;
+                
+                // Fade out audio over 1 second
+                const fadeInterval = setInterval(() => {
+                    if (leaderboardAudio.volume > 0.1) {
+                        leaderboardAudio.volume -= 0.1;
+                    } else {
+                        clearInterval(fadeInterval);
+                        leaderboardAudio.pause();
+                        leaderboardAudio.currentTime = 0;
+                    }
+                }, 100);
+            }
+            
+            // Play audio when leaderboard is opened
+            showPodiumBtn.addEventListener('click', playLeaderboardAudio);
+            floatingLeaderboardBtn.addEventListener('click', playLeaderboardAudio);
+            
+            // Stop audio when leaderboard is closed
+            closePodiumBtn.addEventListener('click', stopLeaderboardAudio);
+            
+            // Toggle mute button functionality
+            toggleLeaderboardMute.addEventListener('click', function() {
+                isLeaderboardMuted = !isLeaderboardMuted;
+                
+                if (isLeaderboardMuted) {
+                    // Change icon to muted
+                    toggleLeaderboardMute.querySelector('.material-symbols-rounded').textContent = 'volume_off';
+                    toggleLeaderboardMute.classList.add('muted');
+                    stopLeaderboardAudio();
+                } else {
+                    // Change icon to unmuted
+                    toggleLeaderboardMute.querySelector('.material-symbols-rounded').textContent = 'volume_up';
+                    toggleLeaderboardMute.classList.remove('muted');
+                    
+                    // Only start playing if the podium is currently visible
+                    if (document.getElementById('podiumDisplay').classList.contains('active')) {
+                        playLeaderboardAudio();
+                    }
+                }
+            });
+        });
+        
+        // Function to show the guide arrow and handle its behavior
+        function showGuideArrow() {
+            const guideArrow = document.getElementById('guideArrow');
+            const playerInput = document.getElementById('playerInput');
+            const continueTournamentBtn = document.getElementById('startTournament'); // This is the "CONTINUE TOURNAMENT" button
+            
+            // Check for visible data in the Round 1 section which indicates loaded data
+            const hasVisibleTournament = document.querySelector('.round-container') !== null;
+            
+            // Also check localStorage as backup method
+            let hasStoredData = false;
+            try {
+                const storedData = localStorage.getItem('tournamentData');
+                if (storedData) {
+                    const parsedData = JSON.parse(storedData);
+                    hasStoredData = parsedData && parsedData.players && parsedData.players.length > 0;
+                }
+            } catch (e) {
+                console.error("Error checking tournament data:", e);
+            }
+            
+            // Either visible tournament or stored data means we should point to the continue button
+            const hasData = hasVisibleTournament || hasStoredData;
+            console.log("Guide arrow check - visible tournament:", hasVisibleTournament, "stored data:", hasStoredData);
+            
+            // Target element based on whether data is loaded
+            const targetElement = hasData ? continueTournamentBtn : playerInput;
+            const targetText = hasData ? "Continue!" : "Start here!";
+            
+            // Position function that will be called on resize too
+            function positionArrow() {
+                const elementRect = targetElement.getBoundingClientRect();
+                const arrowIcon = document.querySelector('.guide-arrow-point');
+                
+                if (hasData) {
+                    // For continue tournament button - position to left of button, centered vertically
+                    guideArrow.style.top = `${elementRect.top + (elementRect.height / 2) - (guideArrow.offsetHeight / 2)}px`;
+                    const leftPosition = Math.max(10, elementRect.left - guideArrow.offsetWidth - 20);
+                    guideArrow.style.left = `${leftPosition}px`;
+                    
+                    // Change to east arrow for pointing to the continue button
+                    arrowIcon.textContent = "east";
+                    arrowIcon.style.animation = "point-arrow-right 1s ease-in-out infinite";
+                } else {
+                    // For player input textarea - position above the LEFT side of the input
+                    guideArrow.style.top = `${elementRect.top - guideArrow.offsetHeight - 15}px`;
+                    guideArrow.style.left = `${elementRect.left + 30}px`;
+                    
+                    // Use downward arrow for pointing to the text field
+                    arrowIcon.textContent = "arrow_downward";
+                    arrowIcon.style.animation = "point-arrow-down 1s ease-in-out infinite";
+                }
+                
+                // Update text
+                guideArrow.querySelector('.guide-text').textContent = targetText;
+            }
+            
+            // Make the arrow visible first
+            guideArrow.classList.add('visible');
+            
+            // Position initially after a tiny delay to ensure visibility
+            setTimeout(positionArrow, 50);
+            
+            // Reposition on window resize
+            window.addEventListener('resize', positionArrow);
+            
+            // Remove the arrow after 10 seconds
+            setTimeout(() => {
+                guideArrow.classList.remove('visible');
+                // Remove event listener
+                window.removeEventListener('resize', positionArrow);
+                
+                // Remove from DOM after animation
+                setTimeout(() => {
+                    guideArrow.remove();
+                }, 500);
+            }, 10000);
+        }
+        
         // Define the scroll to top function and make it globally accessible
         window.scrollTop = function() { 
             document.body.scrollTop = document.documentElement.scrollTop = 0; 
@@ -316,5 +568,16 @@
 
     <script src="script.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    
+    <style>
+        /* Fix for debug button positioning */
+        .toggle-debug-btn {
+            position: fixed;
+            left: 10px;
+            bottom: 10px;
+            /* Ensure it stays on top of other content */
+            z-index: 999;
+        }
+    </style>
 </body>
 </html>
