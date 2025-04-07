@@ -34,7 +34,7 @@
 
     <div id="intro-animation" class="intro-container">
         <div class="intro-content">
-            <img src="PickleParty.svg" alt="Pickle Party Logo" class="intro-logo">
+            <img src="Picklepairs.png" alt="Pickle Pairs Logo" class="intro-logo">
             <h1>Pickle Pairs</h1>
             <p class="slogan">Doing Doubles Right</p>
             <div id="startButton" class="start-button">
@@ -49,7 +49,7 @@
 
     <div class="container">
         <div class="header-logo">
-            <img src="PickleParty.svg" alt="Pickle Party Logo" id="header-logo">
+            <img src="Picklepairs.png" alt="Pickle Pairs Logo" id="header-logo">
             <h1 id="title">Pickle Pairs</h1>
             <p class="subtitle">Doing Doubles Right</p>
         </div>
@@ -180,11 +180,27 @@
                 </div>
                 <div class="footer-section">
                     <h3>Contact & Support</h3>
-                    <p>Coming soon.. If errors happen, check the Debug Log (Gear icon) and copy it to your clipboard, and paste it in a text file if youd like to save it for later.</p>
+                    
+    <iframe
+    id="JotFormIFrame-250965783330462"
+    title="Pickle Pairs - Bug Tracker and Recommendations"
+    onload="window.parent.scrollTo(0,0)"
+    allowtransparency="true"
+    allow="geolocation; microphone; camera; fullscreen"
+    src="https://form.jotform.com/250965783330462"
+    frameborder="0"
+    style="min-width:100%;max-width:100%;height:539px;border:none;"
+    scrolling="no"
+  >
+  </iframe>
+  <script src='https://cdn.jotfor.ms/s/umd/latest/for-form-embed-handler.js'></script>
+  <script>window.jotformEmbedHandler("iframe[id='JotFormIFrame-250965783330462']", "https://form.jotform.com/")</script>
+  
+                    <p>For bugs, check the Debug Log (Gear icon) and copy it to your clipboard using the copy button, and paste it in the debug log section on the Bug Tracker Form.</p>
                 </div>
             </div>
             <div class="footer-bottom">
-                <p>&copy; 2023 Pickle Pairs. All rights reserved.</p>
+                <p>&copy; 2025 Pickle Pairs - Harrison Engle - All rights reserved.</p>
             </div>
         </footer>
 
@@ -194,10 +210,7 @@
             <div id="dateDisplay"></div>
             
             <button id="saveAsPictureBtn" class="save-picture-btn">
-                <span class="material-symbols-rounded">photo_camera</span> Save as Image
-            </button>
-            <button id="editPlayerStatsBtn" onclick="enablePlayerStatsEditing()">
-                <span class="material-symbols-rounded">edit</span> Edit Player Stats
+                <span class="material-symbols-rounded">photo_camera</span> <span>Save as Image</span>
             </button>
             <button id="toggleLeaderboardMute" class="toggle-mute-btn">
                 <span class="material-symbols-rounded">volume_up</span>
@@ -277,6 +290,11 @@
             <span class="material-symbols-rounded">arrow_upward</span>
         </button>
         
+        <!-- Main audio mute button -->
+        <button id="toggleMainAudioBtn" class="toggle-mute-btn fixed-position">
+            <span class="material-symbols-rounded">volume_up</span>
+        </button>
+        
         <!-- Debug toggle button -->
         <button id="toggleDebugBtn" class="toggle-debug-btn">
             <span class="material-symbols-rounded">settings</span>
@@ -301,6 +319,37 @@
             const introContent = introContainer.querySelector('.intro-content');
             const startButton = document.getElementById('startButton');
             const introAudio = document.getElementById('introAudio');
+            const toggleMainAudioBtn = document.getElementById('toggleMainAudioBtn');
+            
+            // Check if main audio is muted based on localStorage
+            let isMainAudioMuted = localStorage.getItem('isMainAudioMuted') === 'true';
+            
+            // Update toggle button icon based on mute state
+            if (isMainAudioMuted) {
+                toggleMainAudioBtn.querySelector('.material-symbols-rounded').textContent = 'volume_off';
+                toggleMainAudioBtn.classList.add('muted');
+            } else {
+                toggleMainAudioBtn.querySelector('.material-symbols-rounded').textContent = 'volume_up';
+                toggleMainAudioBtn.classList.remove('muted');
+            }
+            
+            // Add event listener for the main audio mute button
+            toggleMainAudioBtn.addEventListener('click', function() {
+                isMainAudioMuted = !isMainAudioMuted;
+                localStorage.setItem('isMainAudioMuted', isMainAudioMuted);
+                
+                if (isMainAudioMuted) {
+                    // Change icon to muted
+                    toggleMainAudioBtn.querySelector('.material-symbols-rounded').textContent = 'volume_off';
+                    toggleMainAudioBtn.classList.add('muted');
+                    // Stop audio if it's playing
+                    fadeOutIntroAudio(true);
+                } else {
+                    // Change icon to unmuted
+                    toggleMainAudioBtn.querySelector('.material-symbols-rounded').textContent = 'volume_up';
+                    toggleMainAudioBtn.classList.remove('muted');
+                }
+            });
             
             // Start the intro animation immediately on page load
             // This will animate in the logo, title, slogan, and button
@@ -313,25 +362,19 @@
                 // Add the clicked class to trigger the button animation
                 startButton.classList.add('clicked');
                 
-                // Start the audio
-                introAudio.volume = 1.0;
-                introAudio.play().catch(error => {
-                    console.log('Audio playback was prevented by the browser:', error);
-                });
-                
-                // Start fading audio after 7 seconds
-                setTimeout(() => {
-                    // Gradually fade out audio over 3 seconds
-                    const fadeInterval = setInterval(() => {
-                        if (introAudio.volume > 0.1) {
-                            introAudio.volume -= 0.1;
-                        } else {
-                            clearInterval(fadeInterval);
-                            introAudio.pause();
-                            introAudio.currentTime = 0;
-                        }
-                    }, 300); // Decrease volume every 300ms for 3 seconds total fade
-                }, 7000);
+                // Start the audio only if not muted
+                if (!isMainAudioMuted) {
+                    introAudio.volume = 1.0;
+                    introAudio.play().catch(error => {
+                        console.log('Audio playback was prevented by the browser:', error);
+                    });
+                    
+                    // Start fading audio after 7 seconds
+                    setTimeout(() => {
+                        // Gradually fade out audio over 3 seconds
+                        fadeOutIntroAudio();
+                    }, 7000);
+                }
                 
                 // Trigger animation out after a short delay to allow button animation to complete
                 setTimeout(function() {
@@ -353,22 +396,36 @@
             const floatingLeaderboardBtn = document.getElementById('floatingLeaderboardBtn');
             const closePodiumBtn = document.getElementById('closePodiumBtn');
             const toggleLeaderboardMute = document.getElementById('toggleLeaderboardMute');
-            let isLeaderboardMuted = false;
+            
+            // Check if leaderboard audio is muted based on localStorage
+            let isLeaderboardMuted = localStorage.getItem('isLeaderboardAudioMuted') === 'true';
+            
+            // Update toggle button icon based on mute state
+            if (isLeaderboardMuted) {
+                toggleLeaderboardMute.querySelector('.material-symbols-rounded').textContent = 'volume_off';
+                toggleLeaderboardMute.classList.add('muted');
+            } else {
+                toggleLeaderboardMute.querySelector('.material-symbols-rounded').textContent = 'volume_up';
+                toggleLeaderboardMute.classList.remove('muted');
+            }
             
             // Function to quickly fade out intro audio
-            function fadeOutIntroAudio() {
+            function fadeOutIntroAudio(immediate = false) {
                 if (introAudio.paused) return;
                 
-                // Quickly fade out intro audio (200ms)
+                const duration = immediate ? 50 : 300; // Faster fade if immediate is true
+                const decrement = immediate ? 0.2 : 0.1; // Larger decrement if immediate
+                
+                // Fade out intro audio
                 const fadeInterval = setInterval(() => {
                     if (introAudio.volume > 0.1) {
-                        introAudio.volume -= 0.2; // Faster fade
+                        introAudio.volume -= decrement;
                     } else {
                         clearInterval(fadeInterval);
                         introAudio.pause();
                         introAudio.volume = 1.0; // Reset volume for future use
                     }
-                }, 50); // Very short interval
+                }, duration);
             }
             
             // Function to play leaderboard audio
@@ -411,6 +468,7 @@
             // Toggle mute button functionality
             toggleLeaderboardMute.addEventListener('click', function() {
                 isLeaderboardMuted = !isLeaderboardMuted;
+                localStorage.setItem('isLeaderboardAudioMuted', isLeaderboardMuted);
                 
                 if (isLeaderboardMuted) {
                     // Change icon to muted
@@ -459,7 +517,7 @@
             const targetElement = hasData ? continueTournamentBtn : playerInput;
             const targetText = hasData ? "Continue!" : "Start here!";
             
-            // Position function that will be called on resize too
+            // Position function that will be called on resize and scroll too
             function positionArrow() {
                 const elementRect = targetElement.getBoundingClientRect();
                 const arrowIcon = document.querySelector('.guide-arrow-point');
@@ -493,14 +551,16 @@
             // Position initially after a tiny delay to ensure visibility
             setTimeout(positionArrow, 50);
             
-            // Reposition on window resize
+            // Reposition on window resize and scroll
             window.addEventListener('resize', positionArrow);
+            window.addEventListener('scroll', positionArrow);
             
             // Remove the arrow after 10 seconds
             setTimeout(() => {
                 guideArrow.classList.remove('visible');
-                // Remove event listener
+                // Remove event listeners
                 window.removeEventListener('resize', positionArrow);
+                window.removeEventListener('scroll', positionArrow);
                 
                 // Remove from DOM after animation
                 setTimeout(() => {
@@ -621,6 +681,8 @@
             /* Ensure it stays on top of other content */
             z-index: 999;
         }
+        
+        /* Fix for audio button positioning - This will be removed as we'll handle it in CSS */
     </style>
 </body>
 </html>

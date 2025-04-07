@@ -722,9 +722,26 @@ tr:last-child td {
     animation: fadeIn 0.5s ease;
 }
 
+/* Round header styling */
+.round-header {
+    margin-bottom: var(--space-lg);
+}
+
+.round-header-content {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    flex-wrap: wrap;
+}
+
+.round-header-content h3 {
+    margin-right: auto;
+    margin-bottom: 0;
+}
+
 @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(20px); }
-    to { opacity: 1; transform: translateY(0); }
+    0% { opacity: 0; transform: translateY(20px); }
+    100% { opacity: 1; transform: translateY(0); }
 }
 
 .round-container h3 {
@@ -805,6 +822,10 @@ tr:last-child td {
     padding-bottom: var(--space-xs);
     border-bottom: 1px solid var(--neutral-light);
     text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-sm);
 }
 
 .team {
@@ -920,20 +941,28 @@ tr:last-child td {
 }
 
 .skip-match-btn {
-    position: absolute;
-    top: var(--space-md);
-    right: var(--space-md);
+    position: relative;
     background-color: #777777;
     color: var(--neutral-white);
-    padding: var(--space-xs) var(--space-md);
-    font-size: var(--text-sm);
+    padding: var(--space-xs) var(--space-sm);
+    font-size: var(--text-xs);
     opacity: 0.8;
     transition: opacity var(--transition-fast), background-color var(--transition-fast);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .skip-match-btn:hover {
     background-color: var(--neutral-dark);
     opacity: 1;
+}
+
+@media (max-width: 768px) {
+    .skip-match-btn {
+        font-size: calc(var(--text-xs) - 1px);
+        padding: 2px 6px;
+    }
 }
 
 /* Podium Display */
@@ -1002,7 +1031,7 @@ tr:last-child td {
 }
 
 /* Action buttons in the podium display */
-#editPlayerStatsBtn, #saveAsPictureBtn, #closePodiumBtn {
+#editPlayerStatsBtn, #saveAsPictureBtn, #closePodiumBtn, #toggleLeaderboardMute {
     position: fixed;
     z-index: 2100;
 }
@@ -1011,6 +1040,11 @@ tr:last-child td {
     top: var(--space-md);
     right: calc(var(--space-xl) + 60px); /* Position to the left of close button */
     background-color: var(--secondary);
+}
+
+#toggleLeaderboardMute {
+    top: var(--space-md);
+    right: calc(var(--space-xl) * 2 + 60px); /* Position to the left of edit button */
 }
 
 #saveAsPictureBtn {
@@ -1079,28 +1113,47 @@ tr:last-child td {
 @media (max-width: 768px) {
     #podiumDisplay {
         padding: var(--space-lg) var(--space-md) calc(var(--space-xl) * 2) var(--space-md);
+        padding-top: 60px; /* Extra space for the controls at top */
     }
     
-    #saveAsPictureBtn, #editPlayerStatsBtn, #closePodiumBtn {
+    /* Position buttons in a fixed toolbar */
+    #saveAsPictureBtn, #editPlayerStatsBtn, #toggleLeaderboardMute, #closePodiumBtn {
         width: auto;
         padding: var(--space-xs);
         font-size: var(--text-xs);
+        top: 10px;
     }
     
+    /* Set specific positions for each button */
     #saveAsPictureBtn {
-        top: var(--space-md);
-        left: var(--space-md);
+        left: 10px;
+        width: auto;
     }
     
     #editPlayerStatsBtn {
-        top: calc(var(--space-md) + 50px); /* Position below save button */
-        left: var(--space-md);
+        left: 50%;
+        transform: translateX(-50%);
+        width: auto;
         right: auto;
     }
     
+    #toggleLeaderboardMute {
+        right: 60px;
+        left: auto;
+    }
+    
     #closePodiumBtn {
-        top: var(--space-md);
-        right: var(--space-md);
+        right: 10px;
+    }
+    
+    /* Make button text smaller on mobile */
+    #editPlayerStatsBtn span:not(.material-symbols-rounded) {
+        display: none;
+    }
+    
+    /* Show just the icons for better spacing */
+    #saveAsPictureBtn span:not(.material-symbols-rounded) {
+        display: none;
     }
     
     .sorting-buttons {
@@ -2310,192 +2363,105 @@ button .material-symbols-rounded:only-child {
 /* Numeric Keypad Styles */
 .numeric-keypad {
     position: fixed;
-    top: 50%;
+    bottom: 50%;
     left: 50%;
-    transform: translate(-50%, -50%);
-    display: flex;
+    transform: translate(-50%, 50%);
+    background-color: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+    display: none;
     flex-wrap: wrap;
     width: 300px;
-    background-color: #f9f9f9;
-    border: 1px solid #ccc;
-    border-radius: 12px;
-    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
     padding: 15px;
-    z-index: 1000;
+    z-index: 2000;
     justify-content: center;
-    animation: fadeIn 0.2s ease-in-out;
+}
+
+.keypad-display {
+    width: 100%;
+    background: rgb(221, 221, 221);
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 15px;
+    font-size: 24px;
+    text-align: center;
+    margin-bottom: 15px;
+    min-height: 30px;
 }
 
 .keypad-btn {
     width: 60px;
     height: 60px;
-    margin: 8px;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    background-color: var(--primary);
-    color: white;
-    font-size: 24px;
-    font-weight: bold;
+    margin: 5px;
+    border-radius: 50%;
+    border: none;
+    background-color: #3bac53;
+    font-size: 20px;
     cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
     transition: all 0.2s;
 }
 
 .keypad-btn:hover {
-    background-color: var(--primary-dark);
-    transform: translateY(-2px);
+    background-color: rgb(153, 207, 171);
 }
 
 .keypad-btn:active {
-    background-color: var(--primary-dark);
-    transform: translateY(1px);
+    transform: scale(0.95);
 }
 
-/* Special styling for the winning score button (11) */
+.common-score-btn {
+    background-color: #85b3ee;
+    font-weight: bold;
+}
+
 .keypad-winning-btn {
     background-color: var(--secondary);
-    box-shadow: 0 0 10px rgba(66, 184, 131, 0.5);
-    transform: scale(1.1);
-    position: relative;
+    color: white;
 }
 
-.keypad-winning-btn:hover {
-    background-color: var(--secondary-dark);
-    transform: scale(1.15) translateY(-2px);
-    box-shadow: 0 0 15px rgba(66, 184, 131, 0.7);
+.backspace-btn {
+    background-color: #f16177;
+    font-size: 24px;
 }
 
-.keypad-winning-btn:active {
-    transform: scale(1.1) translateY(1px);
-}
-
-/* Container for action buttons */
 .keypad-action-buttons {
     display: flex;
     justify-content: center;
     width: 100%;
-    margin-top: 8px;
+    margin-top: 10px;
+}
+
+.keypad-confirm-btn, .keypad-close-btn {
+    width: 80px;
+    height: 50px;
+    margin: 5px;
+    border-radius: 25px;
+    border: none;
+    font-size: 20px;
+    cursor: pointer;
 }
 
 .keypad-confirm-btn {
-    width: 60px;
-    height: 60px;
-    margin: 8px;
-    border: 1px solid var(--secondary);
-    border-radius: 8px;
     background-color: var(--secondary);
     color: white;
-    font-size: 24px;
-    font-weight: bold;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.2s;
-}
-
-.keypad-confirm-btn:hover {
-    background-color: var(--secondary-dark);
-    transform: translateY(-2px);
-}
-
-.keypad-confirm-btn:active {
-    background-color: var(--secondary-dark);
-    transform: translateY(1px);
 }
 
 .keypad-close-btn {
-    width: 60px;
-    height: 60px;
-    margin: 8px;
-    border: 1px solid #ff6666;
-    border-radius: 8px;
-    background-color: #ff6666;
+    background-color: var(--accent);
     color: white;
-    font-size: 24px;
-    font-weight: bold;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.2s;
 }
 
-.keypad-close-btn:hover {
-    background-color: #ff4d4d;
-    transform: translateY(-2px);
-}
-
-.keypad-close-btn:active {
-    transform: translateY(1px);
-}
-
-/* Display area for the keypad */
-.keypad-display {
-    width: 100%;
-    height: 50px;
-    margin-bottom: 15px;
-    background-color: white;
-    border: 2px solid var(--primary);
-    border-radius: 8px;
-    font-size: 28px;
-    font-weight: bold;
-    text-align: center;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-@keyframes fadeIn {
-    from { opacity: 0; transform: translate(-50%, -45%); }
-    to { opacity: 1; transform: translate(-50%, -50%); }
-}
-
-/* Improve styling for score inputs to indicate they're clickable */
-input.team-score {
-    cursor: pointer;
-    background-color: #f9f9f9;
-}
-
-input.team-score:focus {
-    outline: 2px solid #4CAF50;
-}
-
-/* Add this after the #playerStatsTable styles */
-.primary-sort-column {
-    background-color: rgba(43, 144, 217, 0.15); /* Light blue background */
-    font-weight: bold;
-    color: var(--primary-dark);
-    position: relative;
-}
-
-.primary-sort-column::before {
-    content: '▶';
-    position: absolute;
-    left: 3px;
-    opacity: 0.6;
-    font-size: 80%;
-}
-
-#playerStatsTable th:nth-child(1),
-#playerStatsTable th:nth-child(2),
-#playerStatsTable th:nth-child(3) {
-    position: sticky;
-    left: 0;
-    background-color: var(--primary); /* Keep the blue header background */
-    color: var(--neutral-white);
-    z-index: 2; /* Higher z-index than the cells */
-}
-
-#playerStatsTable td:nth-child(1),
-#playerStatsTable td:nth-child(2),
-#playerStatsTable td:nth-child(3) {
-    position: sticky;
-    left: 0;
-    background-color: rgba(255, 255, 255, 0.95);
-    z-index: 1;
+/* Mobile optimizations for keypad */
+@media (max-width: 480px) {
+    .numeric-keypad {
+        width: 280px;
+    }
+    
+    .keypad-btn {
+        width: 55px;
+        height: 55px;
+        font-size: 18px;
+    }
 }
 
 /* Custom Sort Modal */
@@ -3534,5 +3500,159 @@ input.team-score:focus {
     .intro-copyright {
         font-size: 0.8rem;
         bottom: 10px;
+    }
+}
+
+/* Main audio toggle button */
+#toggleMainAudioBtn {
+    position: fixed !important;
+    left: 10px !important;
+    bottom: 60px !important; /* Position directly above debug button */
+    z-index: 999 !important;
+    width: 40px !important;
+    height: 40px !important;
+}
+
+/* Override hover style for main audio button to match leaderboard mute button */
+#toggleMainAudioBtn:hover {
+    background-color: var(--neutral-light);
+    color: var(--primary-dark);
+}
+
+/* Override muted style for main audio button */
+#toggleMainAudioBtn.muted .material-symbols-rounded {
+    color: var(--neutral-medium);
+}
+
+/* Debug toggle button positioning */
+.toggle-debug-btn {
+    position: fixed;
+    left: 10px;
+    bottom: 10px;
+    z-index: 999;
+}
+
+/* Mobile adjustments for audio and debug buttons */
+@media (max-width: 768px) {
+    #toggleMainAudioBtn {
+        left: 10px; /* Same as debug button */
+        bottom: 60px; /* Position above the debug button */
+    }
+}
+
+/* Fixed position override for toggle buttons */
+.fixed-position {
+    position: fixed !important;
+    top: auto !important; /* Override the absolute positioning from toggle-mute-btn */
+    left: 10px !important;
+    bottom: 60px !important; /* Position directly above debug button */
+    z-index: 999 !important;
+}
+
+/* Custom Confirm Dialog Styles */
+.confirm-modal {
+    z-index: 3100; /* Higher than regular modals */
+}
+
+.confirm-modal .modal-content {
+    max-width: 400px;
+    padding: var(--space-lg);
+}
+
+.confirm-header {
+    display: flex;
+    align-items: flex-start;
+    margin-bottom: var(--space-lg);
+}
+
+.confirm-icon {
+    font-size: 28px;
+    margin-right: var(--space-md);
+    flex-shrink: 0;
+}
+
+.confirm-message {
+    font-size: var(--text-lg);
+    line-height: 1.5;
+}
+
+.confirm-buttons {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--space-md);
+}
+
+.confirm-ok-btn, .confirm-cancel-btn {
+    padding: var(--space-sm) var(--space-lg);
+    border-radius: var(--radius-md);
+    font-weight: 600;
+    transition: all 0.2s ease;
+    min-width: 100px;
+    cursor: pointer;
+}
+
+.confirm-ok-btn {
+    background-color: var(--accent);
+    color: white;
+    border: none;
+}
+
+.confirm-ok-btn:hover {
+    background-color: var(--accent-dark);
+    transform: translateY(-2px);
+}
+
+.confirm-cancel-btn {
+    background-color: var(--neutral-light);
+    color: var(--neutral-dark);
+    border: 1px solid var(--neutral-medium);
+}
+
+.confirm-cancel-btn:hover {
+    background-color: var(--neutral-medium);
+    transform: translateY(-2px);
+}
+
+/* Confirm modal types */
+.confirm-modal[data-type="warning"] .confirm-icon {
+    color: var(--accent);
+}
+
+.confirm-modal[data-type="error"] .confirm-icon {
+    color: #f44336; /* Red */
+}
+
+.confirm-modal[data-type="info"] .confirm-icon {
+    color: var(--primary);
+}
+
+.confirm-modal[data-type="success"] .confirm-icon {
+    color: var(--secondary);
+}
+
+@media (max-width: 480px) {
+    .confirm-modal .modal-content {
+        padding: var(--space-md);
+    }
+    
+    .confirm-header {
+        margin-bottom: var(--space-md);
+    }
+    
+    .confirm-icon {
+        font-size: 24px;
+    }
+    
+    .confirm-message {
+        font-size: var(--text-base);
+    }
+    
+    .confirm-buttons {
+        flex-direction: column-reverse;
+        gap: var(--space-sm);
+    }
+    
+    .confirm-ok-btn, .confirm-cancel-btn {
+        width: 100%;
     }
 }
