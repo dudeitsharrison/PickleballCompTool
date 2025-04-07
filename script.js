@@ -2733,6 +2733,9 @@ function autoSave() {
 
 
 function restoreState() {
+    // Save the current scroll position to restore after loading
+    const scrollPosition = window.scrollY || document.documentElement.scrollTop;
+
     const savedState = JSON.parse(localStorage.getItem('pickleballCompetitionState'));
     if (savedState) {
         try {
@@ -2857,6 +2860,11 @@ function restoreState() {
     } else {
         console.log("No saved state found.");
     }
+
+    // Restore the original scroll position to prevent unwanted scrolling
+    setTimeout(() => {
+        window.scrollTo(0, 0);
+    }, 0);
 }
 
 
@@ -3686,6 +3694,9 @@ window.onload = restoreState;
 
 // Add this near the beginning of the file with the other event listeners
 document.addEventListener('DOMContentLoaded', function() {
+    // Ensure page is at the top on initial load
+    window.scrollTo(0, 0);
+    
     // Add event listeners for buttons with new IDs
     document.getElementById('showPodiumBtn').addEventListener('click', showPodium);
     document.getElementById('floatingLeaderboardBtn').addEventListener('click', showPodium);
@@ -3774,10 +3785,11 @@ function scrollToCurrentRound() {
         // Get the last round container (current round)
         const currentRoundContainer = roundContainers[roundContainers.length - 1];
         
-        // Scroll to position the round at the top of the viewport with some padding
-        const yOffset = 20; // 20px padding from top
+        // Calculate optimal scroll position to place the round near the top
+        const yOffset = 50; // Padding from top of viewport
         const y = currentRoundContainer.getBoundingClientRect().top + window.pageYOffset - yOffset;
         
+        // Perform the scroll - the permanent padding ensures there's always enough space
         window.scrollTo({
             top: y,
             behavior: 'smooth'

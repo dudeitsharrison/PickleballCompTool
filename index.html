@@ -4,8 +4,22 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pickle Pairs | Doing Doubles Right</title>
+    
+    <!-- Open Graph Meta Tags -->
+    <meta property="og:title" content="Pickle Pairs | Doing Doubles Right">
+    <meta property="og:description" content="Pairing picklers for unique matches every round.">
+    <meta property="og:image" content="landingpickle.png">
+    <meta property="og:url" content="">
+    <meta property="og:type" content="website">
+    
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0" />
+    <script>
+        // Ensure page starts at the top
+        window.onbeforeunload = function() {
+            window.scrollTo(0, 0);
+        };
+    </script>
 </head>
 <body>
     <!-- Add audio elements -->
@@ -26,6 +40,9 @@
             <div id="startButton" class="start-button">
                 <span class="pickle-icon">🥒</span>
                 <span>Let's Pickle!</span>
+            </div>
+            <div class="intro-copyright">
+            &copy; 2025 Harrison Engle | Pickle Pairs
             </div>
         </div>
     </div>
@@ -144,6 +161,32 @@
 
         <!-- Match Display Section -->
         <div id="matchDisplay" class="match-display"></div>
+
+        <!-- Footer with extra space for proper scrolling -->
+        <footer class="site-footer">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>About Pickle Pairs</h3>
+                    <p>Pickle Pairs is designed to help organize and track pickleball matches dynamically, avoiding repeat pairs and unique matches until all matches are exhausted. It also keeps track of player stats, has match history, a leaderboard, and ensures fair play.</p>
+                
+                </div>
+                <div class="footer-section">
+                    <h3>Coming Soon</h3>
+                    <ul>
+                        <li>Bug Reports</li>
+                        <li>Feature Requests</li>
+                        <li>Contact / Support</li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h3>Contact & Support</h3>
+                    <p>Coming soon.. If errors happen, check the Debug Log (Gear icon) and copy it to your clipboard, and paste it in a text file if youd like to save it for later.</p>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2023 Pickle Pairs. All rights reserved.</p>
+            </div>
+        </footer>
 
         <!-- Podium Display Section -->
         <div id="podiumDisplay" class="podium-container">
