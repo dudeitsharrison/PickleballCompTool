@@ -3952,7 +3952,7 @@ function editMatch(matchIndex) {
                     ${playerOptions}
                 </select>
                 <label>Score: 
-                    <input type="text" inputmode="numeric" class="team-score" id="team1-score" min="0" value="${match.team1Score || 0}">
+                    <input type="text" inputmode="numeric" class="team-score" id="team1-score" min="0" value="${match.team1Score || 0}" placeholder="Click to enter score">
                 </label>
             </div>
             <div class="team-edit-section">
@@ -3964,7 +3964,7 @@ function editMatch(matchIndex) {
                     ${playerOptions}
                 </select>
                 <label>Score: 
-                    <input type="text" inputmode="numeric" class="team-score" id="team2-score" min="0" value="${match.team2Score || 0}">
+                    <input type="text" inputmode="numeric" class="team-score" id="team2-score" min="0" value="${match.team2Score || 0}" placeholder="Click to enter score">
                 </label>
             </div>
             <div class="button-row">
@@ -3984,10 +3984,22 @@ function editMatch(matchIndex) {
         document.getElementById('team2-player1').value = match.team2[0]?.name || '';
         document.getElementById('team2-player2').value = match.team2[1]?.name || '';
         
-        // Attach numeric keypad to score inputs if available
-        if (typeof window.attachKeypadToInputs === 'function') {
-            window.attachKeypadToInputs();
-        }
+        // Attach numeric keypad to score inputs
+        const scoreInputs = dialog.querySelectorAll('input.team-score');
+        scoreInputs.forEach(input => {
+            // Make input readonly to prevent mobile keyboard
+            input.setAttribute('readonly', 'readonly');
+            
+            // Make sure the custom keypad is initialized if it doesn't exist
+            if (!document.getElementById('numericKeypad')) {
+                createNumericKeypad();
+            }
+            
+            // Use the window.attachKeypadToInputs function if available
+            if (typeof window.attachKeypadToInputs === 'function') {
+                window.attachKeypadToInputs();
+            }
+        });
     }, 0);
 
     // Add event listeners for the buttons
@@ -4054,6 +4066,9 @@ function editMatch(matchIndex) {
     
             // Close the dialog
             dialog.remove();
+            // Hide the keypad if it's visible
+            const keypad = document.getElementById('numericKeypad');
+            if (keypad) keypad.style.display = 'none';
             
             // Update all relevant displays
             // 1. Update match history display
@@ -4081,6 +4096,13 @@ function editMatch(matchIndex) {
     });
 
     document.getElementById('cancel-match-edit').addEventListener('click', function() {
+        // Hide the keypad before removing the dialog
+        const keypad = document.getElementById('numericKeypad');
+        if (keypad) {
+            keypad.style.display = 'none';
+        }
+        
+        // Remove the dialog
         dialog.remove();
     });
 }

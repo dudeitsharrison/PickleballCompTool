@@ -79,6 +79,244 @@
                 transform: rotateY(180deg);
             }
         }
+        
+        /* Intro info styles */
+        .intro-info-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 20px auto;
+            max-width: 80%;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+        
+        .intro-content.animate-in .intro-info-container {
+            opacity: 1;
+            transform: translateY(0);
+            transition-delay: 0.6s; /* Appear after slogan */
+        }
+        
+        .intro-info-logo {
+            height: 40px;
+            width: auto;
+            margin-right: 15px;
+        }
+        
+        .intro-info-text {
+            font-size: 16px;
+            color: #555;
+            text-align: left;
+            line-height: 1.4;
+        }
+        
+        /* Mobile adjustments for info text */
+        @media (max-width: 768px) {
+            .intro-info-container {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            .intro-info-logo {
+                margin-right: 0;
+                margin-bottom: 10px;
+            }
+            
+            .intro-info-text {
+                text-align: center;
+            }
+        }
+        
+        /* Fix for debug button positioning */
+        .toggle-debug-btn {
+            position: fixed;
+            left: 10px;
+            bottom: 10px;
+            /* Ensure it stays on top of other content */
+            z-index: 999;
+        }
+        
+        /* Settings Panel Styles */
+        .settings-panel {
+            position: fixed;
+            bottom: 50px;
+            left: 10px;
+            width: 300px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+            padding: 15px;
+            z-index: 998;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        
+        .settings-header {
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .settings-header h3 {
+            margin: 0;
+            color: #333;
+            font-size: 18px;
+        }
+        
+        .settings-toggles {
+            margin-bottom: 20px;
+        }
+        
+        .setting-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .setting-label {
+            font-size: 14px;
+            color: #555;
+        }
+        
+        /* Toggle Switch Styles */
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 24px;
+        }
+        
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 24px;
+        }
+        
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 16px;
+            width: 16px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        
+        input:checked + .toggle-slider {
+            background-color: #4CAF50;
+        }
+        
+        input:checked + .toggle-slider:before {
+            transform: translateX(26px);
+        }
+        
+        /* Debug Section Styles */
+        .debug-section {
+            border-top: 1px solid #eee;
+            padding-top: 15px;
+        }
+        
+        .debug-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .debug-header h4 {
+            margin: 0;
+            color: #555;
+            font-size: 14px;
+        }
+        
+        #debugArea {
+            width: 100%;
+            height: 150px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 8px;
+            font-family: monospace;
+            font-size: 12px;
+            resize: vertical;
+        }
+        
+        /* Tooltip for muted controls */
+        [data-tooltip] {
+            position: relative;
+        }
+        
+        [data-tooltip]:hover:after {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            white-space: nowrap;
+            z-index: 1000;
+        }
+        
+        /* Toast Notification Styles */
+        .toast-container {
+            position: fixed;
+            top: 60px; /* Increased from 20px to move toasts down */
+            right: 20px;
+            z-index: 9999; /* Increased z-index to be above everything else */
+        }
+        
+        .toast {
+            min-width: 250px;
+            margin-bottom: 10px;
+            padding: 12px 20px;
+            border-radius: 4px;
+            color: white;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            font-size: 14px;
+            opacity: 0;
+            transform: translateX(50px);
+            transition: all 0.3s ease;
+        }
+        
+        .toast.show {
+            opacity: 1;
+            transform: translateX(0);
+        }
+        
+        .toast-info {
+            background-color: #2196F3;
+        }
+        
+        .toast-success {
+            background-color: #4CAF50;
+        }
+        
+        .toast-warning {
+            background-color: #FF9800;
+        }
+        
+        .toast-error {
+            background-color: #F44336;
+        }
     </style>
     <script>
         // Ensure page starts at the top
@@ -112,6 +350,13 @@
             </div>
             <h1>Pickle Pairs</h1>
             <p class="slogan">Doing Doubles Right</p>
+            
+            <!-- Info text container -->
+            <div class="intro-info-container">
+                <img src="simplelogot.png" alt="Pickle Pairs Logo" class="intro-info-logo">
+                <p class="intro-info-text">Pickle Pairs is a Pickleball matchmaking app providing unique pairings every round.</p>
+            </div>
+            
             <div id="startButton" class="start-button">
                 <span class="pickle-icon">🥒</span>
                 <span>Let's Pickle!</span>
@@ -379,20 +624,46 @@
             <span class="material-symbols-rounded">volume_up</span>
         </button>
         
-        <!-- Debug toggle button -->
+        <!-- Debug toggle button - rename to settings -->
         <button id="toggleDebugBtn" class="toggle-debug-btn">
             <span class="material-symbols-rounded">settings</span>
         </button>
         
-        <!-- Debug area container -->
-        <div id="debugAreaContainer" style="display: none;">
-            <div class="debug-header">
-                <h4>Debug Log</h4>
-                <button id="copyDebugBtn" class="copy-debug-btn">
-                    <span class="material-symbols-rounded">content_copy</span>
-                </button>
+        <!-- Settings container (formerly debug area) -->
+        <div id="debugAreaContainer" style="display: none;" class="settings-panel">
+            <div class="settings-header">
+                <h3>Settings</h3>
             </div>
-            <textarea id="debugArea" readonly></textarea>
+            
+            <div class="settings-toggles">
+                <!-- Skip Intro Toggle -->
+                <div class="setting-item">
+                    <label for="skipIntroToggle" class="setting-label">Skip Intro Animation</label>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="skipIntroToggle">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+                
+                <!-- Mute All Sounds Toggle -->
+                <div class="setting-item">
+                    <label for="muteAllSoundsToggle" class="setting-label">Mute All Sounds</label>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="muteAllSoundsToggle">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+            </div>
+            
+            <div class="debug-section">
+                <div class="debug-header">
+                    <h4>Debug Log</h4>
+                    <button id="copyDebugBtn" class="copy-debug-btn">
+                        <span class="material-symbols-rounded">content_copy</span>
+                    </button>
+                </div>
+                <textarea id="debugArea" readonly></textarea>
+            </div>
         </div>
     </div>
 
@@ -405,32 +676,191 @@
             const introAudio = document.getElementById('introAudio');
             const toggleMainAudioBtn = document.getElementById('toggleMainAudioBtn');
             
-            // Setup logo flip click behavior
-            const logoFlipContainers = document.querySelectorAll('.logo-flip-container');
-            logoFlipContainers.forEach(container => {
-                // We'll keep a simpler implementation that works well with CSS hover
-                container.addEventListener('click', function(e) {
-                    // This is primarily for mobile devices
-                    // Desktop will use CSS :hover state
-                });
+            // Setup audio state variables first
+            let isMainAudioMuted = localStorage.getItem('isMainAudioMuted') === 'true';
+            let isLeaderboardMuted = localStorage.getItem('isLeaderboardAudioMuted') === 'true';
+            
+            // Add debug logging for settings values
+            console.log('Initial settings values:', {
+                isMainAudioMuted,
+                isLeaderboardMuted,
+                skipIntro: localStorage.getItem('skipIntro') === 'true',
+                muteAllSounds: localStorage.getItem('muteAllSounds') === 'true'
             });
             
-            // Check if main audio is muted based on localStorage
-            let isMainAudioMuted = localStorage.getItem('isMainAudioMuted') === 'true';
+            // Initialize settings toggles
+            const skipIntroToggle = document.getElementById('skipIntroToggle');
+            const muteAllSoundsToggle = document.getElementById('muteAllSoundsToggle');
             
-            // Update toggle button icon based on mute state
-            if (isMainAudioMuted) {
-                toggleMainAudioBtn.querySelector('.material-symbols-rounded').textContent = 'volume_off';
-                toggleMainAudioBtn.classList.add('muted');
-            } else {
-                toggleMainAudioBtn.querySelector('.material-symbols-rounded').textContent = 'volume_up';
-                toggleMainAudioBtn.classList.remove('muted');
+            // Check localStorage for settings
+            let skipIntro = localStorage.getItem('skipIntro') === 'true';
+            let muteAllSounds = localStorage.getItem('muteAllSounds') === 'true';
+            
+            // Set initial toggle states
+            skipIntroToggle.checked = skipIntro;
+            muteAllSoundsToggle.checked = muteAllSounds;
+            
+            // Apply skip intro setting if enabled
+            if (skipIntro) {
+                introContainer.style.display = 'none';
+                showGuideArrow();
             }
             
-            // Add event listener for the main audio mute button
+            // Apply mute all sounds setting if enabled
+            if (muteAllSounds) {
+                // Set muted state for both audio elements
+                isMainAudioMuted = true;
+                isLeaderboardMuted = true;
+                
+                // Update localStorage
+                localStorage.setItem('isMainAudioMuted', 'true');
+                localStorage.setItem('isLeaderboardAudioMuted', 'true');
+                
+                // Update UI
+                toggleMainAudioBtn.querySelector('.material-symbols-rounded').textContent = 'volume_off';
+                toggleMainAudioBtn.classList.add('muted');
+                toggleMainAudioBtn.setAttribute('data-tooltip', 'Turned off in settings - gear icon');
+                
+                // Also update leaderboard mute button if it exists
+                const toggleLeaderboardMute = document.getElementById('toggleLeaderboardMute');
+                if (toggleLeaderboardMute) {
+                    toggleLeaderboardMute.querySelector('.material-symbols-rounded').textContent = 'volume_off';
+                    toggleLeaderboardMute.classList.add('muted');
+                    toggleLeaderboardMute.setAttribute('data-tooltip', 'Turned off in settings - gear icon');
+                }
+            }
+            
+            // Add event listeners for settings toggles
+            skipIntroToggle.addEventListener('change', function() {
+                skipIntro = this.checked;
+                localStorage.setItem('skipIntro', skipIntro.toString());
+                
+                // Log to debug area
+                const debugArea = document.getElementById('debugArea');
+                if (debugArea) {
+                    const timestamp = new Date().toISOString();
+                    debugArea.value += `${timestamp} - Skip intro setting changed to: ${skipIntro}\n`;
+                    // Scroll to bottom
+                    debugArea.scrollTop = debugArea.scrollHeight;
+                }
+                
+                // Clear console log for debugging
+                console.log(`Skip intro toggled to: ${skipIntro}`);
+                console.log('Current localStorage value:', localStorage.getItem('skipIntro'));
+            });
+            
+            muteAllSoundsToggle.addEventListener('change', function() {
+                muteAllSounds = this.checked;
+                localStorage.setItem('muteAllSounds', muteAllSounds.toString());
+                
+                // Clear console log for debugging
+                console.log(`Mute all sounds toggled to: ${muteAllSounds}`);
+                console.log('Current localStorage value:', localStorage.getItem('muteAllSounds'));
+                
+                // Update audio states based on this master setting
+                if (muteAllSounds) {
+                    // Save current states before muting everything
+                    localStorage.setItem('previousMainAudioState', isMainAudioMuted.toString());
+                    localStorage.setItem('previousLeaderboardAudioState', isLeaderboardMuted.toString());
+                    
+                    console.log('Saved previous audio states:', {
+                        mainAudio: isMainAudioMuted,
+                        leaderboardAudio: isLeaderboardMuted
+                    });
+                    
+                    // Mute all audio elements
+                    isMainAudioMuted = true;
+                    isLeaderboardMuted = true;
+                    
+                    // Update localStorage
+                    localStorage.setItem('isMainAudioMuted', 'true');
+                    localStorage.setItem('isLeaderboardAudioMuted', 'true');
+                    
+                    // Update UI
+                    toggleMainAudioBtn.querySelector('.material-symbols-rounded').textContent = 'volume_off';
+                    toggleMainAudioBtn.classList.add('muted');
+                    toggleMainAudioBtn.setAttribute('data-tooltip', 'Turned off in settings - gear icon');
+                    
+                    // Also update leaderboard mute button if it exists
+                    const toggleLeaderboardMute = document.getElementById('toggleLeaderboardMute');
+                    if (toggleLeaderboardMute) {
+                        toggleLeaderboardMute.querySelector('.material-symbols-rounded').textContent = 'volume_off';
+                        toggleLeaderboardMute.classList.add('muted');
+                        toggleLeaderboardMute.setAttribute('data-tooltip', 'Turned off in settings - gear icon');
+                    }
+                    
+                    // Stop any playing audio
+                    fadeOutIntroAudio(true);
+                    stopLeaderboardAudio();
+                } else {
+                    // Restore previous audio states
+                    const previousMainAudioState = localStorage.getItem('previousMainAudioState') === 'true';
+                    const previousLeaderboardAudioState = localStorage.getItem('previousLeaderboardAudioState') === 'true';
+                    
+                    console.log('Restoring previous audio states:', {
+                        mainAudio: previousMainAudioState,
+                        leaderboardAudio: previousLeaderboardAudioState
+                    });
+                    
+                    // Set audio states to previous values
+                    isMainAudioMuted = previousMainAudioState;
+                    isLeaderboardMuted = previousLeaderboardAudioState;
+                    
+                    // Update localStorage
+                    localStorage.setItem('isMainAudioMuted', isMainAudioMuted.toString());
+                    localStorage.setItem('isLeaderboardAudioMuted', isLeaderboardMuted.toString());
+                    
+                    // Update main audio UI
+                    toggleMainAudioBtn.removeAttribute('data-tooltip');
+                    if (isMainAudioMuted) {
+                        toggleMainAudioBtn.querySelector('.material-symbols-rounded').textContent = 'volume_off';
+                        toggleMainAudioBtn.classList.add('muted');
+                    } else {
+                        toggleMainAudioBtn.querySelector('.material-symbols-rounded').textContent = 'volume_up';
+                        toggleMainAudioBtn.classList.remove('muted');
+                    }
+                    
+                    // Update leaderboard mute UI if it exists
+                    const toggleLeaderboardMute = document.getElementById('toggleLeaderboardMute');
+                    if (toggleLeaderboardMute) {
+                        toggleLeaderboardMute.removeAttribute('data-tooltip');
+                        if (isLeaderboardMuted) {
+                            toggleLeaderboardMute.querySelector('.material-symbols-rounded').textContent = 'volume_off';
+                            toggleLeaderboardMute.classList.add('muted');
+                        } else {
+                            toggleLeaderboardMute.querySelector('.material-symbols-rounded').textContent = 'volume_up';
+                            toggleLeaderboardMute.classList.remove('muted');
+                        }
+                    }
+                }
+                
+                // Log to debug area
+                const debugArea = document.getElementById('debugArea');
+                if (debugArea) {
+                    const timestamp = new Date().toISOString();
+                    debugArea.value += `${timestamp} - Mute all sounds setting changed to: ${muteAllSounds}\n`;
+                    // Scroll to bottom
+                    debugArea.scrollTop = debugArea.scrollHeight;
+                }
+                
+                // Show toast for user feedback
+                showToast(`All sounds ${muteAllSounds ? 'muted' : 'enabled'}`, "info", 2000);
+            });
+            
+            // Update toggle main audio button click handler to respect the global setting
             toggleMainAudioBtn.addEventListener('click', function() {
+                if (muteAllSounds) {
+                    // Show a toast notification
+                    showToast("Sound is disabled in settings. Check the gear icon to enable.", "info", 3000);
+                    return;
+                }
+                
                 isMainAudioMuted = !isMainAudioMuted;
-                localStorage.setItem('isMainAudioMuted', isMainAudioMuted);
+                localStorage.setItem('isMainAudioMuted', isMainAudioMuted.toString());
+                
+                // Log for debugging
+                console.log(`Main audio muted toggled to: ${isMainAudioMuted}`);
+                console.log('Current localStorage value:', localStorage.getItem('isMainAudioMuted'));
                 
                 if (isMainAudioMuted) {
                     // Change icon to muted
@@ -444,6 +874,25 @@
                     toggleMainAudioBtn.classList.remove('muted');
                 }
             });
+            
+            // Setup logo flip click behavior
+            const logoFlipContainers = document.querySelectorAll('.logo-flip-container');
+            logoFlipContainers.forEach(container => {
+                // We'll keep a simpler implementation that works well with CSS hover
+                container.addEventListener('click', function(e) {
+                    // This is primarily for mobile devices
+                    // Desktop will use CSS :hover state
+                });
+            });
+            
+            // Update toggle button icon based on mute state
+            if (isMainAudioMuted) {
+                toggleMainAudioBtn.querySelector('.material-symbols-rounded').textContent = 'volume_off';
+                toggleMainAudioBtn.classList.add('muted');
+            } else {
+                toggleMainAudioBtn.querySelector('.material-symbols-rounded').textContent = 'volume_up';
+                toggleMainAudioBtn.classList.remove('muted');
+            }
             
             // Start the intro animation immediately on page load
             // This will animate in the logo, title, slogan, and button
@@ -490,9 +939,6 @@
             const floatingLeaderboardBtn = document.getElementById('floatingLeaderboardBtn');
             const closePodiumBtn = document.getElementById('closePodiumBtn');
             const toggleLeaderboardMute = document.getElementById('toggleLeaderboardMute');
-            
-            // Check if leaderboard audio is muted based on localStorage
-            let isLeaderboardMuted = localStorage.getItem('isLeaderboardAudioMuted') === 'true';
             
             // Update toggle button icon based on mute state
             if (isLeaderboardMuted) {
@@ -561,8 +1007,18 @@
             
             // Toggle mute button functionality
             toggleLeaderboardMute.addEventListener('click', function() {
+                if (muteAllSounds) {
+                    // Show a toast notification
+                    showToast("Sound is disabled in settings. Check the gear icon to enable.", "info", 3000);
+                    return;
+                }
+                
                 isLeaderboardMuted = !isLeaderboardMuted;
-                localStorage.setItem('isLeaderboardAudioMuted', isLeaderboardMuted);
+                localStorage.setItem('isLeaderboardAudioMuted', isLeaderboardMuted.toString());
+                
+                // Log for debugging
+                console.log(`Leaderboard audio muted toggled to: ${isLeaderboardMuted}`);
+                console.log('Current localStorage value:', localStorage.getItem('isLeaderboardAudioMuted'));
                 
                 if (isLeaderboardMuted) {
                     // Change icon to muted
@@ -580,6 +1036,28 @@
                     }
                 }
             });
+            
+            // Function to show toast notifications
+            function showToast(message, type = 'info', duration = 3000) {
+                const toastContainer = document.getElementById('toastContainer');
+                
+                // Create toast element
+                const toast = document.createElement('div');
+                toast.classList.add('toast', `toast-${type}`);
+                toast.textContent = message;
+                
+                // Add to container
+                toastContainer.appendChild(toast);
+                
+                // Show with animation
+                setTimeout(() => toast.classList.add('show'), 10);
+                
+                // Remove after duration
+                setTimeout(() => {
+                    toast.classList.remove('show');
+                    setTimeout(() => toastContainer.removeChild(toast), 300);
+                }, duration);
+            }
         });
         
         // Function to show the guide arrow and handle its behavior
@@ -765,18 +1243,5 @@
 
     <script src="script.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
-    
-    <style>
-        /* Fix for debug button positioning */
-        .toggle-debug-btn {
-            position: fixed;
-            left: 10px;
-            bottom: 10px;
-            /* Ensure it stays on top of other content */
-            z-index: 999;
-        }
-        
-        /* Fix for audio button positioning - This will be removed as we'll handle it in CSS */
-    </style>
 </body>
 </html>
