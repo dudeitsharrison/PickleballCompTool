@@ -1,0 +1,11 @@
+Copyright (c) 2025 Harrison, creator of PicklePairs (www.picklepairs.com)
+
+All rights reserved.
+
+This software and its contents, including but not limited to code, logic, UI elements, and design, are the intellectual property of the creator. Unauthorized copying, distribution, modification, or derivative works of any part of this project is strictly prohibited without express written permission.
+
+The use of this project, in whole or in part, for commercial, enterprise, or competitor purposes is not permitted.
+
+This software is provided "as is", without warranty of any kind, express or implied. Under no circumstances shall the author be held liable for any damages or claims arising from its use.
+
+If you are interested in licensing this project or collaborating, please contact: [harrisonengle@gmail.com - Harrison Engle - Pickle Pairs]
