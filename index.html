@@ -759,7 +759,7 @@
                 <span>Let's Pickle!</span>
             </div>
             <div class="intro-copyright">
-            &copy; 2025 Harrison Engle | Pickle Pairs
+            &copy; 2025 PicklePairs | All code and intellectual property © PicklePairs. No reproduction or derivative use permitted.
             </div>
         </div>
     </div>
@@ -927,6 +927,8 @@
             </div>
             <div class="footer-bottom">
                 <p>&copy; 2025 Pickle Pairs - Harrison Engle - All rights reserved.</p>
+                <p class="license-notice">All code and intellectual property © PicklePairs. No reproduction or derivative use permitted.</p>
+                <p class="license-notice">All rights reserved. Protected under international copyright and intellectual property law.</p>
             </div>
         </footer>
 
@@ -978,25 +980,27 @@
             </div>
 
             <!-- Player Stats Table -->
-            <table id="playerStatsTable">
-                <thead>
-                    <tr>
-                        <th>Rank</th>
-                        <th>Name</th>
-                        <th>Games</th>
-                        <th>Victory Pts</th>
-                        <th>Win %</th>
-                        <th>Pickle Pts</th>
-                        <th>Differential</th>
-                        <th>Pt Avg</th>
-                        <th>Teammates</th>
-                        <th>Versus</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <!-- Dynamically filled by JavaScript -->
-                </tbody>
-            </table>
+            <div class="table-wrapper mobile-scroll-wrapper">
+                <table id="playerStatsTable" class="mobile-scrollable-table">
+                    <thead>
+                        <tr>
+                            <th>Rank</th>
+                            <th>Name</th>
+                            <th>Games</th>
+                            <th>Victory Pts</th>
+                            <th>Win %</th>
+                            <th>Pickle Pts</th>
+                            <th>Differential</th>
+                            <th>Pt Avg</th>
+                            <th>Teammates</th>
+                            <th>Versus</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Dynamically filled by JavaScript -->
+                    </tbody>
+                </table>
+            </div>
         </div>
 
         <!-- Match History Modal -->
