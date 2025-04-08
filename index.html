@@ -9,8 +9,8 @@
     
     <!-- Open Graph Meta Tags -->
     <meta property="og:title" content="Pickle Pairs - The Pickleball Matchmaker | Doing Doubles Right">
-    <meta property="og:description" content="Pairing picklers for unique matches every round.">
-    <meta property="og:image" content="landingpickle.png">
+    <meta property="og:description" content="Pairing picklers for unique matches every round. 🥒">
+    <meta property="og:image" content="smallicon.png">
     <meta property="og:url" content="">
     <meta property="og:type" content="website">
     
@@ -346,9 +346,10 @@
             margin-bottom: 15px;
         }
         
+        /* Setting label font color update */
         .setting-label {
             font-size: 14px;
-            color: #555;
+            color: white;
         }
         
         /* Toggle Switch Styles */
@@ -590,6 +591,78 @@
             display: flex;
             align-items: center;
             justify-content: center;
+        }
+        
+        /* Dancing pickle guide styles */
+        .dancing-pickle-guide {
+            position: fixed;
+            top: 80px;
+            right: 40px;
+            z-index: 1005;
+            animation: bounceAndSpin 2.5s infinite;
+            cursor: pointer;
+            width:50px;
+            height: 50px;
+            background-color: #4CAF50;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            font-size: 20px;
+        }
+        
+        @keyframes bounceAndSpin {
+            0%, 100% {
+                transform: translateY(0) rotate(0deg);
+            }
+            25% {
+                transform: translateY(-10px) rotate(20deg);
+            }
+            50% {
+                transform: translateY(0) rotate(0deg);
+            }
+            75% {
+                transform: translateY(-5px) rotate(-20deg);
+            }
+        }
+        
+        .status-toggle {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            width: 60px;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .toggle-active {
+            background-color: rgba(76, 175, 80, 0.2);
+            border: 1px solid #4CAF50;
+            color: #4CAF50;
+        }
+        
+        .toggle-inactive {
+            background-color: rgba(255, 152, 0, 0.2);
+            border: 1px solid #FF9800;
+            color: #FF9800;
+        }
+        
+        .toggle-now-label {
+            position: absolute;
+            top: -7px;
+            right: -7px;
+            background-color: #F44336;
+            color: white;
+            border-radius: 3px;
+            padding: 1px 3px;
+            font-size: 8px;
+            font-weight: bold;
+            transform: rotate(20deg);
         }
         
         .feature-visual img {
@@ -1007,8 +1080,11 @@
                 </button>
             </div>
             
+            <!-- Dancing pickle guide -->
+            <div class="dancing-pickle-guide" id="dancingPickleGuide" title="Jump to Pro Tips">💡🥒</div>
+            
             <div class="help-section">
-                <h3>Welcome to the Pickle Party! 🥒</h3>
+                <h3><span class="feature-section-icon">🥒</span>Welcome to the Pickle Party! 🥒</h3>
                 <p>Pickle Pairs is your go-to app for organizing <span class="pickle-highlight">dill-ightful</span> pickleball matches! Whether you're running a casual neighborhood round-robin or a competitive tournament, we've got you covered with our <span class="pickle-highlight">court-smart</span> matchmaking system.</p>
                 <p>No more "kitchen" violations when it comes to pairing players - we ensure everyone gets a fair chance to play with and against different partners throughout your event!</p>
             </div>
@@ -1016,7 +1092,7 @@
             <div class="help-section">
                 <h3><span class="feature-section-icon">🥒</span>Getting Started</h3>
                 <div class="help-feature">
-                    <h4>Add Your Picklers</h4>
+                    <h4><span class="material-symbols-rounded" style="font-size: 18px; vertical-align: middle; color: #4CAF50; margin-right: 5px;">edit_note</span>Add Your Picklers</h4>
                     <p>Enter player names in the text area at the top, separated by commas or line breaks. Our player counter will keep track of how many picklers you've added.</p>
                     <div class="feature-visual">
                         <div class="ui-example">
@@ -1029,7 +1105,7 @@
                     </div>
                 </div>
                 <div class="help-feature">
-                    <h4>Set Court Count</h4>
+                    <h4><span class="material-symbols-rounded" style="font-size: 18px; vertical-align: middle; color: #4CAF50; margin-right: 5px;">grid_view</span>Set Court Count</h4>
                     <p>Select how many courts you have available using the dropdown menu. This helps us optimize match scheduling.</p>
                     <div class="feature-visual">
                         <div class="ui-example">
@@ -1043,7 +1119,7 @@
                     </div>
                 </div>
                 <div class="help-feature">
-                    <h4>Start Your Tournament</h4>
+                    <h4><span class="material-symbols-rounded" style="font-size: 18px; vertical-align: middle; color: #4CAF50; margin-right: 5px;">sports_tennis</span>Start Your Tournament</h4>
                     <p>Click the green "START TOURNAMENT" button to generate your first round of perfectly balanced matches!</p>
                     <div class="feature-visual">
                         <div class="button-example success">
@@ -1057,7 +1133,7 @@
             <div class="help-section">
                 <h3><span class="feature-section-icon">🏆</span>Key Features</h3>
                 <div class="help-feature">
-                    <h4>Smart Matchmaking</h4>
+                    <h4><span class="material-symbols-rounded" style="font-size: 18px; vertical-align: middle; color: #4CAF50; margin-right: 5px;">diversity_3</span>Smart Matchmaking</h4>
                     <p>Our algorithm ensures players get unique partners each round and face new opponents until all combinations are exhausted - giving everyone a <span class="pickle-highlight">fair dink</span> at playing with everyone else!</p>
                     <p>The algorithm also intelligently handles <span class="pickle-highlight">late arrivals</span> and players who need to step out temporarily, automatically adjusting pairings to maintain balance.</p>
                     <div class="feature-visual">
@@ -1071,24 +1147,49 @@
                     </div>
                 </div>
                 <div class="help-feature">
-                    <h4>Match Scoring</h4>
+                    <h4><span class="material-symbols-rounded" style="font-size: 18px; vertical-align: middle; color: #4CAF50; margin-right: 5px;">scoreboard</span>Match Scoring</h4>
                     <p>Enter scores after each match to track performance. Winners record their "Pickle Points" (the points they scored), and we'll handle the rest!</p>
                     <div class="feature-visual">
                         <div style="width: 100%; padding: 5px;">
-                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                                <div><strong>John & Mary</strong></div>
-                                <input type="text" value="11" disabled style="width: 40px; text-align: center; border: 1px solid #4CAF50; border-radius: 4px; padding: 3px;">
-                                <div style="font-weight: bold; color: #4CAF50;">WINNERS</div>
+                            <div style="margin-bottom: 10px; font-weight: bold; color: #4CAF50; text-align: center; display: flex; align-items: center; justify-content: center;">
+                                <span class="material-symbols-rounded" style="margin-right: 5px;">emoji_events</span>
+                                WINNERS
                             </div>
-                            <div style="display: flex; justify-content: space-between; align-items: center;">
-                                <div><strong>Steve & Jessica</strong></div>
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; background-color: rgba(76, 175, 80, 0.15); padding: 8px; border-radius: 4px; border-left: 4px solid #4CAF50;">
+                                <div style="font-weight: bold;">John & Mary</div>
+                                <input type="text" value="11" disabled style="width: 40px; text-align: center; border: 2px solid #4CAF50; border-radius: 4px; padding: 3px; background-color: white;">
+                            </div>
+                            <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px;">
+                                <div>Steve & Jessica</div>
                                 <input type="text" disabled value="5" style="width: 40px; text-align: center; border: 1px solid #ccc; border-radius: 4px; padding: 3px;">
                             </div>
                         </div>
                     </div>
                 </div>
                 <div class="help-feature">
-                    <h4>Leaderboard</h4>
+                    <h4><span class="material-symbols-rounded" style="font-size: 18px; vertical-align: middle; color: #4CAF50; margin-right: 5px;">edit</span>Editing Match Results</h4>
+                    <p>Made a scoring mistake and in a <span class="pickle-highlight">pickle</span>? No worries! You can easily edit match results after they're completed.</p>
+                    <div class="feature-visual">
+                        <div style="width: 100%; padding: 5px;">
+                            <div style="display: flex; flex-direction: column; gap: 10px;">
+                                <div style="display: flex; align-items: center; gap: 10px;">
+                                    <span class="material-symbols-rounded" style="color: #FF9800;">edit</span>
+                                    <div style="font-size: 13px;">Simply click on any completed match score to edit it</div>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 10px;">
+                                    <span class="material-symbols-rounded" style="color: #4CAF50;">check_circle</span>
+                                    <div style="font-size: 13px;">The leaderboard and stats update automatically</div>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 10px;">
+                                    <span class="material-symbols-rounded" style="color: #F44336;">warning</span>
+                                    <div style="font-size: 13px;">Can't find a match to edit? Check the Match History</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="help-feature">
+                    <h4><span class="material-symbols-rounded" style="font-size: 18px; vertical-align: middle; color: #4CAF50; margin-right: 5px;">leaderboard</span>Leaderboard</h4>
                     <p>Track player progress with our dynamic leaderboard - complete with cool sound effects and animations that would make any pickleball paddle proud!</p>
                     <div class="feature-visual">
                         <div style="width: 100%; display: flex; justify-content: space-around;">
@@ -1103,7 +1204,7 @@
                     </div>
                 </div>
                 <div class="help-feature">
-                    <h4>Match History</h4>
+                    <h4><span class="material-symbols-rounded" style="font-size: 18px; vertical-align: middle; color: #4CAF50; margin-right: 5px;">history</span>Match History</h4>
                     <p>Review all completed matches in chronological order - perfect for settling those "but I'm sure we won!" debates.</p>
                     <div class="feature-visual">
                         <div class="button-example">
@@ -1113,33 +1214,87 @@
                     </div>
                 </div>
                 <div class="help-feature">
-                    <h4>Player Management</h4>
-                    <p>Use the floating player list to track who's playing and who's sitting out. You can manually toggle players to "sit out" for a round if they need a break or have to leave early. Perfect for managing those <span class="pickle-highlight">pickle fatigue</span> moments!</p>
+                    <h4><span class="material-symbols-rounded" style="font-size: 18px; vertical-align: middle; color: #4CAF50; margin-right: 5px;">people</span>Player Management</h4>
+                    <p>Use the floating player list to track who's playing and who's sitting out. You can manually toggle players to "Active" or "Sitting Out" for a round if they need a break or have to leave early. Perfect for managing those <span class="pickle-highlight">pickle fatigue</span> moments!</p>
                     <div class="feature-visual">
-                        <div style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
-                            <div class="button-example" style="background-color: #9C27B0; padding: 5px; border-radius: 50%; display: flex;">
-                                <span class="material-symbols-rounded" style="font-size: 20px;">people</span>
+                        <div style="width: 100%; max-width: 360px; margin: 0 auto; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+                            <!-- Header -->
+                            <div style="background-color: #2196F3; color: white; padding: 10px; text-align: center; font-weight: bold;">
+                                Players
                             </div>
-                            <div style="border: 1px solid #ccc; border-radius: 4px; padding: 8px; width: 75%;">
-                                <div style="font-weight: bold; margin-bottom: 5px;">Players</div>
-                                <div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 3px;">
-                                    <span>John</span>
-                                    <span style="color: green;">Active</span>
+                            <!-- Player table header -->
+                            <div style="display: flex; background-color: #2196F3; color: white; padding: 8px 10px;">
+                                <div style="flex: 1; font-weight: bold; font-size: 14px;">NAME</div>
+                                <div style="flex: 2; font-weight: bold; font-size: 14px;">STATUS</div>
+                            </div>
+                            <!-- Player a -->
+                            <div style="display: flex; align-items: center; padding: 8px 10px; background-color: white; border-bottom: 1px solid #eee;">
+                                <div style="flex: 1; font-size: 16px; font-weight: 700; color: #1565C0;">a</div>
+                                <div style="flex: 2; display: flex; justify-content: space-between; align-items: center; gap: 8px;">
+                                    <div style="display: flex; align-items: center; gap: 8px;">
+                                        <div style="position: relative; display: inline-block; width: 40px; height: 22px; margin-right: 8px;">
+                                            <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(66, 184, 131, 0.3); border-radius: 34px;"></div>
+                                            <div style="position: absolute; height: 18px; width: 18px; left: 22px; bottom: 2px; background-color: white; border-radius: 50%;"></div>
+                                        </div>
+                                        <span style="background-color: rgba(66, 184, 131, 0.2); color: #2E7D32; padding: 2px 6px; border-radius: 3px; font-size: 10px; font-weight: 600; text-transform: uppercase;">Active</span>
+                                    </div>
+                                    <div style="display: flex; gap: 5px;">
+                                        <button style="background-color: #2196F3; color: white; border: none; border-radius: 3px; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center;">
+                                            <span class="material-symbols-rounded" style="font-size: 16px;">edit</span>
+                                        </button>
+                                        <button style="background-color: #FF6B6B; color: white; border: none; border-radius: 3px; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center;">
+                                            <span class="material-symbols-rounded" style="font-size: 16px;">delete</span>
+                                        </button>
+                                    </div>
                                 </div>
-                                <div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 3px;">
-                                    <span>Mary</span>
-                                    <span style="color: green;">Active</span>
+                            </div>
+                            <!-- Player b -->
+                            <div style="display: flex; align-items: center; padding: 8px 10px; background-color: #f5f5f5; border-bottom: 1px solid #eee;">
+                                <div style="flex: 1; font-size: 16px; font-weight: 700; color: #1565C0;">b</div>
+                                <div style="flex: 2; display: flex; justify-content: space-between; align-items: center; gap: 8px;">
+                                    <div style="display: flex; align-items: center; gap: 8px;">
+                                        <div style="position: relative; display: inline-block; width: 40px; height: 22px; margin-right: 8px;">
+                                            <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(255, 107, 107, 0.3); border-radius: 34px;"></div>
+                                            <div style="position: absolute; height: 18px; width: 18px; left: 2px; bottom: 2px; background-color: white; border-radius: 50%;"></div>
+                                        </div>
+                                        <span style="background-color: rgba(255, 107, 107, 0.2); color: #D32F2F; padding: 2px 6px; border-radius: 3px; font-size: 10px; font-weight: 600; text-transform: uppercase;">Sitting Out</span>
+                                    </div>
+                                    <div style="display: flex; gap: 5px;">
+                                        <button style="background-color: #2196F3; color: white; border: none; border-radius: 3px; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center;">
+                                            <span class="material-symbols-rounded" style="font-size: 16px;">edit</span>
+                                        </button>
+                                        <button style="background-color: #FF6B6B; color: white; border: none; border-radius: 3px; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center;">
+                                            <span class="material-symbols-rounded" style="font-size: 16px;">delete</span>
+                                        </button>
+                                    </div>
                                 </div>
-                                <div style="display: flex; justify-content: space-between; font-size: 13px;">
-                                    <span>David</span>
-                                    <span style="color: orange;">Sitting Out</span>
+                            </div>
+                            <!-- Player c -->
+                            <div style="display: flex; align-items: center; padding: 8px 10px; background-color: white; border-bottom: 1px solid #eee;">
+                                <div style="flex: 1; font-size: 16px; font-weight: 700; color: #1565C0;">c</div>
+                                <div style="flex: 2; display: flex; justify-content: space-between; align-items: center; gap: 8px;">
+                                    <div style="display: flex; align-items: center; gap: 8px;">
+                                        <div style="position: relative; display: inline-block; width: 40px; height: 22px; margin-right: 8px;">
+                                            <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(66, 184, 131, 0.3); border-radius: 34px;"></div>
+                                            <div style="position: absolute; height: 18px; width: 18px; left: 22px; bottom: 2px; background-color: white; border-radius: 50%;"></div>
+                                        </div>
+                                        <span style="background-color: rgba(66, 184, 131, 0.2); color: #2E7D32; padding: 2px 6px; border-radius: 3px; font-size: 10px; font-weight: 600; text-transform: uppercase;">Active</span>
+                                    </div>
+                                    <div style="display: flex; gap: 5px;">
+                                        <button style="background-color: #2196F3; color: white; border: none; border-radius: 3px; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center;">
+                                            <span class="material-symbols-rounded" style="font-size: 16px;">edit</span>
+                                        </button>
+                                        <button style="background-color: #FF6B6B; color: white; border: none; border-radius: 3px; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center;">
+                                            <span class="material-symbols-rounded" style="font-size: 16px;">delete</span>
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
                 <div class="help-feature">
-                    <h4>Import/Export Data</h4>
+                    <h4><span class="material-symbols-rounded" style="font-size: 18px; vertical-align: middle; color: #4CAF50; margin-right: 5px;">save</span>Import/Export Data</h4>
                     <p>Save your tournament data to continue later or transfer to another device. Not even a <span class="pickle-highlight">kitchen fault</span> can erase your progress!</p>
                     <div class="feature-visual">
                         <div style="display: flex; gap: 10px; justify-content: center;">
@@ -1155,7 +1310,7 @@
                     </div>
                 </div>
                 <div class="help-feature">
-                    <h4>Capture Images</h4>
+                    <h4><span class="material-symbols-rounded" style="font-size: 18px; vertical-align: middle; color: #4CAF50; margin-right: 5px;">photo_camera</span>Capture Images</h4>
                     <p>Take snapshots of your leaderboard and match history to share with the group or for posterity. Pictures or it didn't happen, right?</p>
                     <div class="feature-visual">
                         <div class="button-example">
@@ -1172,7 +1327,7 @@
                 
                 <div class="ranking-carousel">
                     <div class="ranking-slide active" id="slide-0">
-                        <h4 class="ranking-title">Victory Points <span class="pickle-highlight">(Default)</span></h4>
+                        <h4 class="ranking-title"><span class="material-symbols-rounded" style="font-size: 18px; vertical-align: middle; color: #FFD700; margin-right: 5px;">emoji_events</span>Victory Points <span class="pickle-highlight">(Default)</span></h4>
                         <div class="ranking-description">
                             <p>The primary ranking method in Pickle Pairs.</p>
                             <ul>
@@ -1205,7 +1360,7 @@
                     </div>
                     
                     <div class="ranking-slide" id="slide-1">
-                        <h4 class="ranking-title">Pickle Points</h4>
+                        <h4 class="ranking-title"><span class="material-symbols-rounded" style="font-size: 18px; vertical-align: middle; color: #FF9800; margin-right: 5px;">scoreboard</span>Pickle Points</h4>
                         <div class="ranking-description">
                             <p>Total points scored across all games.</p>
                             <ul>
@@ -1238,7 +1393,7 @@
                     </div>
                     
                     <div class="ranking-slide" id="slide-2">
-                        <h4 class="ranking-title">Win Percentage</h4>
+                        <h4 class="ranking-title"><span class="material-symbols-rounded" style="font-size: 18px; vertical-align: middle; color: #2196F3; margin-right: 5px;">percent</span>Win Percentage</h4>
                         <div class="ranking-description">
                             <p>Percentage of matches won relative to total matches played.</p>
                             <ul>
@@ -1271,7 +1426,7 @@
                     </div>
                     
                     <div class="ranking-slide" id="slide-3">
-                        <h4 class="ranking-title">Pickle Points Average</h4>
+                        <h4 class="ranking-title"><span class="material-symbols-rounded" style="font-size: 18px; vertical-align: middle; color: #9C27B0; margin-right: 5px;">functions</span>Pickle Points Average</h4>
                         <div class="ranking-description">
                             <p>Average points scored in each game.</p>
                             <ul>
@@ -1304,7 +1459,7 @@
                     </div>
                     
                     <div class="ranking-slide" id="slide-4">
-                        <h4 class="ranking-title">Pickle Differential</h4>
+                        <h4 class="ranking-title"><span class="material-symbols-rounded" style="font-size: 18px; vertical-align: middle; color: #F44336; margin-right: 5px;">trending_up</span>Pickle Differential</h4>
                         <div class="ranking-description">
                             <p>The difference between points scored and points allowed.</p>
                             <ul>
@@ -1339,7 +1494,7 @@
                     </div>
                     
                     <div class="ranking-slide" id="slide-5">
-                        <h4 class="ranking-title">Custom Sorting</h4>
+                        <h4 class="ranking-title"><span class="material-symbols-rounded" style="font-size: 18px; vertical-align: middle; color: #4CAF50; margin-right: 5px;">tune</span>Custom Sorting</h4>
                         <div class="ranking-description">
                             <p>Create your own ranking by using the sort buttons at the top of the leaderboard.</p>
                             <ul>
@@ -1403,18 +1558,38 @@
             </div>
             
             <div class="help-section">
-                <h3>Pro Tips</h3>
+                <h3><span class="feature-section-icon">💡</span>Pro Tips</h3>
                 <div class="help-feature">
-                    <h4>Quick Score Entry</h4>
+                    <h4><span class="material-symbols-rounded" style="font-size: 18px; vertical-align: middle; color: #4CAF50; margin-right: 5px;">keyboard</span>Quick Score Entry</h4>
                     <p>Use the number keypad for faster score entry - just click the score box and type the winner's points!</p>
                 </div>
                 <div class="help-feature">
-                    <h4>Real-time Adjustments</h4>
+                    <h4><span class="material-symbols-rounded" style="font-size: 18px; vertical-align: middle; color: #4CAF50; margin-right: 5px;">update</span>Real-time Adjustments</h4>
                     <p>Need to handle players arriving late or leaving early? No problem! Use the player's panel when toggling a player's status to apply changes to the next round.</p>
                 </div>
                 <div class="help-feature">
-                    <h4>Current Round Navigation</h4>
+                    <h4><span class="material-symbols-rounded" style="font-size: 18px; vertical-align: middle; color: #4CAF50; margin-right: 5px;">navigate_next</span>Navigation Shortcuts</h4>
                     <p>Use the Arrow buttons to quickly scroll to your active matches or the top of the page.</p>
+                    <div class="feature-visual">
+                        <div style="display: flex; gap: 15px; align-items: center; justify-content: center;">
+                            <div style="display: flex; flex-direction: column; align-items: center;">
+                                <div class="button-example" style="border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; padding: 0;">
+                                    <span class="material-symbols-rounded">arrow_upward</span>
+                                </div>
+                                <div style="font-size: 12px; margin-top: 5px;">Top</div>
+                            </div>
+                            <div style="display: flex; flex-direction: column; align-items: center;">
+                                <div class="button-example" style="border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; padding: 0;">
+                                    <span class="material-symbols-rounded">arrow_downward</span>
+                                </div>
+                                <div style="font-size: 12px; margin-top: 5px;">Current Round</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="help-feature">
+                    <h4><span class="material-symbols-rounded" style="font-size: 18px; vertical-align: middle; color: #4CAF50; margin-right: 5px;">volume_up</span>Sound Settings</h4>
+                    <p>Toggle sound effects for the intro and leaderboard using the sound icon buttons. Customize your audio preferences in the settings menu.</p>
                 </div>
             </div>
             
@@ -2050,6 +2225,35 @@
                     matchHistoryDisplay.classList.remove('active');
                 }, 500);
             }, 1000);
+        });
+        
+        // Dancing pickle guide functionality
+        document.getElementById('dancingPickleGuide').addEventListener('click', function() {
+            // Find the Pro Tips section by its heading text
+            const proTipsHeading = Array.from(document.querySelectorAll('.help-section h3')).find(
+                h => h.textContent.includes('Pro Tips')
+            );
+            
+            // If found, scroll to its parent section
+            if (proTipsHeading) {
+                const proTipsSection = proTipsHeading.closest('.help-section');
+                const helpPanel = document.getElementById('helpPanel');
+                const offset = proTipsSection.offsetTop - 20;
+                helpPanel.scrollTo({
+                    top: offset,
+                    behavior: 'smooth'
+                });
+                
+                // Add a brief highlight animation to the Pro Tips section
+                proTipsSection.style.transition = 'background-color 0.5s';
+                proTipsSection.style.backgroundColor = 'rgba(76, 175, 80, 0.1)';
+                setTimeout(() => {
+                    proTipsSection.style.backgroundColor = 'transparent';
+                    setTimeout(() => {
+                        proTipsSection.style.transition = '';
+                    }, 500);
+                }, 1000);
+            }
         });
     </script>
     

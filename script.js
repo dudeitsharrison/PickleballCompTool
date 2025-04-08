@@ -490,49 +490,69 @@ function updatePlayerList() {
         nameCell.textContent = player.name;
         row.appendChild(nameCell);
         
-        // Create a cell for the sit-out selector
+        // Create a cell for the player status and toggle
         const statusCell = document.createElement('td');
+        statusCell.className = 'status-cell';
         
-        const sitOutSelector = document.createElement('select');
-        sitOutSelector.className = 'player-status-selector';
-        sitOutSelector.setAttribute('data-player-index', index);
+        // Create status indicator text
+        const statusIndicator = document.createElement('span');
+        statusIndicator.className = `player-status ${player.manualSitOut ? 'status-inactive' : 'status-active'}`;
+        statusIndicator.textContent = player.manualSitOut ? 'Sitting Out' : 'Active';
         
-        const stayInOption = document.createElement('option');
-        stayInOption.value = 'stay-in';
-        stayInOption.textContent = 'Stay In';
-        sitOutSelector.appendChild(stayInOption);
+        // Create toggle switch instead of dropdown
+        const statusToggleLabel = document.createElement('label');
+        statusToggleLabel.className = 'status-toggle';
         
-        const sitOutOption = document.createElement('option');
-        sitOutOption.value = 'sit-out';
-        sitOutOption.textContent = 'Sit Out';
-        sitOutSelector.appendChild(sitOutOption);
+        const statusToggleInput = document.createElement('input');
+        statusToggleInput.type = 'checkbox';
+        statusToggleInput.checked = !player.manualSitOut; // Checked = active, unchecked = sitting out
+        statusToggleInput.setAttribute('data-player-index', index);
         
-        // Set the correct option based on the player's state
-        sitOutSelector.value = player.manualSitOut ? 'sit-out' : 'stay-in';
+        const statusToggleSlider = document.createElement('span');
+        statusToggleSlider.className = 'status-toggle-slider';
         
-        sitOutSelector.addEventListener('change', function() {
+        statusToggleLabel.appendChild(statusToggleInput);
+        statusToggleLabel.appendChild(statusToggleSlider);
+        
+        // Add event listener to toggle input
+        statusToggleInput.addEventListener('change', function() {
             const playerIndex = parseInt(this.getAttribute('data-player-index'));
-            const sitOut = this.value === 'sit-out';
+            const sitOut = !this.checked; // If toggle is off (unchecked), player sits out
             players[playerIndex].manualSitOut = sitOut;
+            
+            // Update status indicator text when toggled
+            const statusIndicator = this.closest('td').querySelector('.player-status');
+            if (statusIndicator) {
+                statusIndicator.textContent = sitOut ? 'Sitting Out' : 'Active';
+                statusIndicator.className = `player-status ${sitOut ? 'status-inactive' : 'status-active'}`;
+            }
+            
             console.log(`Player ${players[playerIndex].name} ${sitOut ? 'will sit out' : 'will play'} next round.`);
             autoSave();
         });
         
-        statusCell.appendChild(sitOutSelector);
+        // Create button group for edit and delete buttons
+        const buttonGroup = document.createElement('div');
+        buttonGroup.className = 'button-group';
         
-        // Add an edit button
+        // Add edit button
         const editButton = document.createElement('button');
         editButton.className = 'small-btn edit-btn';
         editButton.innerHTML = '<span class="material-symbols-rounded">edit</span>';
         editButton.addEventListener('click', () => editPlayer(index));
-        statusCell.appendChild(editButton);
+        buttonGroup.appendChild(editButton);
         
-        // Add a remove button
+        // Add remove button
         const removeButton = document.createElement('button');
         removeButton.className = 'small-btn remove-btn';
         removeButton.innerHTML = '<span class="material-symbols-rounded">delete</span>';
         removeButton.addEventListener('click', () => removePlayer(index));
-        statusCell.appendChild(removeButton);
+        buttonGroup.appendChild(removeButton);
+        
+        // Add toggle, status text, and button group to the cell
+        statusCell.appendChild(statusToggleLabel);
+        statusCell.appendChild(statusIndicator);
+        statusCell.appendChild(buttonGroup);
         
         row.appendChild(statusCell);
         playerList.appendChild(row);
@@ -2824,8 +2844,8 @@ function autoSave() {
 
     console.log("Game state saved. Player statuses and selectors:");
     players.forEach(player => {
-        const selectorValue = player.manualSitOut ? "Sit Out" : "Stay In";
-        console.log(`Player: ${player.name}, Eligible: ${player.eligible}, Manual Sit-Out: ${player.manualSitOut}, Sat Out Last Round: ${player.satOutLastRound}, Selector: ${selectorValue}`);
+        const statusValue = player.manualSitOut ? "Sitting Out" : "Active";
+        console.log(`Player: ${player.name}, Eligible: ${player.eligible}, Manual Sit-Out: ${player.manualSitOut}, Sat Out Last Round: ${player.satOutLastRound}, Status: ${statusValue}`);
     });
 }
 
@@ -2947,8 +2967,8 @@ function restoreState() {
 
             console.log("Competition state restored. Player statuses and selectors:");
             players.forEach(player => {
-                const selectorValue = player.manualSitOut ? "Sit Out" : "Stay In";
-                console.log(`Player: ${player.name}, Eligible: ${player.eligible}, Manual Sit-Out: ${player.manualSitOut}, Sat Out Last Round: ${player.satOutLastRound}, Selector: ${selectorValue}`);
+                const statusValue = player.manualSitOut ? "Sitting Out" : "Active";
+                console.log(`Player: ${player.name}, Eligible: ${player.eligible}, Manual Sit-Out: ${player.manualSitOut}, Sat Out Last Round: ${player.satOutLastRound}, Status: ${statusValue}`);
             });
 
             console.log("Competition state restored successfully.");
@@ -2979,9 +2999,13 @@ function clearState() {
             return; // Exit if the user cancels
         }
 
-        // Save audio mute settings
+        // Save settings before clearing localStorage
         const isMainAudioMuted = localStorage.getItem('isMainAudioMuted');
         const isLeaderboardAudioMuted = localStorage.getItem('isLeaderboardAudioMuted');
+        const skipIntro = localStorage.getItem('skipIntro');
+        const muteAllSounds = localStorage.getItem('muteAllSounds');
+        const previousMainAudioState = localStorage.getItem('previousMainAudioState');
+        const previousLeaderboardAudioState = localStorage.getItem('previousLeaderboardAudioState');
 
         // Clear players array without reassigning
         players.length = 0;
@@ -3010,16 +3034,34 @@ function clearState() {
         // Clear localStorage
         localStorage.clear();
 
-        // Restore audio mute settings
+        // Restore all settings
         if (isMainAudioMuted) {
             localStorage.setItem('isMainAudioMuted', isMainAudioMuted);
         }
         if (isLeaderboardAudioMuted) {
             localStorage.setItem('isLeaderboardAudioMuted', isLeaderboardAudioMuted);
         }
+        if (skipIntro) {
+            localStorage.setItem('skipIntro', skipIntro);
+        }
+        if (muteAllSounds) {
+            localStorage.setItem('muteAllSounds', muteAllSounds);
+        }
+        if (previousMainAudioState) {
+            localStorage.setItem('previousMainAudioState', previousMainAudioState);
+        }
+        if (previousLeaderboardAudioState) {
+            localStorage.setItem('previousLeaderboardAudioState', previousLeaderboardAudioState);
+        }
 
-        console.log("Competition data cleared successfully.");
-        showToast("All competition data has been cleared.", "success");
+        console.log("Competition data cleared successfully. Settings preserved:", {
+            isMainAudioMuted,
+            isLeaderboardAudioMuted,
+            skipIntro,
+            muteAllSounds
+        });
+        
+        showToast("All competition data has been cleared. Settings preserved.", "success");
         location.reload();
     });
 }
