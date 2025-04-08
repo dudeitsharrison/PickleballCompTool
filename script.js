@@ -1118,10 +1118,6 @@ function resetPreviousRoundPairs() {
     logDebugMessage("Reset previous round pairs");
 }
 
-// Function to reset recent pair history when needed
-function resetRecentPairHistory() {
-    pairTracker.resetRecent();
-}
 
 // Helper function to check if a pair is in recent history
 function isPairInRecentHistory(pairKey) {
@@ -1640,16 +1636,6 @@ function updateMatchPlayCounter(matchKey) {
     logDebugMessage(`Match ${matchKey} played ${matchPlayCounter[matchKey]} times.`);
 }
 
-
-function updateSitOutDisplay(sitOutPlayers) {
-    // Don't create a global sitting out display at the top of the page
-    // Let each round handle its own sitting out display section
-    
-    // This function is now deprecated as each round manages its own sitting out display
-    // We keep it for compatibility with existing code, but it doesn't do anything
-    
-    // Old code removed to prevent creating global sitting out display
-}
 
 
 
@@ -2730,94 +2716,6 @@ function displayCurrentDate() {
 let originalPlayerData = []; // Store original data for reverting changes
 
 
-
-
-function savePlayerStats() {
-    const inputs = document.querySelectorAll('#playerStatsTable input');
-
-    inputs.forEach(input => {
-        const playerName = input.dataset.player; // Get player name from the data attribute
-        const stat = input.dataset.stat; // Stat being edited (e.g., gamesPlayed, victoryPoints, etc.)
-        const type = input.dataset.type; // Type (teammates or versus)
-        const name = input.dataset.name; // For teammates or versus
-        const value = parseInt(input.value, 10) || 0; // Default to 0 if not a number
-
-        const player = players.find(p => p.name === playerName);
-        if (!player) {
-            console.error(`Player not found for name "${playerName}"`);
-            return;
-        }
-
-        if (stat) {
-            // Update main stats (gamesPlayed, victoryPoints, picklePoints)
-            player[stat] = value;
-        } else if (type === 'teammates') {
-            // Update teammates
-            if (!player.teammates) player.teammates = {};
-            if (value > 0) {
-                player.teammates[name] = value;
-            } else {
-                delete player.teammates[name]; // Remove teammate if the value is 0
-            }
-        } else if (type === 'versus') {
-            // Update versus
-            if (!player.versus) player.versus = {};
-            if (value > 0) {
-                player.versus[name] = value;
-            } else {
-                delete player.versus[name]; // Remove opponent if the value is 0
-            }
-        }
-    });
-
-    // Remove mobile-edit class from the table
-    document.getElementById('playerStatsTable').classList.remove('mobile-edit-mode');
-
-    // Refresh the table to remove inputs and display updated stats
-    const sortedPlayers = sortByVictoryPoints(players); // Sort players by Victory Points
-    displayPlayerStatsTable(sortedPlayers); // Re-render the table with updated stats
-
-    // Revert the "Save Stats" button back to "Edit Player Stats"
-    const editStatsButton = document.getElementById('editPlayerStatsBtn');
-    editStatsButton.textContent = 'Edit Player Stats';
-    editStatsButton.onclick = enablePlayerStatsEditing;
-
-    // Reset Close Button functionality
-    const closeButton = document.getElementById('closePodiumBtn');
-    closeButton.onclick = closePodium;
-
-    alert('Player stats updated successfully!');
-    autoSave();
-}
-
-function cancelPlayerStatsEditing() {
-    const confirmCancel = confirm('Are you sure you want to exit without saving? Unsaved changes will be lost.');
-    if (!confirmCancel) {
-        return;
-    }
-
-    // Remove mobile-edit class from the table
-    document.getElementById('playerStatsTable').classList.remove('mobile-edit-mode');
-
-    // Restore original data
-    players.length = 0;
-    players.push(...originalPlayerData);
-
-    // Refresh the table to reflect the original data
-    const sortedPlayers = sortByVictoryPoints(players);
-    displayPlayerStatsTable(sortedPlayers);
-
-    // Revert button to "Edit Player Stats"
-    const editStatsButton = document.getElementById('editPlayerStatsBtn');
-    editStatsButton.textContent = 'Edit Player Stats';
-    editStatsButton.onclick = enablePlayerStatsEditing;
-
-    // Reset Close Button functionality
-    const closeButton = document.getElementById('closePodiumBtn');
-    closeButton.onclick = closePodium;
-
-    alert('Edits canceled. Original stats restored.');
-}
 
 
 function autoSave() {
@@ -4754,8 +4652,6 @@ document.addEventListener('DOMContentLoaded', function() {
                                 // If all matches are skipped, reset recent pair history
                                 if (allSkipped) {
                                     logDebugMessage("All matches in round are now skipped, but we've already removed the specific pairs from history");
-                                    // We don't need to reset all recent pair history as we've already removed these specific pairs
-                                    // resetRecentPairHistory();
                                 }
 
                                 // Update the Submit Scores button text if all matches are skipped

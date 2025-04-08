@@ -1035,20 +1035,14 @@ tr:last-child td {
 }
 
 /* Action buttons in the podium display */
-#editPlayerStatsBtn, #saveAsPictureBtn, #closePodiumBtn, #toggleLeaderboardMute {
+#saveAsPictureBtn, #closePodiumBtn, #toggleLeaderboardMute {
     position: fixed;
     z-index: 2100;
 }
 
-#editPlayerStatsBtn {
-    top: var(--space-md);
-    right: calc(var(--space-xl) + 60px); /* Position to the left of close button */
-    background-color: var(--secondary);
-}
-
 #toggleLeaderboardMute {
     top: var(--space-md);
-    right: calc(var(--space-xl) * 2 + 60px); /* Position to the left of edit button */
+    right: calc(var(--space-xl) + 60px); /* Position to the right of save button */
 }
 
 #saveAsPictureBtn {
@@ -1112,7 +1106,7 @@ tr:last-child td {
     }
     
     /* Position buttons in a fixed toolbar */
-    #saveAsPictureBtn, #editPlayerStatsBtn, #toggleLeaderboardMute, #closePodiumBtn {
+    #saveAsPictureBtn, #toggleLeaderboardMute, #closePodiumBtn {
         width: auto;
         padding: var(--space-xs);
         font-size: var(--text-xs);
@@ -1125,13 +1119,6 @@ tr:last-child td {
         width: auto;
     }
     
-    #editPlayerStatsBtn {
-        left: 50%;
-        transform: translateX(-50%);
-        width: auto;
-        right: auto;
-    }
-    
     #toggleLeaderboardMute {
         right: 60px;
         left: auto;
@@ -1139,11 +1126,6 @@ tr:last-child td {
     
     #closePodiumBtn {
         right: 10px;
-    }
-    
-    /* Make button text smaller on mobile */
-    #editPlayerStatsBtn span:not(.material-symbols-rounded) {
-        display: none;
     }
     
     /* Show just the icons for better spacing */
@@ -1463,13 +1445,6 @@ tr:last-child td {
     100% { transform: scale(1); }
 }
 
-.pulse {
-    animation: pulse 2s infinite;
-}
-
-.fade-in {
-    animation: fadeIn 0.5s ease;
-}
 
 /* Player Selector Styles for Edit Round */
 .player-selector {
@@ -1479,19 +1454,6 @@ tr:last-child td {
     border: 1px solid var(--primary);
 }
 
-/* Round Setup Area */
-.round-setup {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--space-sm);
-    margin-bottom: var(--space-lg);
-    padding: var(--space-md);
-    background-color: var(--neutral-white);
-    border-radius: var(--radius-md);
-    box-shadow: var(--shadow-sm);
-}
-
-/* Additional styles for new HTML elements */
 
 /* File Input Styling - Specific styles that complement our new navigation styles */
 .file-input-label:hover {
