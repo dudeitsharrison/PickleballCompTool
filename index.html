@@ -1609,6 +1609,10 @@
             const introAudio = document.getElementById('introAudio');
             const toggleMainAudioBtn = document.getElementById('toggleMainAudioBtn');
             
+            // Set default volume to 30% for both audio elements
+            introAudio.volume = 0.3;
+            document.getElementById('leaderboardAudio').volume = 0.3;
+            
             // Setup audio state variables first
             let isMainAudioMuted = localStorage.getItem('isMainAudioMuted') === 'true';
             let isLeaderboardMuted = localStorage.getItem('isLeaderboardAudioMuted') === 'true';
@@ -1661,6 +1665,14 @@
                     toggleLeaderboardMute.classList.add('muted');
                     toggleLeaderboardMute.setAttribute('data-tooltip', 'Turned off in settings - gear icon');
                 }
+                
+                // Immediately stop any playing audio for iOS/Safari compatibility
+                introAudio.pause();
+                introAudio.currentTime = 0;
+                
+                const leaderboardAudio = document.getElementById('leaderboardAudio');
+                leaderboardAudio.pause();
+                leaderboardAudio.currentTime = 0;
             }
             
             // Add event listeners for settings toggles
@@ -1722,9 +1734,13 @@
                         toggleLeaderboardMute.setAttribute('data-tooltip', 'Turned off in settings - gear icon');
                     }
                     
-                    // Stop any playing audio
-                    fadeOutIntroAudio(true);
-                    stopLeaderboardAudio();
+                    // Immediately stop any playing audio for iOS/Safari compatibility
+                    introAudio.pause();
+                    introAudio.currentTime = 0;
+                    
+                    const leaderboardAudio = document.getElementById('leaderboardAudio');
+                    leaderboardAudio.pause();
+                    leaderboardAudio.currentTime = 0;
                 } else {
                     // Restore previous audio states
                     const previousMainAudioState = localStorage.getItem('previousMainAudioState') === 'true';
@@ -1799,12 +1815,18 @@
                     // Change icon to muted
                     toggleMainAudioBtn.querySelector('.material-symbols-rounded').textContent = 'volume_off';
                     toggleMainAudioBtn.classList.add('muted');
-                    // Stop audio if it's playing
-                    fadeOutIntroAudio(true);
+                    // Immediately pause the audio for iOS/Safari compatibility
+                    introAudio.pause();
+                    introAudio.currentTime = 0;
                 } else {
                     // Change icon to unmuted
                     toggleMainAudioBtn.querySelector('.material-symbols-rounded').textContent = 'volume_up';
                     toggleMainAudioBtn.classList.remove('muted');
+                    
+                    // If we're on the intro screen, play the audio
+                    if (introContainer && !introContainer.classList.contains('animate-out') && introContainer.style.display !== 'none') {
+                        safePlayAudio(introAudio);
+                    }
                 }
             });
             
@@ -1840,10 +1862,8 @@
                 
                 // Start the audio only if not muted
                 if (!isMainAudioMuted) {
-                    introAudio.volume = 1.0;
-                    introAudio.play().catch(error => {
-                        console.log('Audio playback was prevented by the browser:', error);
-                    });
+                    // Volume is already set to 0.3 (30%) on initialization
+                    safePlayAudio(introAudio);
                     
                     // Start fading audio after 7 seconds
                     setTimeout(() => {
@@ -1887,18 +1907,45 @@
                 if (introAudio.paused) return;
                 
                 const duration = immediate ? 50 : 300; // Faster fade if immediate is true
-                const decrement = immediate ? 0.2 : 0.1; // Larger decrement if immediate
+                const decrement = immediate ? 0.05 : 0.02; // Adjusted for 30% starting volume
                 
                 // Fade out intro audio
                 const fadeInterval = setInterval(() => {
-                    if (introAudio.volume > 0.1) {
+                    if (introAudio.volume > 0.05) {
                         introAudio.volume -= decrement;
                     } else {
                         clearInterval(fadeInterval);
                         introAudio.pause();
-                        introAudio.volume = 1.0; // Reset volume for future use
+                        introAudio.currentTime = 0;
+                        introAudio.volume = 0.3; // Reset to 30% volume for future use
                     }
                 }, duration);
+            }
+            
+            // Function to play audio that works around iOS/Safari limitations
+            function safePlayAudio(audioElement) {
+                // Only attempt to play if the audio isn't muted
+                if (audioElement && !audioElement.paused) {
+                    // Already playing, don't interrupt
+                    return Promise.resolve();
+                }
+                
+                // Use a user interaction promise to play audio
+                const playPromise = audioElement.play();
+                
+                // Handle the promise to catch and log any errors
+                if (playPromise !== undefined) {
+                    playPromise.catch(error => {
+                        console.log('Audio playback was prevented by the browser:', error);
+                        // On iOS, we might need to handle this case differently
+                        if (error.name === 'NotAllowedError') {
+                            // Consider showing a "Tap to enable audio" message on iOS
+                            console.log('Safari/iOS blocked autoplay. User interaction required.');
+                        }
+                    });
+                }
+                
+                return playPromise;
             }
             
             // Function to play leaderboard audio
@@ -1907,11 +1954,9 @@
                 fadeOutIntroAudio();
                 
                 if (!isLeaderboardMuted) {
-                    leaderboardAudio.volume = 1.0;
+                    // Volume is already set to 0.3 (30%) on initialization
                     leaderboardAudio.currentTime = 0; // Reset to beginning
-                    leaderboardAudio.play().catch(error => {
-                        console.log('Leaderboard audio playback was prevented by the browser:', error);
-                    });
+                    safePlayAudio(leaderboardAudio);
                 }
             }
             
@@ -1919,16 +1964,9 @@
             function stopLeaderboardAudio() {
                 if (leaderboardAudio.paused) return;
                 
-                // Fade out audio over 1 second
-                const fadeInterval = setInterval(() => {
-                    if (leaderboardAudio.volume > 0.1) {
-                        leaderboardAudio.volume -= 0.1;
-                    } else {
-                        clearInterval(fadeInterval);
-                        leaderboardAudio.pause();
-                        leaderboardAudio.currentTime = 0;
-                    }
-                }, 100);
+                // For iOS/Safari compatibility, just pause immediately
+                leaderboardAudio.pause();
+                leaderboardAudio.currentTime = 0;
             }
             
             // Play audio when leaderboard is opened
@@ -1957,7 +1995,9 @@
                     // Change icon to muted
                     toggleLeaderboardMute.querySelector('.material-symbols-rounded').textContent = 'volume_off';
                     toggleLeaderboardMute.classList.add('muted');
-                    stopLeaderboardAudio();
+                    // Immediately stop audio for iOS/Safari compatibility
+                    leaderboardAudio.pause();
+                    leaderboardAudio.currentTime = 0;
                 } else {
                     // Change icon to unmuted
                     toggleLeaderboardMute.querySelector('.material-symbols-rounded').textContent = 'volume_up';
@@ -1965,7 +2005,7 @@
                     
                     // Only start playing if the podium is currently visible
                     if (document.getElementById('podiumDisplay').classList.contains('active')) {
-                        playLeaderboardAudio();
+                        safePlayAudio(leaderboardAudio);
                     }
                 }
             });
