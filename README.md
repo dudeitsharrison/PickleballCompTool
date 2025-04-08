@@ -1,3 +1,6 @@
+// © 2025 PicklePairs by [W. Harrison Engle II]. All rights reserved.
+// This repo is solely for people to check out the tool and not take any source or logic.
+
 Tool is opened via index.html file.
 
 How to use:
