@@ -1593,6 +1593,11 @@ function generateNextRound() {
     generatePairsAndMatches();
     
     autoSave();
+    
+    // Add a slight delay to ensure the new round is fully rendered before scrolling
+    setTimeout(() => {
+        scrollToCurrentRound();
+    }, 300);
 }
 
 
@@ -1667,6 +1672,11 @@ function playRound() {
     pairTracker.startNewRound();
     generatePairsAndMatches();
     autoSave();
+    
+    // Add a slight delay to ensure the round is fully rendered before scrolling
+    setTimeout(() => {
+        scrollToCurrentRound();
+    }, 300);
 }
 
 function updateVersus(player, opponent) {

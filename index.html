@@ -139,6 +139,29 @@
             z-index: 999;
         }
         
+        /* Info Button Styles */
+        .toggle-info-btn {
+            position: fixed;
+            left: 10px;
+            bottom: 110px; /* Position above the other buttons */
+            z-index: 999;
+            border-radius: 50%; /* Make button circular */
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: rgb(68, 155, 255);
+            border: none;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            cursor: pointer;
+            color: #f7f7f7;
+        }
+        
+        .toggle-info-btn:hover {
+            background-color: #7ec5ff;
+        }
+        
         /* Settings Panel Styles */
         .settings-panel {
             position: fixed;
@@ -152,6 +175,152 @@
             z-index: 998;
             max-height: 80vh;
             overflow-y: auto;
+        }
+        
+        /* Help Panel Styles */
+        .help-panel {
+            position: fixed;
+            top: 0;
+            right: 0;
+            width: 450px; /* Wider by default */
+            height: 100vh;
+            background-color: white;
+            box-shadow: -2px 0 10px rgba(0, 0, 0, 0.2);
+            padding: 20px;
+            z-index: 1000;
+            overflow-y: auto;
+            transform: translateX(100%);
+            transition: transform 0.3s ease-in-out;
+        }
+        
+        /* For wider screens, make the help panel wider */
+        @media (min-width: 1200px) {
+            .help-panel {
+                width: 520px; /* Wider panel for larger screens */
+            }
+        }
+        
+        /* For ultra-wide screens, increase panel width further */
+        @media (min-width: 1800px) {
+            .help-panel {
+                width: 600px; /* Even wider for ultra-wide screens */
+            }
+        }
+        
+        .help-panel.active {
+            transform: translateX(0);
+        }
+        
+        .help-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .help-header-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .help-header-title h2 {
+            margin: 0;
+            color: #333;
+        }
+        
+        .help-logo {
+            width: 40px;
+            height: 40px;
+        }
+        
+        .help-section {
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        
+        .help-section h3 {
+            color: #4CAF50;
+            margin-top: 0;
+            font-size: 18px;
+        }
+        
+        .help-section p {
+            color: #555;
+            line-height: 1.5;
+            margin-bottom: 12px;
+        }
+        
+        .help-feature {
+            margin-bottom: 15px;
+            padding-left: 10px;
+            border-left: 3px solid #4CAF50;
+        }
+        
+        .help-feature h4 {
+            margin: 0 0 5px 0;
+            color: #333;
+        }
+        
+        .help-feature p {
+            margin: 0;
+            font-size: 14px;
+        }
+        
+        .pickle-highlight {
+            color: #4CAF50;
+            font-weight: bold;
+        }
+        
+        .help-close-btn {
+            background: none;
+            border: none;
+            color: #999;
+            cursor: pointer;
+            font-size: 24px;
+        }
+        
+        .help-close-btn:hover {
+            color: #333;
+        }
+        
+        .leaderboard-explanation {
+            background-color: #f9f9f9;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 15px;
+        }
+        
+        .leaderboard-explanation h4 {
+            margin-top: 0;
+            color: #4CAF50;
+        }
+        
+        .metric-description {
+            display: flex;
+            margin-bottom: 8px;
+        }
+        
+        .metric-name {
+            font-weight: bold;
+            min-width: 130px;
+        }
+        
+        .help-footer {
+            text-align: center;
+            margin-top: 30px;
+            color: #999;
+            font-size: 12px;
+        }
+        
+        /* Mobile adjustments for help panel */
+        @media (max-width: 768px) {
+            .help-panel {
+                width: 85vw;
+            }
         }
         
         .settings-header {
@@ -318,6 +487,159 @@
         
         .toast-error {
             background-color: #F44336;
+        }
+        
+        /* Ranking modes carousel styles */
+        .ranking-carousel {
+            background-color: #f9f9f9;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+            position: relative;
+        }
+        
+        .ranking-slide {
+            display: none;
+            animation: fadeEffect 0.5s;
+        }
+        
+        .ranking-slide.active {
+            display: block;
+        }
+        
+        @keyframes fadeEffect {
+            from {opacity: 0.7;}
+            to {opacity: 1;}
+        }
+        
+        .ranking-title {
+            color: #4CAF50;
+            margin-top: 0;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .ranking-description {
+            margin-bottom: 12px;
+            line-height: 1.4;
+        }
+        
+        .ranking-navigation {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 15px;
+        }
+        
+        .ranking-dots {
+            display: flex;
+            gap: 5px;
+            justify-content: center;
+        }
+        
+        .ranking-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: #ccc;
+            cursor: pointer;
+        }
+        
+        .ranking-dot.active {
+            background-color: #4CAF50;
+        }
+        
+        .ranking-btn {
+            background: none;
+            border: none;
+            color: #4CAF50;
+            cursor: pointer;
+            padding: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .ranking-btn:hover {
+            color: #45a049;
+        }
+        
+        .ranking-btn:disabled {
+            color: #ccc;
+            cursor: default;
+        }
+        
+        .ranking-slide ul {
+            padding-left: 20px;
+            margin-bottom: 0;
+        }
+        
+        .ranking-slide li {
+            margin-bottom: 5px;
+        }
+        
+        /* Feature visual example styles */
+        .feature-visual {
+            background-color: #f5f5f5;
+            border-radius: 8px;
+            padding: 8px;
+            margin: 8px 0;
+            border: 1px solid #e0e0e0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .feature-visual img {
+            max-width: 100%;
+            border-radius: 4px;
+        }
+        
+        .button-example {
+            display: inline-block;
+            padding: 8px 15px;
+            margin: 5px;
+            background-color: #4CAF50;
+            color: white;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: bold;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .button-example.primary {
+            background-color: #2196F3;
+        }
+        
+        .button-example.success {
+            background-color: #4CAF50;
+        }
+        
+        .button-example.danger {
+            background-color: #F44336;
+        }
+        
+        .button-example.info {
+            background-color: rgb(68, 155, 255);
+        }
+        
+        .ui-example {
+            display: flex;
+            align-items: center;
+            margin: 8px 0;
+            font-size: 14px;
+        }
+        
+        .ui-example .material-symbols-rounded {
+            margin-right: 8px;
+        }
+        
+        .feature-section-icon {
+            display: inline-block;
+            margin-right: 5px;
+            vertical-align: middle;
         }
     </style>
     <script>
@@ -631,6 +953,11 @@
             <span class="material-symbols-rounded">settings</span>
         </button>
         
+        <!-- Info button for help panel -->
+        <button id="toggleInfoBtn" class="toggle-info-btn">
+            <span class="material-symbols-rounded">info</span>
+        </button>
+        
         <!-- Settings container (formerly debug area) -->
         <div id="debugAreaContainer" style="display: none;" class="settings-panel">
             <div class="settings-header">
@@ -665,6 +992,435 @@
                     </button>
                 </div>
                 <textarea id="debugArea" readonly></textarea>
+            </div>
+        </div>
+
+        <!-- Help/Info Panel -->
+        <div id="helpPanel" class="help-panel">
+            <div class="help-header">
+                <div class="help-header-title">
+                    <img src="Picklepairs.png" alt="Pickle Pairs Logo" class="help-logo">
+                    <h2>Pickle Pairs Guide</h2>
+                </div>
+                <button id="closeHelpBtn" class="help-close-btn">
+                    <span class="material-symbols-rounded">close</span>
+                </button>
+            </div>
+            
+            <div class="help-section">
+                <h3>Welcome to the Pickle Party! 🥒</h3>
+                <p>Pickle Pairs is your go-to app for organizing <span class="pickle-highlight">dill-ightful</span> pickleball matches! Whether you're running a casual neighborhood round-robin or a competitive tournament, we've got you covered with our <span class="pickle-highlight">court-smart</span> matchmaking system.</p>
+                <p>No more "kitchen" violations when it comes to pairing players - we ensure everyone gets a fair chance to play with and against different partners throughout your event!</p>
+            </div>
+            
+            <div class="help-section">
+                <h3><span class="feature-section-icon">🥒</span>Getting Started</h3>
+                <div class="help-feature">
+                    <h4>Add Your Picklers</h4>
+                    <p>Enter player names in the text area at the top, separated by commas or line breaks. Our player counter will keep track of how many picklers you've added.</p>
+                    <div class="feature-visual">
+                        <div class="ui-example">
+                            <span class="material-symbols-rounded">edit_note</span>
+                            <div>
+                                <textarea disabled style="width: 90%; height: 40px; padding: 5px; font-size: 12px;">John, Mary, Steve, Jessica, David</textarea>
+                                <div style="margin-top: 5px;"><strong>Player Count: 5</strong></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="help-feature">
+                    <h4>Set Court Count</h4>
+                    <p>Select how many courts you have available using the dropdown menu. This helps us optimize match scheduling.</p>
+                    <div class="feature-visual">
+                        <div class="ui-example">
+                            <div style="display: inline-block; padding: 5px; border: 1px solid #ccc; border-radius: 4px; background: white;">
+                                <span style="margin-right: 10px;">Courts:</span>
+                                <select disabled style="padding: 3px;">
+                                    <option>3 Courts</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="help-feature">
+                    <h4>Start Your Tournament</h4>
+                    <p>Click the green "START TOURNAMENT" button to generate your first round of perfectly balanced matches!</p>
+                    <div class="feature-visual">
+                        <div class="button-example success">
+                            <span class="material-symbols-rounded" style="font-size: 16px; vertical-align: middle; margin-right: 5px;">sports_tennis</span>
+                            START TOURNAMENT
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="help-section">
+                <h3><span class="feature-section-icon">🏆</span>Key Features</h3>
+                <div class="help-feature">
+                    <h4>Smart Matchmaking</h4>
+                    <p>Our algorithm ensures players get unique partners each round and face new opponents until all combinations are exhausted - giving everyone a <span class="pickle-highlight">fair dink</span> at playing with everyone else!</p>
+                    <p>The algorithm also intelligently handles <span class="pickle-highlight">late arrivals</span> and players who need to step out temporarily, automatically adjusting pairings to maintain balance.</p>
+                    <div class="feature-visual">
+                        <div style="width: 100%; text-align: center; padding: 5px; font-size: 13px;">
+                            <div style="font-weight: bold; margin-bottom: 8px; border-bottom: 1px solid #ccc; padding-bottom: 5px;">Round 1</div>
+                            <div style="display: flex; justify-content: space-around; margin-bottom: 5px;">
+                                <div>Court 1: <strong>John & Mary</strong> vs <strong>Steve & Jessica</strong></div>
+                            </div>
+                            <div style="font-size: 12px; color: #666; margin-top: 10px;">Player David sits out this round</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="help-feature">
+                    <h4>Match Scoring</h4>
+                    <p>Enter scores after each match to track performance. Winners record their "Pickle Points" (the points they scored), and we'll handle the rest!</p>
+                    <div class="feature-visual">
+                        <div style="width: 100%; padding: 5px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                <div><strong>John & Mary</strong></div>
+                                <input type="text" value="11" disabled style="width: 40px; text-align: center; border: 1px solid #4CAF50; border-radius: 4px; padding: 3px;">
+                                <div style="font-weight: bold; color: #4CAF50;">WINNERS</div>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <div><strong>Steve & Jessica</strong></div>
+                                <input type="text" disabled value="5" style="width: 40px; text-align: center; border: 1px solid #ccc; border-radius: 4px; padding: 3px;">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="help-feature">
+                    <h4>Leaderboard</h4>
+                    <p>Track player progress with our dynamic leaderboard - complete with cool sound effects and animations that would make any pickleball paddle proud!</p>
+                    <div class="feature-visual">
+                        <div style="width: 100%; display: flex; justify-content: space-around;">
+                            <div class="button-example primary">
+                                <span class="material-symbols-rounded" style="font-size: 16px; vertical-align: middle; margin-right: 5px;">leaderboard</span>
+                                LEADERBOARD
+                            </div>
+                            <div class="button-example" style="background-color: #FF9800;">
+                                <span class="material-symbols-rounded" style="font-size: 16px; vertical-align: middle; margin-right: 5px;">emoji_events</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="help-feature">
+                    <h4>Match History</h4>
+                    <p>Review all completed matches in chronological order - perfect for settling those "but I'm sure we won!" debates.</p>
+                    <div class="feature-visual">
+                        <div class="button-example">
+                            <span class="material-symbols-rounded" style="font-size: 16px; vertical-align: middle; margin-right: 5px;">history</span>
+                            MATCH HISTORY
+                        </div>
+                    </div>
+                </div>
+                <div class="help-feature">
+                    <h4>Player Management</h4>
+                    <p>Use the floating player list to track who's playing and who's sitting out. You can manually toggle players to "sit out" for a round if they need a break or have to leave early. Perfect for managing those <span class="pickle-highlight">pickle fatigue</span> moments!</p>
+                    <div class="feature-visual">
+                        <div style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
+                            <div class="button-example" style="background-color: #9C27B0; padding: 5px; border-radius: 50%; display: flex;">
+                                <span class="material-symbols-rounded" style="font-size: 20px;">people</span>
+                            </div>
+                            <div style="border: 1px solid #ccc; border-radius: 4px; padding: 8px; width: 75%;">
+                                <div style="font-weight: bold; margin-bottom: 5px;">Players</div>
+                                <div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 3px;">
+                                    <span>John</span>
+                                    <span style="color: green;">Active</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 3px;">
+                                    <span>Mary</span>
+                                    <span style="color: green;">Active</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; font-size: 13px;">
+                                    <span>David</span>
+                                    <span style="color: orange;">Sitting Out</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="help-feature">
+                    <h4>Import/Export Data</h4>
+                    <p>Save your tournament data to continue later or transfer to another device. Not even a <span class="pickle-highlight">kitchen fault</span> can erase your progress!</p>
+                    <div class="feature-visual">
+                        <div style="display: flex; gap: 10px; justify-content: center;">
+                            <div class="button-example">
+                                <span class="material-symbols-rounded" style="font-size: 16px; vertical-align: middle; margin-right: 5px;">download</span>
+                                EXPORT DATA
+                            </div>
+                            <div class="button-example">
+                                <span class="material-symbols-rounded" style="font-size: 16px; vertical-align: middle; margin-right: 5px;">upload</span>
+                                IMPORT DATA
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="help-feature">
+                    <h4>Capture Images</h4>
+                    <p>Take snapshots of your leaderboard and match history to share with the group or for posterity. Pictures or it didn't happen, right?</p>
+                    <div class="feature-visual">
+                        <div class="button-example">
+                            <span class="material-symbols-rounded" style="font-size: 16px; vertical-align: middle; margin-right: 5px;">photo_camera</span>
+                            CAPTURE ALL
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="help-section">
+                <h3><span class="feature-section-icon">📊</span>Leaderboard Rankings Explained</h3>
+                <p>Our leaderboard tracks multiple metrics to give a comprehensive view of player performance. Swipe through each ranking mode to understand how they work:</p>
+                
+                <div class="ranking-carousel">
+                    <div class="ranking-slide active" id="slide-0">
+                        <h4 class="ranking-title">Victory Points <span class="pickle-highlight">(Default)</span></h4>
+                        <div class="ranking-description">
+                            <p>The primary ranking method in Pickle Pairs.</p>
+                            <ul>
+                                <li>1 point awarded to each player on the winning team</li>
+                                <li>Players with most Victory Points rank highest</li>
+                                <li>Ties are broken by: Win %, then Pickle Points, then Differential, then Average</li>
+                            </ul>
+                            <p><strong>Best for:</strong> Fair overall rankings that reward consistent winning.</p>
+                            <div class="feature-visual">
+                                <div style="font-size: 13px; width: 100%;">
+                                    <div style="display: flex; justify-content: space-between; margin-bottom: 5px; font-weight: bold; border-bottom: 1px solid #ccc; padding-bottom: 3px;">
+                                        <span>Name</span>
+                                        <span>Victory Pts</span>
+                                    </div>
+                                    <div style="display: flex; justify-content: space-between; margin-bottom: 3px;">
+                                        <span>1. Mary</span>
+                                        <span>5</span>
+                                    </div>
+                                    <div style="display: flex; justify-content: space-between; margin-bottom: 3px;">
+                                        <span>2. John</span>
+                                        <span>4</span>
+                                    </div>
+                                    <div style="display: flex; justify-content: space-between;">
+                                        <span>3. Steve</span>
+                                        <span>3</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="ranking-slide" id="slide-1">
+                        <h4 class="ranking-title">Pickle Points</h4>
+                        <div class="ranking-description">
+                            <p>Total points scored across all games.</p>
+                            <ul>
+                                <li>Rewards aggressive offensive play and high scoring</li>
+                                <li>Players with most total points rank highest</li>
+                                <li>Ties are broken by: Victory Points, then Win %, then Differential</li>
+                            </ul>
+                            <p><strong>Best for:</strong> Highlighting offensive players who consistently rack up points.</p>
+                            <div class="feature-visual">
+                                <div style="font-size: 13px; width: 100%;">
+                                    <div style="display: flex; justify-content: space-between; margin-bottom: 5px; font-weight: bold; border-bottom: 1px solid #ccc; padding-bottom: 3px;">
+                                        <span>Name</span>
+                                        <span>Pickle Pts</span>
+                                    </div>
+                                    <div style="display: flex; justify-content: space-between; margin-bottom: 3px;">
+                                        <span>1. Steve</span>
+                                        <span>42</span>
+                                    </div>
+                                    <div style="display: flex; justify-content: space-between; margin-bottom: 3px;">
+                                        <span>2. Mary</span>
+                                        <span>39</span>
+                                    </div>
+                                    <div style="display: flex; justify-content: space-between;">
+                                        <span>3. John</span>
+                                        <span>35</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="ranking-slide" id="slide-2">
+                        <h4 class="ranking-title">Win Percentage</h4>
+                        <div class="ranking-description">
+                            <p>Percentage of matches won relative to total matches played.</p>
+                            <ul>
+                                <li>Calculated as: (Wins ÷ Total Games) × 100%</li>
+                                <li>Players with highest win % rank highest</li>
+                                <li>Ties are broken by: Victory Points, then Pickle Points</li>
+                            </ul>
+                            <p><strong>Best for:</strong> Comparing players who've played different numbers of games.</p>
+                            <div class="feature-visual">
+                                <div style="font-size: 13px; width: 100%;">
+                                    <div style="display: flex; justify-content: space-between; margin-bottom: 5px; font-weight: bold; border-bottom: 1px solid #ccc; padding-bottom: 3px;">
+                                        <span>Name</span>
+                                        <span>Win %</span>
+                                    </div>
+                                    <div style="display: flex; justify-content: space-between; margin-bottom: 3px;">
+                                        <span>1. Mary</span>
+                                        <span>83%</span>
+                                    </div>
+                                    <div style="display: flex; justify-content: space-between; margin-bottom: 3px;">
+                                        <span>2. David</span>
+                                        <span>75%</span>
+                                    </div>
+                                    <div style="display: flex; justify-content: space-between;">
+                                        <span>3. John</span>
+                                        <span>67%</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="ranking-slide" id="slide-3">
+                        <h4 class="ranking-title">Pickle Points Average</h4>
+                        <div class="ranking-description">
+                            <p>Average points scored in each game.</p>
+                            <ul>
+                                <li>Calculated as: Total Points ÷ Games Played</li>
+                                <li>Players with highest average rank highest</li>
+                                <li>Ties are broken by: Total Points, then Victory Points</li>
+                            </ul>
+                            <p><strong>Best for:</strong> Finding consistently high scorers regardless of win count.</p>
+                            <div class="feature-visual">
+                                <div style="font-size: 13px; width: 100%;">
+                                    <div style="display: flex; justify-content: space-between; margin-bottom: 5px; font-weight: bold; border-bottom: 1px solid #ccc; padding-bottom: 3px;">
+                                        <span>Name</span>
+                                        <span>Pt Avg</span>
+                                    </div>
+                                    <div style="display: flex; justify-content: space-between; margin-bottom: 3px;">
+                                        <span>1. Jessica</span>
+                                        <span>8.5</span>
+                                    </div>
+                                    <div style="display: flex; justify-content: space-between; margin-bottom: 3px;">
+                                        <span>2. Steve</span>
+                                        <span>8.4</span>
+                                    </div>
+                                    <div style="display: flex; justify-content: space-between;">
+                                        <span>3. Mary</span>
+                                        <span>7.8</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="ranking-slide" id="slide-4">
+                        <h4 class="ranking-title">Pickle Differential</h4>
+                        <div class="ranking-description">
+                            <p>The difference between points scored and points allowed.</p>
+                            <ul>
+                                <li>Calculated as: Total Points Scored − Total Points Allowed</li>
+                                <li>Players with highest differential rank highest</li>
+                                <li>Positive number = scored more than allowed</li>
+                                <li>Negative number = allowed more than scored</li>
+                                <li>Ties are broken by: Victory Points, then Win %</li>
+                            </ul>
+                            <p><strong>Best for:</strong> Balancing offensive scoring with defensive skill.</p>
+                            <div class="feature-visual">
+                                <div style="font-size: 13px; width: 100%;">
+                                    <div style="display: flex; justify-content: space-between; margin-bottom: 5px; font-weight: bold; border-bottom: 1px solid #ccc; padding-bottom: 3px;">
+                                        <span>Name</span>
+                                        <span>Differential</span>
+                                    </div>
+                                    <div style="display: flex; justify-content: space-between; margin-bottom: 3px;">
+                                        <span>1. Mary</span>
+                                        <span>+18</span>
+                                    </div>
+                                    <div style="display: flex; justify-content: space-between; margin-bottom: 3px;">
+                                        <span>2. John</span>
+                                        <span>+12</span>
+                                    </div>
+                                    <div style="display: flex; justify-content: space-between;">
+                                        <span>3. David</span>
+                                        <span>+6</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="ranking-slide" id="slide-5">
+                        <h4 class="ranking-title">Custom Sorting</h4>
+                        <div class="ranking-description">
+                            <p>Create your own ranking by using the sort buttons at the top of the leaderboard.</p>
+                            <ul>
+                                <li>Click any metric button to sort the leaderboard by that stat</li>
+                                <li>Great for tournament variations or special challenges</li>
+                                <li>Podium will update to reflect your custom sort</li>
+                            </ul>
+                            <p><strong>Best for:</strong> Adding variety to your tournament or focusing on specific skills.</p>
+                            <div class="feature-visual">
+                                <div style="width: 100%; padding: 5px;">
+                                    <div style="font-weight: bold; margin-bottom: 8px;">Sort Buttons:</div>
+                                    <div style="display: flex; flex-wrap: wrap; gap: 5px; justify-content: center;">
+                                        <div class="button-example" style="font-size: 12px;">Victory Points</div>
+                                        <div class="button-example" style="font-size: 12px;">Pickle Points</div>
+                                        <div class="button-example" style="font-size: 12px;">Win %</div>
+                                        <div class="button-example" style="font-size: 12px;">Pt Avg</div>
+                                        <div class="button-example" style="font-size: 12px;">Differential</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="ranking-navigation">
+                        <button class="ranking-btn prev-btn" onclick="navigateRankingSlide(-1)">
+                            <span class="material-symbols-rounded">chevron_left</span>
+                        </button>
+                        
+                        <div class="ranking-dots">
+                            <span class="ranking-dot active" onclick="showRankingSlide(0)"></span>
+                            <span class="ranking-dot" onclick="showRankingSlide(1)"></span>
+                            <span class="ranking-dot" onclick="showRankingSlide(2)"></span>
+                            <span class="ranking-dot" onclick="showRankingSlide(3)"></span>
+                            <span class="ranking-dot" onclick="showRankingSlide(4)"></span>
+                            <span class="ranking-dot" onclick="showRankingSlide(5)"></span>
+                        </div>
+                        
+                        <button class="ranking-btn next-btn" onclick="navigateRankingSlide(1)">
+                            <span class="material-symbols-rounded">chevron_right</span>
+                        </button>
+                    </div>
+                </div>
+                
+                <p>The <span class="pickle-highlight">top three picklers</span> get the honor of standing on our virtual podium with gold, silver, and bronze medals!</p>
+                <div class="feature-visual">
+                    <div style="display: flex; justify-content: center; align-items: flex-end; width: 100%; padding: 10px;">
+                        <div style="text-align: center; margin: 0 10px; padding: 5px 10px; background-color: #C0C0C0; height: 40px; display: flex; flex-direction: column; justify-content: flex-end; border-radius: 4px 4px 0 0;">
+                            <div style="font-size: 20px;">🥈</div>
+                            <div style="font-weight: bold;">John</div>
+                        </div>
+                        <div style="text-align: center; margin: 0 10px; padding: 5px 10px; background-color: #FFD700; height: 60px; display: flex; flex-direction: column; justify-content: flex-end; border-radius: 4px 4px 0 0;">
+                            <div style="font-size: 20px;">🥇</div>
+                            <div style="font-weight: bold;">Mary</div>
+                        </div>
+                        <div style="text-align: center; margin: 0 10px; padding: 5px 10px; background-color: #CD7F32; height: 30px; display: flex; flex-direction: column; justify-content: flex-end; border-radius: 4px 4px 0 0;">
+                            <div style="font-size: 20px;">🥉</div>
+                            <div style="font-weight: bold;">Steve</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="help-section">
+                <h3>Pro Tips</h3>
+                <div class="help-feature">
+                    <h4>Quick Score Entry</h4>
+                    <p>Use the number keypad for faster score entry - just click the score box and type the winner's points!</p>
+                </div>
+                <div class="help-feature">
+                    <h4>Real-time Adjustments</h4>
+                    <p>Need to handle players arriving late or leaving early? No problem! Use the player's panel when toggling a player's status to apply changes to the next round.</p>
+                </div>
+                <div class="help-feature">
+                    <h4>Current Round Navigation</h4>
+                    <p>Use the Arrow buttons to quickly scroll to your active matches or the top of the page.</p>
+                </div>
+            </div>
+            
+            <div class="help-footer">
+                <p>Pickle Pairs - Doing Doubles Right since 2025<br>Created with ❤️ and a passion for pickleball</p>
+                <img src="simplelogot.png" alt="Simple Logo" style="width: 30px; margin-top: 10px;">
             </div>
         </div>
     </div>
@@ -1157,6 +1913,18 @@
             debugArea.style.display = debugArea.style.display === 'none' ? 'block' : 'none';
         });
         
+        // Add event listener for the info toggle button
+        document.getElementById('toggleInfoBtn').addEventListener('click', function() {
+            const helpPanel = document.getElementById('helpPanel');
+            helpPanel.classList.toggle('active');
+        });
+        
+        // Add event listener for the help panel close button
+        document.getElementById('closeHelpBtn').addEventListener('click', function() {
+            const helpPanel = document.getElementById('helpPanel');
+            helpPanel.classList.remove('active');
+        });
+        
         // Add event listener for the copy debug button
         document.getElementById('copyDebugBtn').addEventListener('click', function() {
             const debugText = document.getElementById('debugArea').value;
@@ -1174,6 +1942,51 @@
                         console.error('Failed to copy: ', err);
                         showToast('Failed to copy debug log to clipboard', 'error');
                     });
+            }
+        });
+        
+        // Ranking Carousel Navigation
+        let currentSlideIndex = 0;
+        const totalSlides = 6; // Total number of ranking slides
+        
+        // Function to show a specific slide
+        function showRankingSlide(index) {
+            // Handle index bounds
+            if (index < 0) index = totalSlides - 1;
+            if (index >= totalSlides) index = 0;
+            
+            // Update current index
+            currentSlideIndex = index;
+            
+            // Hide all slides
+            const slides = document.querySelectorAll('.ranking-slide');
+            slides.forEach(slide => slide.classList.remove('active'));
+            
+            // Show the selected slide
+            const selectedSlide = document.getElementById('slide-' + index);
+            if (selectedSlide) selectedSlide.classList.add('active');
+            
+            // Update dots
+            const dots = document.querySelectorAll('.ranking-dot');
+            dots.forEach((dot, i) => {
+                dot.classList.toggle('active', i === index);
+            });
+        }
+        
+        // Function to navigate relative to current slide
+        function navigateRankingSlide(direction) {
+            showRankingSlide(currentSlideIndex + direction);
+        }
+        
+        // Enable keyboard navigation for ranking slides when help panel is open
+        document.addEventListener('keydown', function(e) {
+            const helpPanel = document.getElementById('helpPanel');
+            if (helpPanel.classList.contains('active')) {
+                if (e.key === 'ArrowLeft') {
+                    navigateRankingSlide(-1);
+                } else if (e.key === 'ArrowRight') {
+                    navigateRankingSlide(1);
+                }
             }
         });
         
