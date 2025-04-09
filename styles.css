@@ -207,12 +207,12 @@ button:active {
 }
 
 .btn-danger {
-    background-color: var(--accent) !important;
-    color: white !important;
+    background-color: var(--accent);
+    color: white;
 }
 
 .btn-danger:hover {
-    background-color: var(--accent-dark) !important;
+    background-color: var(--accent-dark);
 }
 
 /* Navigation Bar */
@@ -678,14 +678,13 @@ button:active {
     left: 450px; /* Updated to match panel width exactly */
 }
 
-/* Tables - Base styling for all tables */
+/* Tables - Base styling for all tables*/
 table {
     width: 100%;
     border-collapse: collapse;
     margin-bottom: var(--space-lg);
     background-color: var(--neutral-white);
     border-radius: var(--radius-md);
-    overflow: hidden;
     box-shadow: var(--shadow-sm);
 }
 
@@ -969,26 +968,7 @@ tr:last-child td {
     }
 }
 
-/* Podium Display */
-#podiumDisplay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: var(--neutral-white);
-    z-index: 2000;
-    overflow-y: auto;
-    transform: translateY(100%);
-    transition: transform var(--transition-normal);
-    padding: var(--space-xl) var(--space-xl) calc(var(--space-xl) * 2) var(--space-xl);
-    display: flex;
-    flex-direction: column;
-}
 
-#podiumDisplay.active {
-    transform: translateY(0);
-}
 
 #dateDisplay {
         text-align: center;
@@ -1049,7 +1029,7 @@ tr:last-child td {
     position: fixed;
     top: var(--space-md);
     left: var(--space-md);
-    background-color: #9C27B0 !important;
+    background-color: #9C27B0;
     z-index: 2100;
 }
 
@@ -1059,61 +1039,45 @@ tr:last-child td {
     background-color: var(--accent);
 }
 
-/* Player Stats Table */
-#playerStatsTable {
-    margin-top: var(--space-xl);
-    font-size: var(--text-sm);
-    table-layout: fixed;
-    width: 100%;
+.photo-capture-mode table {
+    overflow: visible;
+    height: auto;
+    max-height: none;
 }
 
-#playerStatsTable th,
-#playerStatsTable td {
-    padding: var(--space-sm);
-    text-align: center;
-    border: 1px solid var(--neutral-light);
-    word-break: break-word;
-}
 
-/* More specific input styling for stats table */
-#playerStatsTable input[type="number"] {
-    width: 70px;
-    padding: var(--space-xs);
-    font-size: var(--text-base);
-    text-align: center;
-    margin: 0;
-}
 
 /* Photo capture mode adjustments */
 .photo-capture-mode {
-    position: relative !important;
-    transform: none !important;
-    height: auto !important;
-    max-height: none !important;
-    overflow: visible !important;
+    position: relative;
+    transform: none;
+    height: auto;
+    max-height: none; /* Fixed: 'auto' to 'none' */
+    overflow: visible;
 }
 
 .photo-capture-mode table {
-    overflow: visible !important;
-    height: auto !important;
-    max-height: none !important;
+    overflow: visible;
+    height: auto;
+    max-height: none; /* Fixed: 'auto' to 'none' */
 }
 
 /* Responsive leaderboard adjustments */
 @media (max-width: 768px) {
-    #podiumDisplay {
-        padding: var(--space-lg) var(--space-md) calc(var(--space-xl) * 2) var(--space-md);
-        padding-top: 60px; /* Extra space for the controls at top */
-        overflow-y: auto;
-        max-height: none;
-        height: auto;
+
+    
+    /* Only keep essential styles for mobile tables */
+    #playerStatsTable {
+        min-width: 300px; /* Allow smaller width on mobile */
+        font-size: 12px; /* Smaller font for mobile */
+        width: 100%; /* Full width */
     }
     
     /* Position buttons in a fixed toolbar */
     #saveAsPictureBtn, #toggleLeaderboardMute, #closePodiumBtn {
         width: auto;
-        padding: var(--space-xs);
-        font-size: var(--text-xs);
+        padding: 8px;
+        font-size: 12px;
         top: 10px;
     }
     
@@ -1139,7 +1103,7 @@ tr:last-child td {
     
     .sorting-buttons {
         flex-direction: column;
-        margin: var(--space-xl) 0 var(--space-md);
+        margin: 20px 0 15px;
     }
     
     .sorting-buttons button {
@@ -1152,90 +1116,9 @@ tr:last-child td {
         /* Keep horizontal layout by removing column-reverse */
         justify-content: center;
         align-items: flex-end;
-        gap: var(--space-md);
+        gap: 10px;
         min-height: 120px; /* Ensure minimum height for the staggered display */
-    }
-    
-    .podium-place {
-        width: 30%; /* Smaller width to fit horizontally */
-        margin: 0 var(--space-xs);
-        padding: var(--space-xs);
-    }
-    
-    /* Add specific heights for each podium place to maintain staggered appearance */
-    .podium .gold {
-        height: 100px !important;
-    }
-    
-    .podium .silver {
-        height: 80px !important;
-    }
-    
-    .podium .bronze {
-        height: 60px !important;
-    }
-    
-    .podium-place:hover {
-        transform: translateY(-10px);
-    }
-    
-    /* Remove order properties that were used for vertical stacking */
-    
-    .placementtitle, .medals {
-        font-size: var(--text-lg);
-        margin-bottom: var(--space-xs);
-    }
-    
-    .player-name {
-        font-size: var(--text-sm);
-        font-weight: 700;
-        text-align: center;
-        word-break: break-word;
-    }
-    
-    #playerStatsTable {
-        display: block;
-        overflow-x: auto;
-        white-space: nowrap;
-        font-size: var(--text-xs);
-        width: 100%;
-        max-width: 100%;
-        margin-left: auto;
-        margin-right: auto;
-        border-collapse: collapse;
-        table-layout: auto;
-    }
-    
-    #playerStatsTable th,
-    #playerStatsTable td {
-        padding: 4px;
-        font-size: 10px;
-        min-width: 40px;
-    }
-    
-    /* Hide less important columns on mobile to make the table fit better */
-    #playerStatsTable th:nth-child(7),
-    #playerStatsTable th:nth-child(8),
-    #playerStatsTable th:nth-child(9),
-    #playerStatsTable th:nth-child(10),
-    #playerStatsTable td:nth-child(7),
-    #playerStatsTable td:nth-child(8),
-    #playerStatsTable td:nth-child(9),
-    #playerStatsTable td:nth-child(10) {
-        display: none;
-    }
-    
-    /* Make the name column a bit wider */
-    #playerStatsTable th:nth-child(2),
-    #playerStatsTable td:nth-child(2) {
-        min-width: 60px;
-    }
-    
-    #dateDisplay {
-        font-size: var(--text-lg);
-        margin: var(--space-xl) 0 var(--space-md);
-        padding-top: var(--space-lg); /* Give more space from top buttons */
-        width: 80%;
+        margin-bottom: 30px; /* Add extra space below podium before table */
     }
 }
 
@@ -1268,6 +1151,47 @@ tr:last-child td {
     text-align: center;
 }
 
+#saveMatchHistoryAsPictureBtn {
+    position: absolute;
+    top: 15px;
+    right: 70px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background-color: var(--primary);
+    color: white;
+    border: none;
+    border-radius: var(--radius-sm);
+    padding: var(--space-sm) var(--space-md);
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+#saveMatchHistoryAsPictureBtn:hover {
+    background-color: var(--primary-dark);
+}
+
+#closeMatchHistoryBtn {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background-color: var(--neutral-light);
+    color: var(--text-dark);
+    border: none;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+#closeMatchHistoryBtn:hover {
+    background-color: #ddd;
+}
+
 #matchHistoryContent {
     flex-grow: 1;
     overflow-y: auto;
@@ -1275,25 +1199,75 @@ tr:last-child td {
     max-height: 70vh;
     display: flex;
     flex-direction: column;
+    width: 100%;
+}
+
+.match-history-table-wrapper {
+    width: 100%;
+    overflow-x: auto;
 }
 
 #matchHistoryContent table {
     margin-top: var(--space-md);
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
 }
 
 #matchHistoryContent th {
     padding: var(--space-md);
     text-align: left;
     font-size: var(--text-sm);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 #matchHistoryContent td {
     padding: var(--space-md);
     text-align: left;
+    vertical-align: middle;
+}
+
+/* Column widths */
+#matchHistoryContent table th:nth-child(1), 
+#matchHistoryContent table td:nth-child(1) {
+    width: 8%;
+}
+
+#matchHistoryContent table th:nth-child(2), 
+#matchHistoryContent table td:nth-child(2) {
+    width: 10%;
+}
+
+#matchHistoryContent table th:nth-child(3), 
+#matchHistoryContent table td:nth-child(3),
+#matchHistoryContent table th:nth-child(4), 
+#matchHistoryContent table td:nth-child(4) {
+    width: 25%;
+}
+
+#matchHistoryContent table th:nth-child(5), 
+#matchHistoryContent table td:nth-child(5) {
+    width: 12%;
+    text-align: center;
+}
+
+#matchHistoryContent table th:nth-child(6), 
+#matchHistoryContent table td:nth-child(6) {
+    width: 15%;
+}
+
+#matchHistoryContent table th:nth-child(7), 
+#matchHistoryContent table td:nth-child(7) {
+    width: 5%;
+    text-align: center;
+    min-width: 40px; /* Ensure enough space for the button */
 }
 
 .team-cell {
-    padding: var(--space-xs) !important;
+    padding: var(--space-xs);
+    overflow: hidden;
 }
 
 .team1-badge, .team2-badge {
@@ -1303,6 +1277,9 @@ tr:last-child td {
     margin: var(--space-xs);
     font-size: var(--text-sm);
     white-space: nowrap;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .team1-badge {
@@ -1315,6 +1292,11 @@ tr:last-child td {
     background-color: var(--team2-color-bg);
     color: var(--team2-color);
     border-left: 3px solid var(--team2-color);
+}
+
+/* Icon headers for smaller screens */
+.header-icon {
+    display: none;
 }
 
 /* Match edit button */
@@ -1330,10 +1312,136 @@ tr:last-child td {
     justify-content: center;
     cursor: pointer;
     transition: background-color 0.2s;
+    margin: 0 auto; /* Center the button in its cell */
 }
 
 .edit-match-btn:hover {
     background-color: var(--primary-dark);
+}
+
+/* Responsive styling for match history panel */
+@media (max-width: 1024px) {
+    #matchHistoryContent table {
+        font-size: 14px;
+    }
+    
+    #matchHistoryContent th, 
+    #matchHistoryContent td {
+        padding: var(--space-sm);
+    }
+    
+    .team1-badge, .team2-badge {
+        padding: var(--space-xs) var(--space-xs);
+        margin: 2px;
+        font-size: 13px;
+    }
+}
+
+@media (max-width: 768px) {
+    #matchHistoryDisplay {
+        padding: var(--space-md);
+    }
+    
+    #matchHistoryDisplay h2 {
+        margin-bottom: var(--space-md);
+        font-size: 1.4rem;
+    }
+    
+    #saveMatchHistoryAsPictureBtn {
+        transform: scale(0.9);
+        margin-bottom: var(--space-sm);
+    }
+    
+    #closeMatchHistoryBtn {
+        top: 10px;
+        right: 10px;
+        transform: scale(0.9);
+    }
+    
+    #matchHistoryContent table {
+        font-size: 13px;
+    }
+    
+    #matchHistoryContent th span.header-text,
+    #matchHistoryContent th span.header-icon {
+        display: inline-block;
+        vertical-align: middle;
+    }
+    
+    #matchHistoryContent th span.header-text {
+        display: none;
+    }
+    
+    #matchHistoryContent th span.header-icon {
+        display: inline-block;
+    }
+    
+    .team1-badge, .team2-badge {
+        font-size: 12px;
+        padding: 2px 4px;
+        margin: 1px;
+    }
+    
+}
+
+@media (max-width: 480px) {
+    #matchHistoryContent table {
+        font-size: 12px;
+    }
+    
+    #matchHistoryContent th, 
+    #matchHistoryContent td {
+        padding: 4px;
+    }
+    
+    #matchHistoryContent table th:nth-child(1), 
+    #matchHistoryContent table td:nth-child(1) {
+        width: 10%;
+    }
+    
+    #matchHistoryContent table th:nth-child(2), 
+    #matchHistoryContent table td:nth-child(2) {
+        width: 12%;
+    }
+    
+    #matchHistoryContent table th:nth-child(3), 
+    #matchHistoryContent table td:nth-child(3),
+    #matchHistoryContent table th:nth-child(4), 
+    #matchHistoryContent table td:nth-child(4) {
+        width: 22%;
+    }
+    
+    #matchHistoryContent table th:nth-child(5), 
+    #matchHistoryContent table td:nth-child(5) {
+        width: 14%;
+    }
+    
+    #matchHistoryContent table th:nth-child(6), 
+    #matchHistoryContent table td:nth-child(6) {
+        width: 14%;
+    }
+    
+    #matchHistoryContent table th:nth-child(7), 
+    #matchHistoryContent table td:nth-child(7) {
+        width: 6%;
+        min-width: 32px; /* Smaller minimum width for mobile */
+    }
+    
+    .team1-badge, .team2-badge {
+        font-size: 11px;
+        padding: 1px 3px;
+        margin: 1px;
+        display: block;
+    }
+    
+    .edit-match-btn {
+    width: 22px;
+    height: 22px;
+    }
+    
+    .edit-match-btn .material-symbols-rounded {
+        font-size: 14px;
+    }
 }
 
 /* Match edit dialog */
@@ -1463,11 +1571,7 @@ tr:last-child td {
     .button-row button {
         padding: var(--space-xs) var(--space-sm);
         font-size: var(--text-sm);
-    }
     
-    .edit-match-btn {
-        width: 25px;
-        height: 25px;
     }
 }
 
@@ -1608,7 +1712,7 @@ button .material-symbols-rounded:only-child {
 
 /* Hidden class */
 .hidden {
-    display: none !important;
+    display: none;
 }
 
 /* Empty state messages */
@@ -1927,18 +2031,18 @@ button .material-symbols-rounded:only-child {
 
 /* Ensure full content capture for photos */
 .photo-capture-mode {
-    position: relative !important;
-    display: block !important;
-    opacity: 1 !important;
-    visibility: visible !important;
-    overflow: visible !important;
-    height: auto !important;
-    max-height: none !important;
+    position: relative;
+    display: block;
+    opacity: 1;
+    visibility: visible;
+    overflow: visible;
+    height: auto;
+    max-height: none; /* Fixed: 'auto' to 'none' */
 }
 
 .photo-capture-mode table {
-    width: 100% !important;
-    display: table !important;
+    width: 100%;
+    display: table;
 }
 
 /* Add a new capture all button style */
@@ -1970,7 +2074,7 @@ button .material-symbols-rounded:only-child {
     position: fixed;
     top: var(--space-md);
     left: var(--space-md);
-    background-color: #9C27B0 !important;
+    background-color: #9C27B0;
     z-index: 2100;
 }
 
@@ -2170,11 +2274,11 @@ button .material-symbols-rounded:only-child {
 }
 
 .save-picture-btn {
-    background-color: #9C27B0 !important; /* Ensure it overrides any other styles */
+    background-color: #9C27B0; /* Ensure it overrides any other styles */
 }
 
 #saveMatchHistoryAsPictureBtn {
-    background-color: #9C27B0 !important;
+    background-color: #9C27B0;
 }
 
 /* Additional confetti elements */
@@ -2314,7 +2418,7 @@ button .material-symbols-rounded:only-child {
 /* Winner team highlighting */
 .winner-team {
     box-shadow: 0 0 15px rgba(66, 184, 131, 0.7);
-    border-left: 6px solid var(--secondary) !important;
+    border-left: 6px solid var(--secondary);
     transform: scale(1.03);
     position: relative;
 }
@@ -2336,7 +2440,7 @@ button .material-symbols-rounded:only-child {
 
 .tie-team {
     box-shadow: 0 0 15px rgba(255, 193, 7, 0.7);
-    border-left: 6px solid #FFC107 !important;
+    border-left: 6px solid #FFC107;
 }
 
 #closeMatchHistoryBtn {
@@ -3035,7 +3139,7 @@ button .material-symbols-rounded:only-child {
 }
 
 .audio-play-icon {
-    font-size: 80px !important;
+    font-size: 80px;
     color: white;
     margin-bottom: 16px;
 }
@@ -3254,7 +3358,7 @@ button .material-symbols-rounded:only-child {
 }
 
 .guide-arrow-point {
-    font-size: 1.8rem !important;
+    font-size: 1.8rem;
     display: inline-block;
     color: var(--secondary);
 }
@@ -3318,7 +3422,7 @@ button .material-symbols-rounded:only-child {
     }
     
     .guide-arrow-point {
-        font-size: 1.6rem !important;
+        font-size: 1.6rem;
     }
     
     .guide-text {
@@ -3495,12 +3599,12 @@ button .material-symbols-rounded:only-child {
 
 /* Main audio toggle button */
 #toggleMainAudioBtn {
-    position: fixed !important;
-    left: 10px !important;
-    bottom: 60px !important; /* Position directly above debug button */
-    z-index: 999 !important;
-    width: 40px !important;
-    height: 40px !important;
+    position: fixed;
+    left: 10px;
+    bottom: 60px; /* Position directly above debug button */
+    z-index: 999;
+    width: 40px;
+    height: 40px;
 }
 
 /* Override hover style for main audio button to match leaderboard mute button */
@@ -3532,11 +3636,11 @@ button .material-symbols-rounded:only-child {
 
 /* Fixed position override for toggle buttons */
 .fixed-position {
-    position: fixed !important;
-    top: auto !important; /* Override the absolute positioning from toggle-mute-btn */
-    left: 10px !important;
-    bottom: 60px !important; /* Position directly above debug button */
-    z-index: 999 !important;
+    position: fixed;
+    top: auto; /* Override the absolute positioning from toggle-mute-btn */
+    left: 10px;
+    bottom: 60px; /* Position directly above debug button */
+    z-index: 999;
 }
 
 /* Custom Confirm Dialog Styles */
@@ -3861,7 +3965,7 @@ input:checked + .status-toggle-slider:before {
         width: 30%; /* Set percentage width to ensure fit */
         max-width: 100px; /* Cap maximum width */
         min-width: 70px; /* Ensure minimum width */
-        height: auto !important; /* Auto height based on content */
+        height: auto; /* Auto height based on content */
         padding: var(--space-sm);
         margin-bottom: 0;
     }
@@ -3936,114 +4040,80 @@ input:checked + .status-toggle-slider:before {
         gap: 2px;
     }
     
-    /* Make table cells use less padding on mobile */
-    #playerTable th, 
-    #playerTable td {
-        padding: var(--space-sm);
-    }
 }
 
-@media (max-width: 768px) {
-    /* Hide less important columns on mobile to make the table fit better */
-    .mobile-scrollable-table th:nth-child(7),
-    .mobile-scrollable-table th:nth-child(8),
-    .mobile-scrollable-table th:nth-child(9),
-    .mobile-scrollable-table th:nth-child(10),
-    .mobile-scrollable-table td:nth-child(7),
-    .mobile-scrollable-table td:nth-child(8),
-    .mobile-scrollable-table td:nth-child(9),
-    .mobile-scrollable-table td:nth-child(10) {
-        display: none;
-    }
-    
-    /* Make the name column wider for readability */
-    .mobile-scrollable-table th:nth-child(2),
-    .mobile-scrollable-table td:nth-child(2) {
-        min-width: 80px;
-    }
-}
-
-/* Table wrapper for horizontal scrolling */
-.table-wrapper {
+#podiumDisplay {
+    position: fixed;
+    top: 0;
+    left: 0;
     width: 100%;
-    overflow-x: auto;
-    margin-top: var(--space-md);
-    -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+    height: 100%; /* Full viewport height */
+    background-color: var(--neutral-white);
+    z-index: 2000;
+    overflow-y: auto; /* Allow scrolling if content exceeds height */
+    transform: translateY(100%);
+    transition: transform var(--transition-normal);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-lg); /* Space between elements */
 }
 
-@media (max-width: 768px) {
-    .table-wrapper {
-        margin-top: 10px;
-        background-color: white;
-        border-radius: 4px;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-        max-width: 100%; /* Ensure it doesn't overflow the screen */
-        overflow-x: auto;
-    }
-    
-    /* Fix table width issues for mobile */
-    #playerStatsTable {
-        min-width: 500px; /* Force the table to be wider than the screen for scrolling */
-        max-width: none; /* Override any max-width constraints */
-        width: auto; /* Let the content determine width */
-    }
+#podiumDisplay.active {
+    transform: translateY(0);
 }
 
-/* Mobile table scrolling styles */
-.mobile-scroll-wrapper {
-    width: 100%;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
+
+/* ============================================
+   TABLE STYLES - OVERRIDE ALL PREVIOUS STYLES
+   ============================================ */
+
+/* Force proper table display regardless of other styles */
+#playerStatsTable {
+    width: 100%; /* Fit container width */
+    height: 100%;
+    display: block;
+    table-layout: auto;
+    border-collapse: collapse;
     background-color: white;
-    margin-bottom: 20px;
+    font-size: 14px;
+    visibility: visible;
+    overflow-x: auto;
+    overflow-y: auto;
+    }
+
+#playerStatsTable th {
+    position: sticky;
+    top: 0;
+    background-color: var(--primary);
+    color: var(--neutral-white);
+    z-index: 1;
+    padding: 8px;
+    border: 1px solid #ddd;
+}
+
+#playerStatsTable td {
+    padding: 8px;
+    border: 1px solid #ddd;
+    text-align: center;
+}
+
+
+
+#playerStatsTable tr {
+    display: table-row; 
+}
+
+
+.table-wrapper.mobile-scroll-wrapper {
+    width: 100%; /* Fit within #podiumDisplay */
+    height: 100%;
+    overflow-x: visible; /* Horizontal scroll if needed */
+    overflow-y: visible; /* Allow table height to expand */
+    background-color: white;
+    border-radius: 4px;
+    padding: 5px;
+    position: relative;
+    border: 1px solid #eee;
     display: block;
 }
 
-.mobile-scrollable-table {
-    width: auto;
-    min-width: 100%;
-    table-layout: fixed;
-}
-
-@media (max-width: 768px) {
-    .mobile-scroll-wrapper {
-        border-radius: 4px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        max-height: none !important;
-        overflow-y: visible !important;
-    }
-    
-    .mobile-scrollable-table {
-        min-width: 500px; /* Force table to be wider than screen for horizontal scrolling */
-        border-collapse: collapse;
-        height: auto !important;
-        max-height: none !important;
-    }
-    
-    /* Make sure table cells look good on mobile */
-    .mobile-scrollable-table th,
-    .mobile-scrollable-table td {
-        padding: 8px 6px;
-        font-size: 12px;
-        text-align: center;
-        border: 1px solid #ddd;
-        white-space: nowrap;
-        height: auto !important;
-        overflow: visible !important;
-    }
-    
-    /* Add styles to ensure tbody is visible */
-    .mobile-scrollable-table tbody {
-        display: table-row-group !important;
-    }
-    
-    .mobile-scrollable-table tr {
-        display: table-row !important;
-        height: auto !important;
-    }
-    
-    /* Alternating row colors for better readability */
-    .mobile-scrollable-table tbody tr:nth-child(even) {
-        background-color: #f4f4f4;
-    }
-}
