@@ -173,14 +173,12 @@ button {
     cursor: pointer;
     transition: all var(--transition-fast);
     text-transform: uppercase;
-    letter-spacing: 0.03em;
     box-shadow: var(--shadow-sm);
     margin: var(--space-xs);
 }
 
 button:hover {
     background-color: var(--primary-dark);
-    transform: translateY(-2px);
     box-shadow: var(--shadow-md);
 }
 
@@ -208,7 +206,6 @@ button:active {
 
 .btn-danger {
     background-color: var(--accent);
-    color: white;
 }
 
 .btn-danger:hover {
@@ -583,11 +580,14 @@ button:active {
 #playerListContainerTable {
     flex-grow: 1;
     overflow-y: auto;
-    padding: var(--space-md);
+    padding: 0px, var(--space-md),var(--space-md),var(--space-md);
+    border-collapse: collapse;
+    margin-top: 10px;
 }
 
 #playerTable {
     width: 100%;
+
 }
 
 /* Toggle Button */
@@ -675,10 +675,10 @@ button:active {
 
 /* Position adjustments when player panel is open */
 .floating-panel.active + .toggle-btn {
-    left: 450px; /* Updated to match panel width exactly */
+    left: min(450px, calc(100vw - 55px - 5vh)); /* Ensure button never goes beyond viewport width */
 }
 
-/* Tables - Base styling for all tables*/
+/* Tables - Base styling for all tables
 table {
     width: 100%;
     border-collapse: collapse;
@@ -686,7 +686,7 @@ table {
     background-color: var(--neutral-white);
     border-radius: var(--radius-md);
     box-shadow: var(--shadow-sm);
-}
+}*/
 
 th, td {
     padding: var(--space-md);
@@ -704,6 +704,7 @@ th {
     position: sticky;
     top: 0;
     z-index: 1;
+    padding: 15px 15px;
 }
 
 tr:nth-child(even) {
@@ -824,11 +825,22 @@ tr:last-child td {
     margin-bottom: var(--space-md);
     padding-bottom: var(--space-xs);
     border-bottom: 1px solid var(--neutral-light);
-    text-align: center;
     display: flex;
     align-items: center;
-    justify-content: center;
-    gap: var(--space-sm);
+    justify-content: space-between;
+    gap: var(--space-md);
+}
+
+/* Group the match number with its emoji for consistent spacing */
+.match > p:first-child span.match-title {
+    display: flex;
+    align-items: center;
+}
+
+/* Add styles for the match title to be consistent with round header */
+.match > p:first-child::before {
+    content: "🏓";
+    margin-right: var(--space-xs);
 }
 
 .team {
@@ -948,23 +960,34 @@ tr:last-child td {
     background-color: #777777;
     color: var(--neutral-white);
     padding: var(--space-xs) var(--space-sm);
-    font-size: var(--text-xs);
-    opacity: 0.8;
+    font-size: var(--text-sm);
+    border-radius: var(--radius-sm);
+    opacity: 0.9;
     transition: opacity var(--transition-fast), background-color var(--transition-fast);
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    margin-left: auto;
 }
 
 .skip-match-btn:hover {
-    background-color: var(--neutral-dark);
+    background-color: #555555;
     opacity: 1;
 }
 
 @media (max-width: 768px) {
     .skip-match-btn {
-        font-size: calc(var(--text-xs) - 1px);
-        padding: 2px 6px;
+        font-size: var(--text-xs);
+        padding: 2px 8px;
+    }
+    
+    .match > p:first-child {
+        flex-wrap: wrap;
+        gap: var(--space-sm);
+    }
+    
+    .match > p:first-child::before {
+        display: none;
     }
 }
 
@@ -1015,14 +1038,9 @@ tr:last-child td {
 }
 
 /* Action buttons in the podium display */
-#saveAsPictureBtn, #closePodiumBtn, #toggleLeaderboardMute {
+#saveAsPictureBtn, #closePodiumBtn {
     position: fixed;
     z-index: 2100;
-}
-
-#toggleLeaderboardMute {
-    top: var(--space-md);
-    right: calc(var(--space-xl) + 60px); /* Position to the right of save button */
 }
 
 #saveAsPictureBtn {
@@ -1050,17 +1068,91 @@ tr:last-child td {
 /* Photo capture mode adjustments */
 .photo-capture-mode {
     position: relative;
-    transform: none;
+    display: block;
+    opacity: 1;
+    visibility: visible;
+    overflow: visible;
     height: auto;
     max-height: none; /* Fixed: 'auto' to 'none' */
-    overflow: visible;
 }
 
-.photo-capture-mode table {
+/* Add new separate capture mode classes */
+/* Podium Capture Mode */
+.podium-capture-mode {
+    position: relative;
+    display: block;
+    opacity: 1;
+    visibility: visible;
     overflow: visible;
     height: auto;
-    max-height: none; /* Fixed: 'auto' to 'none' */
+    max-height: none;
+    width: auto;
+    max-width: none;
 }
+
+/* Add full table extensions for podium display */
+.podium-capture-mode .table-wrapper,
+.podium-capture-mode #playerStatsTable,
+.podium-capture-mode #playerStatsTable tbody,
+.podium-capture-mode #playerStatsTable thead {
+    max-height: none !important;
+    height: auto !important;
+    overflow: visible !important;
+    width: 100% !important;
+    max-width: none !important;
+}
+
+/* Ensure all cells get proper width */
+.podium-capture-mode #playerStatsTable th,
+.podium-capture-mode #playerStatsTable td {
+    white-space: normal !important;
+    width: auto !important;
+    overflow: visible !important;
+}
+
+/* Match History Capture Mode */
+.match-history-capture-mode {
+    /* Special styling for match history capture */
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    background-color: white;
+    margin: 20px;
+    max-width: none;
+    width: auto;
+    max-height: none;
+    height: auto;
+}
+
+/* Add full table extensions for match history */
+.match-history-capture-mode #matchHistoryContent,
+.match-history-capture-mode .match-history-table-wrapper,
+.match-history-capture-mode table {
+    max-height: none !important;
+    height: auto !important;
+    overflow: visible !important;
+    width: 100% !important;
+    max-width: none !important;
+}
+
+
+
+
+#playerStatsTable {
+    width: 100vw;
+    height: auto;
+    max-height: 95vh;
+    table-layout: auto;
+    border-collapse: collapse;
+    background-color: white;
+    font-size: 14px;
+    visibility: visible;
+    overflow-x: auto;
+    overflow-y: auto;
+    border-radius: var(--radius-md);
+}
+    
+
 
 /* Responsive leaderboard adjustments */
 @media (max-width: 768px) {
@@ -1070,16 +1162,28 @@ tr:last-child td {
     #playerStatsTable {
         min-width: 300px; /* Allow smaller width on mobile */
         font-size: 12px; /* Smaller font for mobile */
-        width: 100%; /* Full width */
+        width: auto;
+        height: auto;
+        max-height: 95vh; /* calc(100vh - 200px); 200px for podium height */
+        display: block;
+        table-layout: auto;
+        border-collapse: collapse;
+        background-color: white;
+        font-size: 14px;
+        visibility: visible;
+        overflow-x: auto;
+        overflow-y: auto;
+        border-radius: var(--radius-md);
     }
     
     /* Position buttons in a fixed toolbar */
-    #saveAsPictureBtn, #toggleLeaderboardMute, #closePodiumBtn {
+    #saveAsPictureBtn, #closePodiumBtn {
         width: auto;
         padding: 8px;
         font-size: 12px;
         top: 10px;
     }
+    
     
     /* Set specific positions for each button */
     #saveAsPictureBtn {
@@ -1131,7 +1235,7 @@ tr:last-child td {
     height: 100%;
     background-color: var(--neutral-white);
     z-index: 2000;
-    padding: var(--space-xl);
+    padding: var(--space-lg);
     overflow-y: auto;
     visibility: hidden;
     opacity: 0;
@@ -1147,7 +1251,7 @@ tr:last-child td {
 
 #matchHistoryDisplay h2 {
     margin-top: 0;
-    margin-bottom: var(--space-xl);
+    margin-bottom: var(--space-lg);
     text-align: center;
 }
 
@@ -1173,19 +1277,9 @@ tr:last-child td {
 
 #closeMatchHistoryBtn {
     position: absolute;
-    top: 15px;
-    right: 15px;
-    background-color: var(--neutral-light);
-    color: var(--text-dark);
-    border: none;
-    border-radius: 50%;
-    width: 40px;
-    height: 40px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: background-color 0.2s;
+    top: var(--space-md);
+    right: var(--space-md);
+    background-color: var(--accent);
 }
 
 #closeMatchHistoryBtn:hover {
@@ -1194,9 +1288,9 @@ tr:last-child td {
 
 #matchHistoryContent {
     flex-grow: 1;
-    overflow-y: auto;
-    margin-top: var(--space-lg);
-    max-height: 70vh;
+    overflow-y: visible;
+    margin-top: var(--space-md);
+    max-height: 100%;
     display: flex;
     flex-direction: column;
     width: 100%;
@@ -1205,106 +1299,196 @@ tr:last-child td {
 .match-history-table-wrapper {
     width: 100%;
     overflow-x: auto;
+    max-width: 100vw;
+    display: flex;
+    justify-content: center;
 }
 
 #matchHistoryContent table {
     margin-top: var(--space-md);
-    width: 100%;
+    width: auto;
+    max-width: 100%;
     border-collapse: collapse;
     table-layout: fixed;
+    max-height: 100vh;
 }
 
+/* Condensed table cells */
 #matchHistoryContent th {
-    padding: var(--space-md);
-    text-align: left;
+    padding: 6px;
+    text-align: center; /* Changed from left to center */
     font-size: var(--text-sm);
-    white-space: nowrap;
+    white-space: normal;
     overflow: hidden;
     text-overflow: ellipsis;
-}
-
-#matchHistoryContent td {
-    padding: var(--space-md);
-    text-align: left;
     vertical-align: middle;
 }
 
-/* Column widths */
-#matchHistoryContent table th:nth-child(1), 
-#matchHistoryContent table td:nth-child(1) {
-    width: 8%;
+#matchHistoryContent td {
+    padding: 6px;
+    text-align: left;
+    vertical-align: middle;
+    line-height: 1.2;
 }
 
+/* Optimized column widths */
+#matchHistoryContent table th:nth-child(1), 
+#matchHistoryContent table td:nth-child(1),
 #matchHistoryContent table th:nth-child(2), 
-#matchHistoryContent table td:nth-child(2) {
-    width: 10%;
+#matchHistoryContent table td:nth-child(2),
+#matchHistoryContent table th:nth-child(6), 
+#matchHistoryContent table td:nth-child(6) {
+    width: 40px;
+    text-align: center;
+    min-width: 30px;
 }
 
 #matchHistoryContent table th:nth-child(3), 
 #matchHistoryContent table td:nth-child(3),
 #matchHistoryContent table th:nth-child(4), 
 #matchHistoryContent table td:nth-child(4) {
-    width: 25%;
+    width: 180px;
+    min-width: 150px;
 }
 
 #matchHistoryContent table th:nth-child(5), 
 #matchHistoryContent table td:nth-child(5) {
-    width: 12%;
+    width: 70px;
     text-align: center;
 }
 
-#matchHistoryContent table th:nth-child(6), 
-#matchHistoryContent table td:nth-child(6) {
-    width: 15%;
-}
-
-#matchHistoryContent table th:nth-child(7), 
-#matchHistoryContent table td:nth-child(7) {
-    width: 5%;
-    text-align: center;
-    min-width: 40px; /* Ensure enough space for the button */
-}
-
+/* More compact team cells */
 .team-cell {
-    padding: var(--space-xs);
+    padding: 4px;
     overflow: hidden;
+    position: relative;
+}
+
+/* Winner highlight for history view */
+.history-winner-team {
+    background-color: transparent;
+    position: relative;
+}
+
+.history-winner-team .team-players {
+    box-shadow: 0 0 12px rgba(66, 184, 131, 0.8);
+    border: 3px solid rgba(66, 184, 131, 0.8);
+    border-radius: var(--radius-sm);
+    padding: 2px 2px 2px 32px; /* Add proper padding on left side for trophy */
+    position: relative; /* For absolute positioning of the trophy */
+}
+
+/* Only use this one trophy element */
+.history-winner-team .team-players::before {
+    content: "🏆";
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    left: 8px; /* Position inside the team players div */
+    font-size: 14px;
+    z-index: 5;
+    text-shadow: 0 0 3px white, 0 0 5px rgba(255,255,255,0.8);
+}
+
+/* Remove the duplicate trophy */
+.history-winner-team::before {
+    content: none;
+    display: none;
+}
+
+.history-tie-team {
+    background-color: transparent;
+    position: relative;
+}
+
+.history-tie-team .team-players {
+    box-shadow: 0 0 12px rgba(255, 193, 7, 0.8);
+    border: 3px solid rgba(255, 193, 7, 0.8);
+    border-radius: var(--radius-sm);
+    padding: 2px 2px 2px 32px; /* Add proper padding on left side for medal */
+    position: relative; /* For absolute positioning of the medal */
+}
+
+/* Only use this one medal element */
+.history-tie-team .team-players::before {
+    content: "🏅";
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    left: 8px; /* Position inside the team players div */
+    font-size: 14px;
+    z-index: 5;
+    text-shadow: 0 0 3px white, 0 0 5px rgba(255,255,255,0.8);
+}
+
+/* Remove the duplicate medal */
+.history-tie-team::before {
+    content: none;
+    display: none;
 }
 
 .team1-badge, .team2-badge {
     display: inline-block;
-    padding: var(--space-xs) var(--space-sm);
+    padding: 2px 3px;
     border-radius: var(--radius-sm);
-    margin: var(--space-xs);
-    font-size: var(--text-sm);
-    white-space: nowrap;
-    max-width: 100%;
+    margin: 1px;
+    font-size: 12px;
+    max-width: 95%;
     overflow: hidden;
     text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.team-players {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2px;
+}
+
+.team1-players, .team2-players {
+    display: flex;
+    flex-wrap: wrap;
 }
 
 .team1-badge {
     background-color: var(--team1-color-bg);
     color: var(--team1-color);
-    border-left: 3px solid var(--team1-color);
+    border: 1px solid var(--team1-color);
+    display: inline-block;
+    padding: 2px 4px;
+    border-radius: var(--radius-sm);
+    margin: 1px;
+    font-size: 12px;
+    max-width: 95%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .team2-badge {
     background-color: var(--team2-color-bg);
     color: var(--team2-color);
-    border-left: 3px solid var(--team2-color);
+    border: 1px solid var(--team2-color);
+    display: inline-block;
+    padding: 2px 4px;
+    border-radius: var(--radius-sm);
+    margin: 1px;
+    font-size: 12px;
+    max-width: 95%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
-/* Icon headers for smaller screens */
 .header-icon {
     display: none;
 }
 
-/* Match edit button */
 .edit-match-btn {
-    background-color: var(--primary);
-    color: white;
+    background-color: var(--neutral-light);
+    color: var(--text-dark);
     border: none;
-    border-radius: var(--radius-sm);
+    border-radius: 50%;
     width: 30px;
     height: 30px;
     display: flex;
@@ -1312,136 +1496,15 @@ tr:last-child td {
     justify-content: center;
     cursor: pointer;
     transition: background-color 0.2s;
-    margin: 0 auto; /* Center the button in its cell */
+    padding: 0;
 }
 
 .edit-match-btn:hover {
-    background-color: var(--primary-dark);
+    background-color: #ddd;
 }
 
-/* Responsive styling for match history panel */
-@media (max-width: 1024px) {
-    #matchHistoryContent table {
-        font-size: 14px;
-    }
-    
-    #matchHistoryContent th, 
-    #matchHistoryContent td {
-        padding: var(--space-sm);
-    }
-    
-    .team1-badge, .team2-badge {
-        padding: var(--space-xs) var(--space-xs);
-        margin: 2px;
-        font-size: 13px;
-    }
-}
-
-@media (max-width: 768px) {
-    #matchHistoryDisplay {
-        padding: var(--space-md);
-    }
-    
-    #matchHistoryDisplay h2 {
-        margin-bottom: var(--space-md);
-        font-size: 1.4rem;
-    }
-    
-    #saveMatchHistoryAsPictureBtn {
-        transform: scale(0.9);
-        margin-bottom: var(--space-sm);
-    }
-    
-    #closeMatchHistoryBtn {
-        top: 10px;
-        right: 10px;
-        transform: scale(0.9);
-    }
-    
-    #matchHistoryContent table {
-        font-size: 13px;
-    }
-    
-    #matchHistoryContent th span.header-text,
-    #matchHistoryContent th span.header-icon {
-        display: inline-block;
-        vertical-align: middle;
-    }
-    
-    #matchHistoryContent th span.header-text {
-        display: none;
-    }
-    
-    #matchHistoryContent th span.header-icon {
-        display: inline-block;
-    }
-    
-    .team1-badge, .team2-badge {
-        font-size: 12px;
-        padding: 2px 4px;
-        margin: 1px;
-    }
-    
-}
-
-@media (max-width: 480px) {
-    #matchHistoryContent table {
-        font-size: 12px;
-    }
-    
-    #matchHistoryContent th, 
-    #matchHistoryContent td {
-        padding: 4px;
-    }
-    
-    #matchHistoryContent table th:nth-child(1), 
-    #matchHistoryContent table td:nth-child(1) {
-        width: 10%;
-    }
-    
-    #matchHistoryContent table th:nth-child(2), 
-    #matchHistoryContent table td:nth-child(2) {
-        width: 12%;
-    }
-    
-    #matchHistoryContent table th:nth-child(3), 
-    #matchHistoryContent table td:nth-child(3),
-    #matchHistoryContent table th:nth-child(4), 
-    #matchHistoryContent table td:nth-child(4) {
-        width: 22%;
-    }
-    
-    #matchHistoryContent table th:nth-child(5), 
-    #matchHistoryContent table td:nth-child(5) {
-        width: 14%;
-    }
-    
-    #matchHistoryContent table th:nth-child(6), 
-    #matchHistoryContent table td:nth-child(6) {
-        width: 14%;
-    }
-    
-    #matchHistoryContent table th:nth-child(7), 
-    #matchHistoryContent table td:nth-child(7) {
-        width: 6%;
-        min-width: 32px; /* Smaller minimum width for mobile */
-    }
-    
-    .team1-badge, .team2-badge {
-        font-size: 11px;
-        padding: 1px 3px;
-        margin: 1px;
-        display: block;
-    }
-    
-    .edit-match-btn {
-    width: 22px;
-    height: 22px;
-    }
-    
-    .edit-match-btn .material-symbols-rounded {
-        font-size: 14px;
-    }
+.edit-match-btn .material-symbols-rounded {
+    font-size: 16px;
 }
 
 /* Match edit dialog */
@@ -1705,7 +1768,7 @@ button .material-symbols-rounded:only-child {
 
 /* Match Display */
 .match-display {
-    padding: var(--space-md);
+        padding: var(--space-md);
     border-radius: var(--radius-lg);
     min-height: 50vh; /* Ensure there's enough vertical space for match display */
 }
@@ -1784,20 +1847,28 @@ button .material-symbols-rounded:only-child {
 }
 
 /* Round buttons enhancement */
-.edit-round-btn, .add-match-btn, .submit-scores-btn, .cancel-round-btn {
+.edit-round-btn, .add-match-btn, .submit-scores-btn, .cancel-round-btn, .skip-match-btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
     transition: all var(--transition-fast);
-}
+    padding: var(--space-xs) var(--space-sm);
+    font-size: var(--text-sm);
+    border-radius: var(--radius-sm);
+    white-space: nowrap;
+    }
 
 .edit-round-btn::before {
     content: "✏️";
-    margin-right: var(--space-xs);
 }
 
 .add-match-btn::before {
     content: "➕";
+    margin-right: var(--space-xs);
+}
+
+.skip-match-btn::before {
+    content: "⏭️";
     margin-right: var(--space-xs);
 }
 
@@ -1809,6 +1880,34 @@ button .material-symbols-rounded:only-child {
 .cancel-round-btn::before {
     content: "❌";
     margin-right: var(--space-xs);
+}
+
+.edit-round-btn {
+    background-color: var(--neutral-medium);
+}
+
+.add-match-btn {
+    background-color: var(--secondary);
+}
+
+.submit-scores-btn:hover {
+    background-color: var(--secondary-dark);
+}
+
+.cancel-round-btn {
+    background-color: var(--neutral-medium);
+}
+
+/* Add a media query for smaller screens */
+@media (max-width: 600px) {
+    .edit-round-btn, .add-match-btn, .submit-scores-btn, .cancel-round-btn, .skip-match-btn {
+        font-size: 12px;    }
+    
+    .round-container h3 {
+        margin-bottom: var(--space-sm);
+        display: block;
+        width: 100%;
+    }
 }
 
 /* Enhanced podium */
@@ -1839,16 +1938,16 @@ button .material-symbols-rounded:only-child {
 
 /* Enhanced and more prominent sitting out display */
 .sit-out-players {
-    margin: var(--space-md) auto var(--space-xl);
-    padding: var(--space-md);
+    margin: var(--space-sm) auto var(--space-md);
+    padding: var(--space-xs) var(--space-sm);
     background-color: rgba(255, 107, 107, 0.1);
     border: none;
-    border-left: 6px solid var(--accent);
+    border-left: 4px solid var(--accent);
     border-radius: var(--radius-sm);
     font-weight: 600;
     max-width: 90%;
     text-align: center;
-    box-shadow: var(--shadow-md);
+    box-shadow: var(--shadow-sm);
     position: relative;
     overflow: visible;
 }
@@ -1872,25 +1971,27 @@ button .material-symbols-rounded:only-child {
 
 .sitting-player {
     display: inline-block;
-    padding: var(--space-sm) var(--space-md);
-    margin: var(--space-xs);
+    padding: var(--space-xs) var(--space-sm);
+    margin: var(--space-xs) var(--space-xs);
     background-color: rgba(255, 107, 107, 0.15);
     border-radius: var(--radius-sm);
     font-weight: 500;
-    border-bottom: 2px solid var(--accent);
+    border-bottom: 1px solid var(--accent);
     transition: transform 0.2s ease, box-shadow 0.2s ease;
-    box-shadow: var(--shadow-sm);
+    box-shadow: none;
+    font-size: var(--text-sm);
 }
 
 .sitting-player:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-md);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-sm);
 }
 
 .sit-out-players.all-playing {
     background-color: rgba(66, 184, 131, 0.1);
-    border-left: 6px solid var(--secondary);
+    border-left: 4px solid var(--secondary);
     text-align: center;
+    padding: var(--space-xs) var(--space-sm);
 }
 
 .sit-out-players.all-playing:before {
@@ -1943,7 +2044,7 @@ button .material-symbols-rounded:only-child {
     left: 20px;
     width: calc(100% - 40px);
     max-width: 600px;
-    z-index: 998;
+    z-index: 2200; /* Updated to be the same as the settings button */
     background-color: rgba(0, 0, 0, 0.8);
     border-radius: var(--radius-md);
     padding: var(--space-md);
@@ -2045,6 +2146,60 @@ button .material-symbols-rounded:only-child {
     display: table;
 }
 
+/* Ensure trophy icons appear in the podium in photo capture mode */
+.photo-capture-mode .podium-place.gold::before,
+.photo-capture-mode .podium-place.gold::after,
+.photo-capture-mode .podium-place::before {
+    display: block !important;
+    content: inherit !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+.photo-capture-mode .gold::before {
+    content: "🏆" !important;
+    position: absolute !important;
+    font-size: 24px !important;
+    top: 10px !important;
+    left: 20% !important;
+    animation: confetti-internal 2.5s infinite linear !important;
+    z-index: 5 !important;
+    display: block !important;
+}
+
+.photo-capture-mode .gold::after {
+    content: "🎉" !important;
+    position: absolute !important;
+    font-size: 24px !important;
+    top: 30px !important;
+    left: 60% !important;
+    animation: confetti-internal 3s infinite linear 0.5s !important;
+    z-index: 5 !important;
+    display: block !important;
+}
+
+/* Ensure confetti animation appears in photo capture mode */
+.photo-capture-mode .confetti-container {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+.photo-capture-mode .confetti {
+    display: block !important;
+    visibility: visible !important;
+}
+
+.photo-capture-mode .confetti:nth-child(1),
+.photo-capture-mode .confetti:nth-child(2),
+.photo-capture-mode .confetti:nth-child(3),
+.photo-capture-mode .confetti:nth-child(4),
+.photo-capture-mode .confetti:nth-child(5) {
+    display: block !important;
+    visibility: visible !important;
+    animation-play-state: running !important;
+}
+
 /* Add a new capture all button style */
 .capture-all-btn {
     background-color: #9C27B0; /* Subtle purple */
@@ -2084,7 +2239,7 @@ button .material-symbols-rounded:only-child {
 
 /* Ensure all photo-related buttons have consistent styling */
 .save-picture-btn,
-#saveMatchHistoryAsPictureBtn {
+    #saveMatchHistoryAsPictureBtn {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -2246,8 +2401,8 @@ button .material-symbols-rounded:only-child {
 
 .placementtitle, .medals {
     font-size: var(--text-3xl);
-    margin-bottom: var(--space-sm);
-}
+        margin-bottom: var(--space-sm);
+    }
 
 .player-name {
     font-size: var(--text-lg);
@@ -2442,18 +2597,15 @@ button .material-symbols-rounded:only-child {
     box-shadow: 0 0 15px rgba(255, 193, 7, 0.7);
     border-left: 6px solid #FFC107;
 }
-
-#closeMatchHistoryBtn {
+    
+    #closeMatchHistoryBtn {
     position: absolute;
     top: var(--space-md);
     right: var(--space-md);
     background-color: var(--accent);
 }
 
-.edit-round-btn, .add-match-btn {
-    margin-right: var(--space-md);
-    margin-bottom: var(--space-md);
-}
+
 
 .edit-round-btn {
     background-color: var(--neutral-medium);
@@ -2526,8 +2678,19 @@ button .material-symbols-rounded:only-child {
 }
 
 .keypad-winning-btn {
-    background-color: var(--secondary);
+    background-color: #00bb00;
     color: white;
+    font-weight: bold;
+    font-size: 130%;
+    box-shadow: 0 0 10px rgba(0, 187, 0, 0.7);
+    border: 2px solid #006600;
+    animation: pulse-winner 1.5s infinite;
+}
+
+@keyframes pulse-winner {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); box-shadow: 0 0 12px rgba(0, 187, 0, 0.9); }
+    100% { transform: scale(1); }
 }
 
 .backspace-btn {
@@ -2839,112 +3002,135 @@ button .material-symbols-rounded:only-child {
     border-left: 3px solid var(--primary);
 }
 
-/* Toast Notifications */
-.toast-container {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    z-index: 10000;
+
+
+/* Header Logo Styles */
+.header-logo {
     display: flex;
     flex-direction: column;
-    gap: 10px;
-    max-width: 350px;
-}
-
-.toast {
-    background-color: var(--neutral-white);
-    color: var(--neutral-dark);
-    border-radius: var(--radius-md);
-    padding: 12px 16px;
-    box-shadow: var(--shadow-md);
-    display: flex;
     align-items: center;
-    animation: toast-in 0.3s ease, toast-out 0.3s ease forwards 5s;
-    transform-origin: top right;
+    margin-bottom: var(--space-xl);
+    padding-top: var(--space-md);
 }
 
-.toast-success {
-    border-left: 4px solid var(--secondary);
+#header-logo {
+    width: 180px;
+    height: auto;
+    margin-bottom: var(--space-sm);
+    filter: drop-shadow(0 4px 8px rgba(0,0,0,0.15));
+    transition: transform var(--transition-normal), filter var(--transition-normal);
 }
 
-.toast-error {
-    border-left: 4px solid var(--accent);
+#header-logo:hover {
+    transform: scale(1.05);
+    filter: drop-shadow(0 6px 12px rgba(0,0,0,0.2));
 }
 
-.toast-info {
-    border-left: 4px solid var(--primary);
+.header-logo h1 {
+    margin-top: var(--space-sm);
+    position: relative;
+    text-align: center;
 }
 
-.toast-icon {
-    margin-right: 10px;
-    font-size: 20px;
-}
-
-.toast-success .toast-icon {
-    color: var(--secondary);
-}
-
-.toast-error .toast-icon {
-    color: var(--accent);
-}
-
-.toast-info .toast-icon {
-    color: var(--primary);
-}
-
-.toast-message {
-    flex-grow: 1;
-}
-
-.toast-close {
-    background: none;
-    border: none;
-    color: var(--neutral-medium);
-    cursor: pointer;
-    font-size: 20px;
-    padding: 0;
-    margin-left: 10px;
+/* Intro animation styles */
+.intro-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(255, 255, 255, 0.98);
     display: flex;
-    align-items: center;
     justify-content: center;
-    box-shadow: none;
+    align-items: center;
+    z-index: 2000;
+    opacity: 1;
+    transition: opacity 0.7s ease-out;
+    overflow: hidden;
 }
 
-.toast-close:hover {
-    color: var(--neutral-dark);
-    transform: none;
-    box-shadow: none;
+.intro-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    transform: translate(0, 0) scale(1);
+    transition: transform 1s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-@keyframes toast-in {
-    from {
-        transform: translateX(100%) scale(0.8);
-        opacity: 0;
-    }
-    to {
-        transform: translateX(0) scale(1);
-        opacity: 1;
-    }
+.intro-logo {
+    width: 300px; /* Reduced from 340px */
+    height: auto;
+    filter: drop-shadow(0 8px 16px rgba(0,0,0,0.2));
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.5s ease, transform 0.5s ease;
 }
 
-@keyframes toast-out {
-    from {
-        transform: translateX(0) scale(1);
-        opacity: 1;
-    }
-    to {
-        transform: translateX(100%) scale(0.8);
-        opacity: 0;
-    }
+.intro-container h1 {
+    font-size: 3.5rem; /* Reduced from 4rem */
+    margin-top: var(--space-md);
+    margin-bottom: var(--space-sm);
+    color: var(--primary-dark);
+    text-transform: uppercase;
+    position: relative;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.5s ease, transform 0.5s ease;
 }
 
-@media (max-width: 768px) {
-    .toast-container {
-        top: 10px;
-        right: 10px;
-        left: 10px;
-        max-width: calc(100% - 20px);
-    }
+.intro-container h1:after {
+    content: "";
+    position: absolute;
+    bottom: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 120px;
+    height: 4px;
+    background: linear-gradient(to right, var(--primary), var(--secondary));
+    border-radius: var(--radius-sm);
+}
+
+.intro-container .slogan {
+    font-size: 1.6rem; /* Reduced from 1.8rem */
+    color: var(--secondary-dark);
+    font-style: italic;
+    margin-top: var(--space-md);
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.5s ease, transform 0.5s ease;
+}
+
+.intro-content.animate-in .intro-logo,
+.intro-content.animate-in h1,
+.intro-content.animate-in .slogan,
+.intro-content.animate-in .start-button {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.intro-content.animate-in .intro-logo {
+    transition-delay: 0.1s;
+}
+
+.intro-content.animate-in h1 {
+    transition-delay: 0.4s;
+}
+
+.intro-content.animate-in .slogan {
+    transition-delay: 0.7s;
+}
+
+.intro-content.animate-in .start-button {
+    transition-delay: 1.0s;
+}
+
+.intro-container.animate-out {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.intro-container.animate-out .intro-content {
+    transform: translate(0, -40vh) scale(0.3);
 }
 
 /* Header Logo Styles */
@@ -3187,7 +3373,7 @@ button .material-symbols-rounded:only-child {
 
 .pickle-icon {
     font-size: 2rem; /* Reduced from 2.2rem */
-    display: inline-block;
+        display: inline-block;
     animation: bounce 1s infinite alternate;
 }
 
@@ -3322,24 +3508,27 @@ button .material-symbols-rounded:only-child {
 /* Guide Arrow */
 .guide-arrow {
     position: fixed;
-    z-index: 100;
+    z-index: 1000;
     opacity: 0;
-    transition: opacity 0.5s ease, transform 0.5s ease;
+    visibility: hidden; /* Start hidden */
+    transition: opacity 0.5s ease, transform 0.5s ease, visibility 0.5s ease;
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 10px;
     pointer-events: none;
-    background-color: rgba(255, 255, 255, 0.92);
-    padding: 8px 12px;
+    background-color: rgba(255, 255, 255, 0.95);
+    padding: 10px 15px;
     border-radius: 50px;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     border: 2px solid var(--secondary);
     transform: translateY(-10px);
     max-width: 240px;
+    will-change: opacity, transform; /* Optimizes animations */
 }
 
 .guide-arrow.visible {
     opacity: 1;
+    visibility: visible;
     transform: translateY(0);
     animation: float-guide 2.5s ease-in-out infinite;
 }
@@ -3347,24 +3536,24 @@ button .material-symbols-rounded:only-child {
 .guide-arrow-content {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 10px;
 }
 
 .guide-pickle {
-    font-size: 2rem;
+    font-size: 2.2rem;
     animation: dance-pickle 1.2s ease-in-out infinite;
     display: inline-block;
     transform-origin: bottom center;
 }
 
 .guide-arrow-point {
-    font-size: 1.8rem;
+    font-size: 2rem;
     display: inline-block;
     color: var(--secondary);
 }
 
 .guide-text {
-    font-size: 1rem;
+    font-size: 1.1rem;
     font-weight: bold;
     color: var(--primary-dark);
     margin: 0;
@@ -3378,16 +3567,16 @@ button .material-symbols-rounded:only-child {
         transform: translateY(0);
     }
     50% {
-        transform: translateY(-5px);
+        transform: translateY(-6px);
     }
 }
 
 @keyframes dance-pickle {
     0%, 100% {
-        transform: rotate(-8deg) translateY(0);
+        transform: rotate(-10deg) translateY(0);
     }
     50% {
-        transform: rotate(8deg) translateY(-3px);
+        transform: rotate(10deg) translateY(-3px);
     }
 }
 
@@ -3396,7 +3585,7 @@ button .material-symbols-rounded:only-child {
         transform: translateX(0);
     }
     50% {
-        transform: translateX(5px);
+        transform: translateX(6px);
     }
 }
 
@@ -3413,7 +3602,7 @@ button .material-symbols-rounded:only-child {
 @media (max-width: 768px) {
     .guide-arrow {
         max-width: 200px;
-        padding: 6px 10px;
+        padding: 8px 12px;
         gap: 8px;
     }
     
@@ -3422,22 +3611,20 @@ button .material-symbols-rounded:only-child {
     }
     
     .guide-arrow-point {
-        font-size: 1.6rem;
+        font-size: 1.7rem;
     }
     
     .guide-text {
-        font-size: 0.9rem;
+        font-size: 1rem;
     }
 }
-
-/* Start Button */
 
 @keyframes point-arrow-down {
     0%, 100% {
         transform: translateY(0);
     }
     50% {
-        transform: translateY(5px);
+        transform: translateY(6px);
     }
 }
 
@@ -3446,7 +3633,7 @@ button .material-symbols-rounded:only-child {
         transform: translateX(0);
     }
     50% {
-        transform: translateX(5px);
+        transform: translateX(6px);
     }
 }
 
@@ -3602,7 +3789,7 @@ button .material-symbols-rounded:only-child {
     position: fixed;
     left: 10px;
     bottom: 60px; /* Position directly above debug button */
-    z-index: 999;
+    z-index: 2100; /* Increase z-index to match podium buttons */
     width: 40px;
     height: 40px;
 }
@@ -3631,6 +3818,16 @@ button .material-symbols-rounded:only-child {
     #toggleMainAudioBtn {
         left: 10px; /* Same as debug button */
         bottom: 60px; /* Position above the debug button */
+    }
+    
+    .toggle-capture-btn {
+        left: 10px; /* Same as debug button */
+        bottom: 110px; /* Adjust spacing for mobile */
+    }
+    
+    .toggle-info-btn {
+        left: 10px; /* Same as debug button */
+        bottom: 160px; /* Adjust spacing for mobile to match desktop arrangement */
     }
 }
 
@@ -3861,7 +4058,7 @@ input:checked + .status-toggle-slider:before {
     }
     
     .floating-panel.active + .toggle-btn {
-        left: calc(90% + 10px); /* Position toggle button outside panel width + some padding */
+        left: min(calc(90% + 10px), calc(100vw - 55px - 5vh)); /* Ensure button stays within viewport */
     }
     
     .status-cell {
@@ -4047,73 +4244,1615 @@ input:checked + .status-toggle-slider:before {
     top: 0;
     left: 0;
     width: 100%;
-    height: 100%; /* Full viewport height */
+    max-width: 100vw;
+    height: 100%;
     background-color: var(--neutral-white);
     z-index: 2000;
-    overflow-y: auto; /* Allow scrolling if content exceeds height */
+    overflow-x: auto;
+    overflow-y: auto;
     transform: translateY(100%);
     transition: transform var(--transition-normal);
     display: flex;
     flex-direction: column;
-    gap: var(--space-lg); /* Space between elements */
+    padding: 20px;
+    box-sizing: border-box;
 }
 
 #podiumDisplay.active {
     transform: translateY(0);
 }
 
-
-/* ============================================
-   TABLE STYLES - OVERRIDE ALL PREVIOUS STYLES
-   ============================================ */
-
-/* Force proper table display regardless of other styles */
-#playerStatsTable {
-    width: 100%; /* Fit container width */
-    height: 100%;
-    display: block;
-    table-layout: auto;
-    border-collapse: collapse;
-    background-color: white;
-    font-size: 14px;
-    visibility: visible;
-    overflow-x: auto;
-    overflow-y: auto;
-    }
-
-#playerStatsTable th {
-    position: sticky;
-    top: 0;
-    background-color: var(--primary);
-    color: var(--neutral-white);
-    z-index: 1;
-    padding: 8px;
-    border: 1px solid #ddd;
+/* Table wrapper - remove any constraints */
+.table-wrapper {
+    width: 100%;
+    overflow: visible;
+    margin-top: 20px;
+    margin-bottom: 20px;
 }
 
+#playerStatsTable {
+    width: auto;
+    min-width: 100%;
+    border-collapse: collapse;
+    table-layout: auto;
+}
+
+#playerStatsTable th, 
 #playerStatsTable td {
-    padding: 8px;
-    border: 1px solid #ddd;
+    padding: 8px 12px;
+    text-align: center;
+    white-space: nowrap;
+}
+
+/* Photo capture mode styles - simplified for proper table fitting */
+.photo-capture-mode {
+    position: static !important;
+    transform: none !important;
+    overflow: visible !important;
+    background-color: white;
+}
+
+.photo-capture-mode .table-wrapper {
+    overflow: visible !important;
+    height: auto !important;
+    max-height: none !important;
+    width: 100% !important;
+}
+
+.photo-capture-mode #playerStatsTable {
+    width: auto !important;
+    min-width: 100% !important;
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+    table-layout: auto !important;
+}
+
+.photo-capture-mode #playerStatsTable th,
+.photo-capture-mode #playerStatsTable td {
+    overflow: visible !important;
+    white-space: normal !important;
+}
+
+/* Fix sticky columns in photo capture mode */
+.photo-capture-mode #playerStatsTable th:nth-child(1),
+.photo-capture-mode #playerStatsTable td:nth-child(1),
+.photo-capture-mode #playerStatsTable th:nth-child(2),
+.photo-capture-mode #playerStatsTable td:nth-child(2) {
+    position: static !important;
+    left: auto !important;
+    box-shadow: none !important;
+    z-index: 1 !important;
+    border-right: 1px solid #ddd !important;
+    background-color: transparent !important; /* Use transparent instead of inherit */
+}
+
+/* Explicitly set the background color for rows */
+.photo-capture-mode #playerStatsTable tr:nth-child(odd) td {
+    background-color: white !important;
+}
+
+.photo-capture-mode #playerStatsTable tr:nth-child(even) td {
+    background-color: rgb(240, 245, 255) !important;
+}
+
+/* Force background color of name column in each row */
+.photo-capture-mode #playerStatsTable tr:nth-child(odd) td:nth-child(2) {
+    background-color: white !important;
+}
+
+.photo-capture-mode #playerStatsTable tr:nth-child(even) td:nth-child(2) {
+    background-color: rgb(240, 245, 255) !important;
+}
+
+/* Add a more specific override to ensure the name column isn't darker */
+.photo-capture-mode #playerStatsTable .name-column,
+.photo-capture-mode #playerStatsTable td:nth-child(2) {
+    background-image: none !important;
+    background-blend-mode: normal !important;
+    opacity: 1 !important;
+    filter: none !important;
+}
+
+/* Toast Notification System - With Debug Support */
+.toast-container {
+    position: fixed;
+    bottom: 2vh;
+    right: 5px;
+    z-index: 10000;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-width: 60vw;
+    pointer-events: none; /* Allow clicks to pass through container but not toasts */
+}
+
+.toast {
+    background-color: white;
+    color: #333;
+    border-radius: 8px;
+    padding: 14px 16px 16px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    display: flex;
+    align-items: flex-start;
+    transform: translateX(120%);
+    transition: transform 0.3s ease-out;
+    position: relative;
+    overflow: hidden;
+    width: 100%;
+    pointer-events: auto; /* Re-enable pointer events for the toast itself */
+}
+
+.toast.active {
+    transform: translateX(0);
+}
+
+.toast-success {
+    border-left: 4px solid #4CAF50;
+}
+
+.toast-error {
+    border-left: 4px solid #F44336;
+}
+
+.toast-info {
+    border-left: 4px solid #2196F3;
+}
+
+.toast-warning {
+    border-left: 4px solid #FF9800;
+}
+
+.toast-icon {
+    margin-right: 10px;
+    font-size: 20px;
+    line-height: 1;
+}
+
+.toast-success .toast-icon {
+    color: #4CAF50;
+}
+
+.toast-error .toast-icon {
+    color: #F44336;
+}
+
+.toast-info .toast-icon {
+    color: #2196F3;
+}
+
+.toast-warning .toast-icon {
+    color: #FF9800;
+}
+
+.toast-message {
+    flex-grow: 1;
+    font-size: 14px;
+    line-height: 1.4;
+    padding-right: 5px;
+    word-break: break-word;
+}
+
+.toast-close {
+    background: none;
+    border: 1px solid #888;
+    border-radius: 50%;
+    color: #888;
+    cursor: pointer;
+    font-size: 18px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: auto;
+    opacity: 0.7;
+    transition: opacity 0.2s, transform 0.2s;
+    width: 24px;
+    height: 24px;
+}
+
+.toast-close:hover {
+    color: #333;
+    border-color: #333;
+    opacity: 1;
+    transform: scale(1.1);
+}
+
+.toast-progress-bar {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    height: 4px;
+    width: 100%;
+    background-color: rgba(0, 0, 0, 0.1);
+}
+
+.toast-success .toast-progress-bar {
+    background-color: #4CAF50;
+}
+
+.toast-error .toast-progress-bar {
+    background-color: #F44336;
+}
+
+.toast-info .toast-progress-bar {
+    background-color: #2196F3;
+}
+
+.toast-warning .toast-progress-bar {
+    background-color: #FF9800;
+}
+
+@media (max-width: 768px) {
+    .toast-container {
+        bottom: 2vh;
+        right: 5px;
+        max-width: 60vw;
+    }
+    
+    .toast {
+        padding: 12px 14px 14px;
+    }
+    
+    .toast-message {
+        font-size: 13px;
+    }
+}
+
+/* Icon headers for all screen sizes */
+.header-icon {
+    display: none;
+}
+
+/* Team number styling inside icon headers */
+.team-number {
+    display: inline-block;
+    font-size: 10px;
+    vertical-align: super;
+    margin-left: 2px;
+}
+
+/* Responsive adjustments for match history */
+@media (max-width: 1024px) {
+    #matchHistoryContent table {
+        font-size: 13px;
+    }
+    
+    #matchHistoryContent th span.header-text {
+        display: none;
+    }
+    
+    #matchHistoryContent th span.header-icon {
+        display: inline-block;
+    }
+    
+    /* Adjust column widths for better readability */
+    #matchHistoryContent table th:nth-child(3), 
+    #matchHistoryContent table td:nth-child(3),
+    #matchHistoryContent table th:nth-child(4), 
+    #matchHistoryContent table td:nth-child(4) {
+        width: 30%;
+    }
+}
+
+/* Move specific team stacking styles from 768px to 650px */
+@media (max-width: 650px) {
+    /* Hide Team 2 header when teams are stacked */
+    #matchHistoryContent th:nth-child(4) {
+        display: none;
+    }
+    
+    /* Update Team 1 header to only show the group icon without the number */
+    #matchHistoryContent th:nth-child(3) .header-icon {
+        display: inline-block;
+    }
+    
+    /* Hide the team number from the Team 1 header */
+    #matchHistoryContent th:nth-child(3) .team-number {
+        display: none;
+    }
+    
+    .team-cell {
+        word-break: break-word;
+        display: flex;
+        flex-direction: column;
+        gap: 1px;
+    }
+    
+    .team-players {
+        display: flex;
+        flex-direction: column;
+        width: 100%;
+    }
+    
+    .team1-badge, .team2-badge {
+        margin: 1px 0;
+        width: 95%;
+        box-sizing: border-box;
+        font-size: 11px;
+        padding: 1px 2px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+}
+
+/* Photo capture mode adjustments for match history */
+.photo-capture-mode.match-history-capture {
+    /* Special styling for match history capture */
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    background-color: white;
+    margin: 20px;
+    max-width: none;
+    width: auto;
+    max-height: none;
+    height: auto;
+}
+
+/* New class for match history capture mode */
+.match-history-capture-mode {
+    /* Special styling for match history capture */
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    background-color: white;
+    margin: 20px;
+    max-width: none;
+    width: auto;
+    max-height: none;
+    height: auto;
+}
+
+.match-history-capture h2 {
+    font-size: 28px !important;
+    color: var(--primary) !important;
+    text-align: center !important;
+    margin-top: 0 !important;
+    margin-bottom: 15px !important;
+    width: 100% !important;
+    font-weight: bold !important;
+}
+
+.match-history-capture #dateDisplay {
+    display: block !important;
+    text-align: center !important;
+    font-size: 18px !important;
+    font-weight: bold !important;
+    margin: 15px auto 25px !important;
+    width: 100% !important;
+    border-bottom: 2px solid var(--primary) !important;
+    padding-bottom: 10px !important;
+    position: relative !important;
+    left: auto !important;
+    right: auto !important;
+    transform: none !important;
+}
+
+.match-history-capture #matchHistoryContent {
+    overflow: visible !important;
+    max-height: none !important;
+    height: auto !important;
+    width: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
+    padding-bottom: 30px !important;
+}
+
+.match-history-capture .match-history-table-wrapper {
+    overflow: visible !important;
+    width: 100% !important;
+    max-width: none !important;
+    min-width: auto !important;
+    display: flex !important;
+    justify-content: center !important;
+    margin-top: 20px !important;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1) !important;
+    border-radius: 8px !important;
+    background-color: white !important;
+}
+
+.match-history-capture #matchHistoryContent table {
+    width: 100% !important;
+    min-width: auto !important;
+    max-width: 100% !important;
+    table-layout: fixed !important;
+    margin: 0 auto !important;
+    overflow: visible !important;
+    height: auto !important;
+    border-collapse: collapse !important;
+}
+
+/* Headers styling */
+.match-history-capture #matchHistoryContent table th {
+    background-color: #f2f2f2 !important;
+    color: var(--text-dark) !important;
+    font-weight: bold !important;
+    text-align: center !important;
+    border-bottom: 2px solid var(--primary) !important;
+    padding: 12px 8px !important;
+    white-space: normal !important;
+    height: auto !important;
+    line-height: 1.3 !important;
+    vertical-align: middle !important;
+    font-size: 14px !important;
+}
+
+/* Cell styling */
+.match-history-capture #matchHistoryContent td {
+    padding: 8px !important;
+    word-wrap: break-word !important;
+    overflow: visible !important;
+    vertical-align: middle !important;
+    line-height: 1.4 !important;
+    border-bottom: 1px solid #ddd !important;
+    font-size: 14px !important;
+}
+
+/* Header text and icons handling */
+.match-history-capture #matchHistoryContent th span.header-text {
+    display: inline-block !important;
+}
+
+.match-history-capture #matchHistoryContent th span.header-icon {
+    display: none !important;
+}
+
+/* Column width adjustments for photo capture */
+.photo-capture-mode #matchHistoryContent table th:nth-child(1),
+.photo-capture-mode #matchHistoryContent table td:nth-child(1) {
+    width: 8%;
     text-align: center;
 }
 
-
-
-#playerStatsTable tr {
-    display: table-row; 
+.photo-capture-mode #matchHistoryContent table th:nth-child(2),
+.photo-capture-mode #matchHistoryContent table td:nth-child(2) {
+    width: 8%;
+    text-align: center;
 }
 
+.photo-capture-mode #matchHistoryContent table th:nth-child(3),
+.photo-capture-mode #matchHistoryContent table td:nth-child(3),
+.photo-capture-mode #matchHistoryContent table th:nth-child(4),
+.photo-capture-mode #matchHistoryContent table td:nth-child(4) {
+    width: 36%;
+}
 
-.table-wrapper.mobile-scroll-wrapper {
-    width: 100%; /* Fit within #podiumDisplay */
-    height: 100%;
-    overflow-x: visible; /* Horizontal scroll if needed */
-    overflow-y: visible; /* Allow table height to expand */
-    background-color: white;
-    border-radius: 4px;
-    padding: 5px;
+.photo-capture-mode #matchHistoryContent table th:nth-child(5),
+.photo-capture-mode #matchHistoryContent table td:nth-child(5) {
+    width: 12%;
+    text-align: center;
+}
+
+/* Specific styling for winner highlighting in photo mode */
+.photo-capture-mode .history-winner-team {
     position: relative;
-    border: 1px solid #eee;
-    display: block;
+    background-color: transparent;
 }
 
+.photo-capture-mode .history-winner-team .team-players {
+    box-shadow: 0 0 12px rgba(66, 184, 131, 0.8);
+    border: 3px solid rgba(66, 184, 131, 0.8);
+    border-radius: var(--radius-sm);
+    padding: 2px;
+}
+
+.photo-capture-mode .history-tie-team {
+    position: relative;
+    background-color: transparent;
+}
+
+.photo-capture-mode .history-tie-team .team-players {
+    box-shadow: 0 0 12px rgba(255, 193, 7, 0.8);
+    border: 3px solid rgba(255, 193, 7, 0.8);
+    border-radius: var(--radius-sm);
+    padding: 2px;
+}
+
+/* Winner highlight for history view */
+.history-winner-team {
+    background-color: transparent;
+    position: relative;
+}
+
+.history-winner-team .team-players {
+    box-shadow: 0 0 12px rgba(66, 184, 131, 0.8);
+    border: 3px solid rgba(66, 184, 131, 0.8);
+    border-radius: var(--radius-sm);
+    padding: 2px;
+}
+
+.history-winner-team::before {
+    content: "🏆";
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    left: auto;
+    right: auto;
+    font-size: 14px;
+    z-index: 5;
+    text-shadow: 0 0 3px white, 0 0 5px rgba(255,255,255,0.8);
+}
+
+.history-tie-team {
+    background-color: transparent;
+    position: relative;
+}
+
+.history-tie-team .team-players {
+    box-shadow: 0 0 12px rgba(255, 193, 7, 0.8);
+    border: 3px solid rgba(255, 193, 7, 0.8);
+    border-radius: var(--radius-sm);
+    padding: 2px;
+}
+
+/* Make trophy icon responsive and properly placed */
+@media (max-width: 768px) {
+    #matchHistoryDisplay {
+        padding: var(--space-md) var(--space-sm);
+    }
+    
+    #matchHistoryDisplay h2 {
+        margin-bottom: var(--space-md);
+        font-size: 1.3rem;
+    }
+    
+    #saveMatchHistoryAsPictureBtn {
+        transform: scale(0.9);
+        top: 10px;
+        right: 60px;
+    }
+    
+    #closeMatchHistoryBtn {
+        top: 10px;
+        right: 10px;
+        transform: scale(0.9);
+    }
+    
+    #matchHistoryContent table {
+        font-size: 12px;
+    }
+    
+    #matchHistoryContent th, 
+    #matchHistoryContent td {
+        padding: 4px;
+    }
+    
+    .history-winner-team .team-players {
+        padding-left: 28px; /* Slightly less left padding on mobile */
+    }
+    
+    .history-winner-team .team-players::before {
+        font-size: 12px;
+        left: 6px;
+    }
+    
+    .history-tie-team .team-players {
+        padding-left: 28px; /* Slightly less left padding on mobile */
+    }
+    
+    .history-tie-team .team-players::before {
+        font-size: 12px;
+        left: 6px;
+    }
+    
+    /* Maintain consistent winner highlighting in mobile */
+    .history-winner-team .team-players {
+        box-shadow: 0 0 12px rgba(66, 184, 131, 0.7);
+        border: 2px solid rgba(66, 184, 131, 0.7);
+    }
+    
+    .history-tie-team .team-players {
+        box-shadow: 0 0 12px rgba(255, 193, 7, 0.7);
+        border: 2px solid rgba(255, 193, 7, 0.7);
+    }
+}
+
+/* Fix trophy position for very small screens */
+@media (max-width: 480px) {
+    .team-cell {
+        position: relative;
+        padding-right: 20px;
+    }
+    
+    .team-players {
+        width: calc(100% - 20px);
+    }
+    
+    .team1-badge, .team2-badge {
+        margin: 1px 0;
+        width: 100%;
+        box-sizing: border-box;
+        font-size: 10px;
+    }
+    
+    .history-winner-team::before {
+        content: none; /* Remove the right-positioned trophy */
+        display: none;
+    }
+    
+    /* Ensure the trophy is correctly positioned inside team-players */
+    .history-winner-team .team-players {
+        padding-left: 24px; /* Reduced padding for smaller screens */
+    }
+    
+    .history-winner-team .team-players::before {
+        font-size: 10px;
+        left: 5px;
+    }
+    
+    .history-tie-team .team-players {
+        padding-left: 24px; /* Reduced padding for smaller screens */
+    }
+    
+    .history-tie-team .team-players::before {
+        font-size: 10px;
+        left: 5px;
+    }
+}
+
+/* Style adjustments specific to photo capture mode for match history */
+.match-history-capture .history-winner-team::before {
+    content: "🏆";
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    right: -18px;
+    left: auto;
+    font-size: 16px !important;
+    z-index: 5;
+    text-shadow: 0 0 3px white, 0 0 5px rgba(255,255,255,0.8);
+}
+
+.match-history-capture .history-winner-team .team-players::after {
+    content: "";
+    position: absolute;
+    bottom: -5px;
+    right: 5px;
+    font-size: 10px;
+    font-weight: bold;
+    color: var(--secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    background-color: rgba(255,255,255,0.8);
+    padding: 2px 4px;
+    border-radius: 3px;
+    z-index: 10;
+}
+
+.match-history-capture .history-tie-team::before {
+    content: "🤝";
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    right: -18px;
+    left: auto;
+    font-size: 16px !important;
+    z-index: 5;
+    text-shadow: 0 0 3px white, 0 0 5px rgba(255,255,255,0.8);
+}
+
+.match-history-capture .history-tie-team .team-players::after {
+    content: "";
+    position: absolute;
+    bottom: -5px;
+    right: 5px;
+    font-size: 10px;
+    font-weight: bold;
+    color: #ff9800;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    background-color: rgba(255,255,255,0.8);
+    padding: 2px 4px;
+    border-radius: 3px;
+    z-index: 10;
+}
+
+/* Match History Photo Capture Refinements */
+.match-history-capture .history-winner-team::before {
+    content: none !important; /* Remove the default trophy */
+}
+
+.match-history-capture .history-tie-team::before {
+    content: none !important; /* Remove the default tie icon */
+}
+
+.match-history-capture .history-winner-team .team-players {
+    box-shadow: 0 0 12px rgba(66, 184, 131, 0.8) !important;
+    border: 3px solid rgba(66, 184, 131, 0.8) !important;
+    border-radius: 6px !important;
+    padding: 2px 2px 2px 32px !important; /* Add padding on left side for trophy */
+    width: auto !important; /* Let it size naturally */
+    position: relative !important; /* Position relative for absolute trophy */
+}
+
+/* Add trophy inside the winner team container */
+.match-history-capture .history-winner-team .team-players::before {
+    content: "🏆" !important;
+    position: absolute !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+    left: 8px !important; /* Position on the left */
+    font-size: 16px !important;
+    z-index: 5 !important;
+    text-shadow: 0 0 3px white, 0 0 5px rgba(255,255,255,0.8) !important;
+    display: block !important;
+    width: 20px !important;
+    height: 20px !important;
+    line-height: 20px !important;
+    text-align: center !important;
+}
+
+.match-history-capture .history-tie-team .team-players {
+    box-shadow: 0 0 12px rgba(255, 193, 7, 0.8) !important;
+    border: 3px solid rgba(255, 193, 7, 0.8) !important;
+    border-radius: 6px !important;
+    padding: 2px 2px 2px 32px !important; /* Add padding on left side for medal */
+    width: auto !important; /* Let it size naturally */
+    position: relative !important; /* Position relative for absolute medal */
+}
+
+/* Add medal inside tie team container */
+.match-history-capture .history-tie-team .team-players::before {
+    content: "🏅" !important; /* Medal instead of trophy */
+    position: absolute !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+    left: 8px !important; /* Position on the left */
+    font-size: 16px !important;
+    z-index: 5 !important;
+    text-shadow: 0 0 3px white, 0 0 5px rgba(255,255,255,0.8) !important;
+    display: block !important;
+    width: 20px !important;
+    height: 20px !important;
+    line-height: 20px !important;
+    text-align: center !important;
+}
+
+/* Ensure team badges have consistent styling in photo mode */
+.match-history-capture .team1-badge, 
+.match-history-capture .team2-badge {
+    margin: 2px !important;
+    padding: 3px 5px !important;
+    border-radius: 4px !important;
+    font-size: 13px !important;
+    display: inline-block !important;
+    max-width: none !important;
+    width: auto !important;
+}
+
+.match-history-capture .team1-badge {
+    background-color: rgba(45, 55, 72, 0.2) !important;
+    border: 1px solid var(--team1-color) !important;
+    color: var(--team1-color) !important;
+}
+
+.match-history-capture .team2-badge {
+    background-color: rgba(85, 60, 154, 0.2) !important;
+    border: 1px solid var(--team2-color) !important;
+    color: var(--team2-color) !important;
+}
+
+/* Enhanced mobile view for photo capture */
+@media (max-width: 768px) {
+    /* Make sure header text is visible in photo mode */
+    .match-history-capture #matchHistoryContent th span.header-text {
+        display: inline-block !important;
+    }
+    
+    .match-history-capture #matchHistoryContent th span.header-icon {
+        display: none !important;
+    }
+    
+    /* Show the team-number for Team 1 in capture mode */
+    .match-history-capture #matchHistoryContent th:nth-child(3) .team-number {
+        display: inline !important;
+    }
+    
+    /* Update the styling of teams in mobile view */
+    .match-history-capture .team-cell {
+        padding: 4px !important;
+    }
+    
+    .match-history-capture .team-players {
+        flex-direction: row !important;
+        flex-wrap: wrap !important;
+        width: 100% !important;
+    }
+}
+
+@media (max-width: 480px) {
+    #matchHistoryDisplay.photo-capture-mode {
+        padding: 15px 10px 20px !important;
+    }
+    
+    .photo-capture-mode #matchHistoryContent th,
+    .photo-capture-mode #matchHistoryContent td {
+        padding: 5px !important;
+        font-size: 12px !important;
+    }
+    
+    .photo-capture-mode #dateDisplay {
+        font-size: 16px !important;
+    }
+    
+    .photo-capture-mode .team1-badge,
+    .photo-capture-mode .team2-badge {
+        padding: 2px 3px !important;
+        font-size: 11px !important;
+    }
+}
+
+.match-history-capture .history-winner-team::before,
+.match-history-capture .history-tie-team::before {
+    content: none !important; /* Remove any outside trophy icons */
+    display: none !important;
+}
+
+/* Ensure the main trophy and medal are consistently positioned at left */
+.match-history-capture .history-winner-team .team-players,
+.history-winner-team .team-players {
+    padding: 2px 2px 2px 32px !important; /* Add padding on left side for trophy */
+    position: relative !important; /* Position relative for absolute trophy */
+}
+
+.match-history-capture .history-tie-team .team-players,
+.history-tie-team .team-players {
+    padding: 2px 2px 2px 32px !important; /* Add padding on left side for medal */
+    position: relative !important; /* Position relative for absolute medal */
+}
+
+/* Toggle Info Button Styles */
+        .toggle-info-btn {
+            position: fixed;
+            left: 10px;
+            bottom: 110px; /* Position above the other buttons */
+            z-index: 2100;
+            border-radius: 50%; /* Make button circular */
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: rgb(68, 155, 255);
+            border: none;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            cursor: pointer;
+            color: #f7f7f7;
+        }
+        
+        .toggle-info-btn:hover {
+            background-color: #7ec5ff;
+        }
+        
+        /* Floating Capture All Button Styles */
+        .toggle-capture-btn {
+            position: fixed;
+            left: 10px;
+            bottom: 160px; /* Position above the info button */
+            z-index: 2100; /* Higher z-index to stay above everything except debug panel */
+            border-radius: 50%; /* Make button circular */
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #9C27B0; /* Match the purple of the capture all button */
+            border: none;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            cursor: pointer;
+            color: #f7f7f7;
+        }
+        
+        /* Direct styling for the save as picture button to ensure it appears */
+        #saveAsPictureBtn {
+            position: fixed !important;
+            left: 10px !important;
+            bottom: 160px !important; /* Position above the info button */
+            z-index: 2190 !important; /* Higher z-index to stay above everything except debug panel */
+            border-radius: 50% !important; /* Make button circular */
+            width: 40px !important;
+            height: 40px !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            background-color: #9C27B0 !important; /* Match the purple of the capture all button */
+            border: none !important;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2) !important;
+            cursor: pointer !important;
+            color: #f7f7f7 !important;
+            top: auto !important; /* Override any top positioning */
+            right: auto !important; /* Override any right positioning */
+        }
+        
+        .toggle-capture-btn:hover, 
+        #saveAsPictureBtn:hover {
+            background-color: #7B1FA2; /* Darker purple on hover */
+        }
+        
+        .toggle-capture-btn .photo-icon-container {
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 100%;
+        }
+        
+        /* Modified for the dual icon layout that matches the capture-all-btn */
+        .toggle-capture-btn .photo-icon-container span {
+            font-size: 16px;
+        }
+        
+        .toggle-capture-btn .photo-icon-container .camera-icon {
+            font-size: 14px;
+            position: relative;
+            top: -2px;
+        }
+        
+        /* Single camera mode for when match history or podium is active */
+        .toggle-capture-btn.single-camera-mode .photo-icon-container span:first-child {
+            display: none;
+        }
+        
+        .toggle-capture-btn.single-camera-mode .photo-icon-container span:last-child {
+            font-size: 20px;
+            position: static;
+        }
+        
+        /* Settings Panel Styles */
+
+        .table-wrapper.mobile-scroll-wrapper {
+            width: 100vw;
+            height: 100%;
+            overflow: visible;/* Horizontal scroll NOT enabled properly */
+            background-color: white;
+            border-radius: 4px;
+            padding: 5px;
+            position: relative;
+            border: 1px solid #eee;
+            display: block;
+        }
+
+th:first-child {
+    border-top-left-radius: var(--radius-md);
+}
+
+th:last-child {
+    border-top-right-radius: var(--radius-md);
+}
+
+#playerStatsTable th:nth-child(1),
+#playerStatsTable td:nth-child(1) {
+    left: 0;
+    position: sticky;
+    z-index: 2; /* Above other cells but below headers */
+    background-color: white;
+    box-shadow: none;
+    border-right: none;
+}
+
+#playerStatsTable th:nth-child(2),
+#playerStatsTable td:nth-child(2) {
+    /* Adjust to match exactly where first column ends */
+    left: 55px;
+    position: sticky;
+    z-index: 2;
+    background-color: white;
+    box-shadow: 5px 2px 8px -2px rgba(0,0,0,0.15), inset -1px 0 0 rgba(0,0,0,0.4); /* Consistent shadow */
+    border-right: 1px solid var(--neutral-light); /* Consistent border */
+}
+
+/* Make sure sticky headers maintain their color */
+#playerStatsTable th:nth-child(1),
+#playerStatsTable th:nth-child(2) {
+    background-color: var(--primary) !important; /* Override inheritance */
+    z-index: 3; /* Above everything else */
+}
+
+/* Handle alternating row colors with !important to ensure they apply */
+#playerStatsTable tr:nth-child(even) td:nth-child(1),
+#playerStatsTable tr:nth-child(even) td:nth-child(2) {
+    background-color: rgb(240, 245, 255) !important;
+}
+/* Add special CSS to handle the columns better and provide proper coloring */
+#playerStatsTable td {
+    border-right: 1px solid var(--neutral-light);
+}
+
+/* Make first column specific width instead of auto-sizing */
+#playerStatsTable th:nth-child(1),
+#playerStatsTable td:nth-child(1) {
+    width: 55px !important;
+    min-width: 55px !important;
+    max-width: 55px !important;
+}
+
+/* Make second column (name) automatically size based on content */
+#playerStatsTable th:nth-child(2),
+#playerStatsTable td:nth-child(2) {
+    width: auto !important;
+    min-width: fit-content !important;
+    white-space: nowrap;
+}
+
+.photo-capture-mode.active {
+    /* Ensure elements with both photo-capture-mode and active stay visible */
+    visibility: visible !important;
+    opacity: 1 !important;
+    display: flex !important;
+}
+
+/* Make winner trophies visible in photo capture mode */
+.photo-capture-mode .winner-team::before {
+    content: "🏆";
+    position: absolute;
+    top: -10px;
+    right: 10px;
+    font-size: 24px;
+    animation: float 2s ease-in-out infinite;
+    z-index: 5;
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+.photo-capture-mode .tie-team::before {
+    content: "🤝";
+    position: absolute;
+    top: -10px;
+    right: 10px;
+    font-size: 24px;
+    animation: float 2s ease-in-out infinite;
+    z-index: 5;
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+/* Bottom Continue Button Styling */
+#bottomContinueContainer {
+    margin: 30px 0;
+    text-align: center;
+    animation: fadeInUp 0.5s ease-out;
+}
+
+#bottomContinueBtn {
+    padding: 15px 30px;
+    font-size: 1.1rem;
+    border-radius: var(--radius-md);
+    transition: all 0.3s ease;
+    background-color: var(--secondary);
+    color: white;
+    border: none;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    box-shadow: var(--shadow-md);
+}
+
+#bottomContinueBtn:hover {
+    background-color: var(--secondary-dark);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+}
+
+#bottomContinueBtn:active {
+    transform: translateY(1px);
+    box-shadow: var(--shadow-sm);
+}
+
+#bottomContinueBtn .material-symbols-rounded {
+    font-size: 1.3rem;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Floating Match History Button */
+.floating-history-btn {
+    position: fixed;
+    bottom: 260px; /* Position above other buttons */
+    right: 20px;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background-color: #2196F3; /* Light blue color */
+    color: var(--neutral-white);
+    box-shadow: var(--shadow-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 999;
+    opacity: 0.9;
+    border: none;
+    cursor: pointer;
+    transition: opacity var(--transition-fast), transform var(--transition-fast);
+}
+
+.floating-history-btn:hover {
+    opacity: 1;
+    transform: scale(1.05);
+}
+
+.floating-history-btn .material-symbols-rounded {
+    margin: 0;
+    font-size: 24px;
+}
+
+/* Mobile Responsive Design for floating history button */
+@media (max-width: 768px) {
+    .floating-history-btn {
+        width: 40px;
+        height: 40px;
+        right: 20px;
+        bottom: 220px;
+    }
+}
+
+/* When edit mode is active, disable add match and submit scores buttons */
+.round-container.edit-mode .add-match-btn,
+.round-container.edit-mode .submit-scores-btn {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+/* Bottom continue button should only show when needed (on initial load with existing data) */
+#bottomContinueContainer {
+    display: none; /* Hidden by default, will be shown via JS only when needed */
+    /* ... existing code ... */
+}
+
+/* SIMPLIFIED CAPTURE MODE STYLING - Only focus on dimensions */
+.match-history-capture {
+    /* Container visibility */
+    overflow: visible !important;
+    max-height: none !important;
+    height: auto !important;
+}
+
+/* Make table fully visible */
+.match-history-capture #matchHistoryContent {
+    overflow: visible !important;
+    max-height: none !important;
+    height: auto !important;
+}
+
+.match-history-capture .match-history-table-wrapper {
+    overflow: visible !important;
+    max-height: none !important;
+    height: auto !important;
+}
+
+.match-history-capture #matchHistoryContent table {
+    table-layout: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+}
+
+/* Hide UI elements that shouldn't appear in the captured image */
+.match-history-capture #closeMatchHistoryBtn,
+.match-history-capture #saveMatchHistoryAsPictureBtn {
+    display: none !important;
+}
+
+/* Hide action columns */
+.match-history-capture .action-column,
+.match-history-capture .action-cell {
+    display: none !important;
+}
+
+/* Add header styling to match-history-capture */
+.match-history-capture #matchHistoryContent table th {
+    background-color: var(--primary) !important;
+    color: white !important;
+    font-weight: bold !important;
+    padding: 10px 8px !important;
+    text-align: center !important;
+    border-bottom: 2px solid var(--primary-dark) !important;
+}
+
+/* Make sure all header text is visible */
+.match-history-capture #matchHistoryContent th span.header-text {
+    display: inline-block !important;
+}
+
+.match-history-capture #matchHistoryContent th span.header-icon {
+    display: none !important;
+}
+
+/* Add the same styles for the new podium-capture-mode class */
+.podium-capture-mode .podium-place.gold::before,
+.podium-capture-mode .podium-place.gold::after,
+.podium-capture-mode .podium-place::before {
+    display: block !important;
+    content: inherit !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+.podium-capture-mode .gold::before {
+    content: "🏆" !important;
+    position: absolute !important;
+    font-size: 24px !important;
+    top: 10px !important;
+    left: 20% !important;
+    animation: confetti-internal 2.5s infinite linear !important;
+    z-index: 5 !important;
+    display: block !important;
+}
+
+.podium-capture-mode .gold::after {
+    content: "🎉" !important;
+    position: absolute !important;
+    font-size: 24px !important;
+    top: 30px !important;
+    left: 60% !important;
+    animation: confetti-internal 3s infinite linear 0.5s !important;
+    z-index: 5 !important;
+    display: block !important;
+}
+
+/* Add the same styles for the new podium-capture-mode class */
+.podium-capture-mode .confetti-container {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+.podium-capture-mode .confetti {
+    display: block !important;
+    visibility: visible !important;
+}
+
+.podium-capture-mode .confetti:nth-child(1),
+.podium-capture-mode .confetti:nth-child(2),
+.podium-capture-mode .confetti:nth-child(3),
+.podium-capture-mode .confetti:nth-child(4),
+.podium-capture-mode .confetti:nth-child(5) {
+    display: block !important;
+    visibility: visible !important;
+    animation-play-state: running !important;
+}
+
+/* Fixed width styles for capture mode */
+.match-history-capture-mode,
+.podium-capture-mode {
+    width: 1200px !important;
+    max-width: 1200px !important;
+    min-width: 1200px !important;
+    margin: 0 auto !important;
+    position: relative !important;
+    transform: none !important;
+    left: auto !important;
+    right: auto !important;
+    overflow: visible !important;
+    box-sizing: border-box !important;
+    padding: 20px !important;
+    background-color: white !important;
+    box-shadow: none !important;
+}
+
+/* Center content within containers */
+.match-history-capture-mode #matchHistoryContent,
+.podium-capture-mode .podium-content {
+    width: 100% !important;
+    max-width: 1160px !important;
+    margin: 0 auto !important;
+    overflow: visible !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+}
+
+/* Table wrapper styling */
+.match-history-capture-mode .match-history-table-wrapper,
+.podium-capture-mode .table-wrapper {
+    width: 100% !important;
+    max-width: 1160px !important;
+    margin: 0 auto !important;
+    overflow: visible !important;
+    height: auto !important;
+    max-height: none !important;
+}
+
+/* Table styling */
+.match-history-capture-mode table,
+.podium-capture-mode #playerStatsTable {
+    width: 100% !important;
+    max-width: 1160px !important;
+    table-layout: fixed !important;
+    border-collapse: collapse !important;
+    margin: 0 auto !important;
+    overflow: visible !important;
+}
+
+/* Ensure all table cells have proper spacing */
+.match-history-capture-mode td,
+.match-history-capture-mode th,
+.podium-capture-mode td, 
+.podium-capture-mode th {
+    padding: 8px !important;
+    overflow: visible !important;
+    white-space: normal !important;
+    text-overflow: ellipsis !important;
+}
+
+/* Ensure podium display shows correctly */
+.podium-capture-mode .podium {
+    display: flex !important;
+    justify-content: center !important;
+    align-items: flex-end !important;
+    gap: 20px !important;
+    margin: 20px auto !important;
+    width: auto !important;
+    max-width: 1000px !important;
+    height: auto !important;
+    min-height: 200px !important;
+    overflow: visible !important;
+}
+
+/* Fix podium table column styling for capture */
+.podium-capture-mode #playerStatsTable th,
+.podium-capture-mode #playerStatsTable td {
+    position: static !important; /* Remove sticky positioning */
+    box-shadow: none !important;
+    border: 1px solid #ddd !important;
+    left: auto !important;
+    z-index: 1 !important;
+}
+
+.podium-capture-mode #playerStatsTable th {
+    background-color: var(--primary) !important;
+    color: white !important;
+}
+
+.podium-capture-mode #playerStatsTable tr:nth-child(odd) td {
+    background-color: white !important;
+}
+
+.podium-capture-mode #playerStatsTable tr:nth-child(even) td {
+    background-color: rgb(240, 245, 255) !important;
+}
+
+/* For sticky columns that have special styling */
+.podium-capture-mode #playerStatsTable th:nth-child(1),
+.podium-capture-mode #playerStatsTable th:nth-child(2),
+.podium-capture-mode #playerStatsTable td:nth-child(1),
+.podium-capture-mode #playerStatsTable td:nth-child(2) {
+    box-shadow: none !important;
+    border-right: 1px solid #ddd !important;
+}
+
+/* Add these styles to ensure the date display is properly centered in all capture modes */
+.photo-capture-mode #dateDisplay,
+.match-history-capture-mode #dateDisplay {
+    display: block !important;
+    text-align: center !important;
+    font-size: 18px !important;
+    font-weight: bold !important;
+    margin: 15px auto 25px !important;
+    width: 100% !important;
+    border-bottom: 2px solid var(--primary) !important;
+    padding-bottom: 10px !important;
+}
+
+/* Support Button and Panel */
+.support-btn {
+    position: fixed !important;
+    bottom: auto !important; /* Position it below the scroll down button (which is at 80px/70px) */
+    right: 20px !important;
+    left: auto !important; /* Ensure it's not positioned on the left */
+    top: 25px !important; /* Ensure it's not positioned at the top */
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background-color: #fff;
+    color: #0D0C22;
+    box-shadow: var(--shadow-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1100; /* Keep z-index high enough to be visible */
+    transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+    border: none;
+    cursor: pointer;
+}
+
+.support-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-lg);
+}
+
+.support-icon {
+    width: 24px;
+    height: 24px;
+}
+
+.support-panel {
+    position: fixed !important;
+    top: 0 !important;
+    right: -9999px !important; /* Start completely off-screen */
+    transform: translateX(380px) !important; /* Additional transform to move it off-screen */
+    width: 380px;
+    height: 100vh;
+    background-color: #fff;
+    box-shadow: var(--shadow-lg);
+    z-index: 1500 !important; /* Ensure it's above other elements */
+    transition: right 0.3s ease-in-out, transform 0.3s ease-in-out;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    visibility: hidden !important; /* Ensure panel is not visible */
+}
+
+.support-panel.open {
+    right: 0 !important; /* Slide in when open */
+    transform: translateX(0) !important; /* Reset transform when open */
+    visibility: visible !important; /* Make panel visible when open */
+}
+
+.support-panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    border-bottom: 1px solid var(--neutral-light);
+    background-color: var(--primary);
+    color: white;
+}
+
+.support-panel-header h2 {
+    margin: 0;
+    font-size: 1.5rem;
+}
+
+.close-support-btn {
+    background: transparent;
+    border: none;
+    color: white;
+    font-size: 1.5rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    transition: background-color 0.2s;
+}
+
+.close-support-btn:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+.support-panel-content {
+    padding: 1.5rem;
+    flex: 1;
+}
+
+.support-section {
+    margin-bottom: 2rem;
+}
+
+.support-section h3 {
+    color: var(--primary-dark);
+    margin-top: 0;
+    border-bottom: 2px solid var(--primary-light);
+    padding-bottom: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.support-section p {
+    margin-bottom: 1.5rem;
+    line-height: 1.6;
+}
+
+.bmc-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background-color: #f5f5f5;
+    border-radius: var(--radius-md);
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.bmc-qr {
+    width: 200px;
+    height: 200px;
+    margin-bottom: 1rem;
+    border-radius: var(--radius-sm);
+}
+
+.bmc-text {
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+}
+
+.bmc-button {
+    display: inline-block;
+    background-color: #FFDD00;
+    color: #0D0C22;
+    padding: 0.75rem 1.5rem;
+    border-radius: var(--radius-md);
+    text-decoration: none;
+    font-weight: 700;
+    transition: transform 0.2s, box-shadow 0.2s;
+    margin-top: 0.5rem;
+}
+
+.bmc-button:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.support-thanks {
+    text-align: center;
+    font-weight: 600;
+    color: var(--primary);
+    font-size: 1.1rem;
+}
+
+/* Mobile styles for support panel */
+@media (max-width: 768px) {
+    .support-btn {
+        width: 40px;
+        height: 40px;
+        bottom: 20px !important; /* Position at the bottom on mobile, below the scroll down button which is at 70px */
+        right: 20px !important;
+        left: auto !important;
+        top: auto !important;
+    }
+    
+    .support-icon {
+        width: 20px;
+        height: 20px;
+    }
+    
+    .support-panel {
+        width: 100% !important;
+        right: -100% !important; /* Ensure panel is fully off-screen on mobile */
+        visibility: hidden !important; /* Ensure consistency with main rule */
+    }
+    
+    .support-panel.open {
+        right: 0 !important;
+        visibility: visible !important; /* Ensure consistency with main rule */
+    }
+    
+    .support-panel-header h2 {
+        font-size: 1.25rem;
+    }
+    
+    .bmc-qr {
+        width: 160px;
+        height: 160px;
+    }
+}
+
+/* Fix for support panel at specific widths where it might appear without click */
+@media (min-width: 760px) and (max-width: 780px) {
+    .support-panel {
+        right: -100% !important;
+        width: 100% !important;
+        visibility: hidden !important; /* Ensure consistency with main rule */
+    }
+    
+    .support-panel.open {
+        right: 0 !important;
+        visibility: visible !important; /* Ensure consistency with main rule */
+    }
+}

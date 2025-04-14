@@ -15,7 +15,7 @@
     <meta property="og:type" content="website">
     
     <!-- AdSense Verification - Replace content with your actual AdSense publisher ID when provided -->
-    <meta name="google-adsense-account" content="ca-pub-XXXXXXXXXXXXXXXX">
+    <meta name="google-adsense-account" content="ca-pub-2034792889395341">
     
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0" />
@@ -134,9 +134,25 @@
         .toggle-debug-btn {
             position: fixed;
             left: 10px;
-            bottom: 10px;
-            /* Ensure it stays on top of other content */
-            z-index: 999;
+            bottom: 10px; /* Restore to original position */
+            z-index: 2200; /* Higher than displays (2000) but lower than photo mode */
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: var(--neutral-white); /* Light color similar to mute button */
+            border: 1px solid var(--neutral-light);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            cursor: pointer;
+            color: var(--primary); /* Color that matches the mute toggle */
+            opacity: 0.9;
+        }
+        
+        .toggle-debug-btn:hover {
+            background-color: var(--neutral-light); /* Lighter gray on hover */
+            color: var(--primary-dark);
         }
         
         /* Info Button Styles */
@@ -144,7 +160,7 @@
             position: fixed;
             left: 10px;
             bottom: 110px; /* Position above the other buttons */
-            z-index: 999;
+            z-index: 2100;
             border-radius: 50%; /* Make button circular */
             width: 40px;
             height: 40px;
@@ -172,7 +188,7 @@
             border-radius: 8px;
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
             padding: 15px;
-            z-index: 998;
+            z-index: 2200; /* Same as the settings button */
             max-height: 80vh;
             overflow-y: auto;
         }
@@ -448,48 +464,6 @@
             z-index: 1000;
         }
         
-        /* Toast Notification Styles */
-        .toast-container {
-            position: fixed;
-            top: 60px; /* Increased from 20px to move toasts down */
-            right: 20px;
-            z-index: 9999; /* Increased z-index to be above everything else */
-        }
-        
-        .toast {
-            min-width: 250px;
-            margin-bottom: 10px;
-            padding: 12px 20px;
-            border-radius: 4px;
-            color: white;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-            font-size: 14px;
-            opacity: 0;
-            transform: translateX(50px);
-            transition: all 0.3s ease;
-        }
-        
-        .toast.show {
-            opacity: 1;
-            transform: translateX(0);
-        }
-        
-        .toast-info {
-            background-color: #2196F3;
-        }
-        
-        .toast-success {
-            background-color: #4CAF50;
-        }
-        
-        .toast-warning {
-            background-color: #FF9800;
-        }
-        
-        .toast-error {
-            background-color: #F44336;
-        }
-        
         /* Ranking modes carousel styles */
         .ranking-carousel {
             background-color: #f9f9f9;
@@ -714,6 +688,32 @@
             margin-right: 5px;
             vertical-align: middle;
         }
+        
+        /* Photo capture mode adjustments */
+        .photo-capture-mode {
+            position: relative;
+            transform: none;
+            height: auto;
+            max-height: none; /* Fixed: 'auto' to 'none' */
+            overflow: visible;
+            z-index: 10001; /* Higher than settings */
+        }
+        
+        /* Hide settings during photo capture */
+        .photo-capture-mode ~ .toggle-debug-btn,
+        .photo-capture-mode ~ .settings-panel,
+        .photo-capture-mode .toggle-debug-btn,
+        .photo-capture-mode .settings-panel {
+            display: none !important;
+        }
+        
+        /* Keep the floating capture button visible during photo capture */
+        .photo-capture-mode ~ .toggle-capture-btn,
+        .photo-capture-mode .toggle-capture-btn {
+            display: flex !important;
+            z-index: 10002 !important; /* Higher than photo-capture-mode */
+        }
+        
     </style>
     <script>
         // Ensure page starts at the top
@@ -791,7 +791,7 @@
                     START TOURNAMENT
                 </button>
                 <button id="showPodiumBtn" class="btn-primary">
-                    <span class="material-symbols-rounded">leaderboard</span>
+                    <span class="material-symbols-rounded">emoji_events</span>
                     LEADERBOARD
                 </button>
                 <button id="addPlayersBtn">
@@ -813,13 +813,6 @@
                 <button id="matchesPlayed">
                     <span class="material-symbols-rounded">history</span>
                     MATCH HISTORY
-                </button>
-                <button id="captureAllBtn" class="capture-all-btn">
-                    <div class="photo-icon-container">
-                        <span class="material-symbols-rounded">photo_library</span>
-                        <span class="material-symbols-rounded camera-icon">photo_camera</span>
-                    </div>
-                    CAPTURE ALL
                 </button>
             </div>
             
@@ -887,6 +880,14 @@
 
         <!-- Match Display Section -->
         <div id="matchDisplay" class="match-display"></div>
+        
+        <!-- Bottom Continue Playing Button - Only shows when data is loaded -->
+        <div id="bottomContinueContainer" style="display: none; margin: 20px 0; text-align: center;">
+            <button id="bottomContinueBtn" class="btn-success">
+                <span class="material-symbols-rounded">sports_tennis</span>
+                CONTINUE PLAYING
+            </button>
+        </div>
 
         <!-- Footer with extra space for proper scrolling -->
         <footer class="site-footer">
@@ -934,15 +935,9 @@
 
         <!-- Podium Display Section -->
         <div id="podiumDisplay" class="podium-container">
-            <h2>Pickle Board</h2>
+            <img src="simplelogotbase64renamed.png" alt="Pickle Pairs Logo" style="display: block; margin: 0 auto; max-width: 150px;" crossorigin="anonymous">
+            <h2 style="text-align: center;">Top Picklers</h2>
             <div id="dateDisplay"></div>
-            
-            <button id="saveAsPictureBtn" class="save-picture-btn">
-                <span class="material-symbols-rounded">photo_camera</span> <span>Save as Image</span>
-            </button>
-            <button id="toggleLeaderboardMute" class="toggle-mute-btn">
-                <span class="material-symbols-rounded">volume_up</span>
-            </button>
             <button id="closePodiumBtn">
                 <span class="material-symbols-rounded">close</span>
             </button>
@@ -980,8 +975,8 @@
             </div>
 
             <!-- Player Stats Table -->
-            <div class="table-wrapper mobile-scroll-wrapper">
-                <table id="playerStatsTable" class="mobile-scrollable-table">
+            <div class="table-wrapper">
+                <table id="playerStatsTable">
                     <thead>
                         <tr>
                             <th>Rank</th>
@@ -1005,15 +1000,47 @@
 
         <!-- Match History Modal -->
         <div id="matchHistoryDisplay">
-            <h2>Match History</h2>
-            <button id="saveMatchHistoryAsPictureBtn" class="save-picture-btn">
-                <span class="material-symbols-rounded">photo_camera</span> Save as Image
-            </button>
+            <img src="simplelogotbase64renamed.png" alt="Pickle Pairs Logo" style="display: block; margin: 0 auto; max-width: 150px;" crossorigin="anonymous">
+            <h2 style="text-align: center;">Match History</h2>
             <div id="matchHistoryContent"></div>
             <button id="closeMatchHistoryBtn">
                 <span class="material-symbols-rounded">close</span>
             </button>
         </div>
+        
+        <!-- Support Panel -->
+        <div id="support-panel" class="support-panel">
+            <div class="support-panel-header">
+                <h2>Support This Project</h2>
+                <button class="close-support-btn" onclick="toggleSupportPanel()">
+                    <span class="material-symbols-rounded">close</span>
+                </button>
+            </div>
+            <div class="support-panel-content">
+                <div class="support-section">
+                    <h3>Buy Me a Coffee</h3>
+                    <p>If you find this tool helpful in your pickleball events, please consider supporting its continued development.</p>
+                    <div class="bmc-container">
+                        <a href="https://buymeacoffee.com/L5ff3Ti0zc" target="_blank" class="bmc-link">
+                            <img src="bmc_qr.png" alt="Buy Me A Coffee QR Code" class="bmc-qr">
+                        </a>
+                        <p class="bmc-text">Scan the QR code or visit:</p>
+                        <a href="https://buymeacoffee.com/L5ff3Ti0zc" target="_blank" class="bmc-button">
+                            buymeacoffee.com/L5ff3Ti0zc
+                        </a>
+                    </div>
+                    <p class="support-thanks">Thank you for your support!</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Support Button (Buy Me a Coffee) -->
+        <button id="supportButton" class="support-btn" onclick="toggleSupportPanel()" aria-label="Support this project">
+            <svg width="20" height="20" viewBox="0 0 884 1279" fill="none" xmlns="http://www.w3.org/2000/svg" class="support-icon">
+                <path d="M472.623 590.836C426.682 610.503 374.546 632.802 306.976 632.802C278.71 632.746 250.58 628.868 223.353 621.274L270.086 1101.08C271.74 1121.13 280.876 1139.83 295.679 1153.46C310.482 1167.09 329.87 1174.65 349.992 1174.65C349.992 1174.65 416.254 1178.09 438.365 1178.09C462.161 1178.09 533.516 1174.65 533.516 1174.65C553.636 1174.65 573.019 1167.08 587.819 1153.45C602.619 1139.82 611.752 1121.13 613.406 1101.08L663.459 570.876C641.091 563.237 618.516 558.161 593.068 558.161C549.054 558.144 513.591 573.303 472.623 590.836Z" fill="#FFDD00"></path>
+                <path d="M879.567 341.849L872.53 306.352C866.215 274.503 851.882 244.409 819.19 232.898C808.711 229.215 796.821 227.633 788.786 220.01C780.751 212.388 778.376 200.55 776.518 189.572C773.076 169.423 769.842 149.257 766.314 129.143C763.269 111.85 760.86 92.4243 752.928 76.56C742.604 55.2584 721.182 42.8009 699.88 34.559C688.965 30.4844 677.826 27.0375 666.517 24.2352C613.297 10.1947 557.342 5.03277 502.591 2.09047C436.875 -1.53577 370.983 -0.443234 305.422 5.35968C256.625 9.79894 205.229 15.1674 158.858 32.0469C141.91 38.224 124.445 45.6399 111.558 58.7341C95.7448 74.8221 90.5829 99.7026 102.128 119.765C110.336 134.012 124.239 144.078 138.985 150.737C158.192 159.317 178.251 165.846 198.829 170.215C256.126 182.879 315.471 187.851 374.007 189.968C438.887 192.586 503.87 190.464 568.44 183.618C584.408 181.863 600.347 179.758 616.257 177.304C634.995 174.43 647.022 149.928 641.499 132.859C634.891 112.453 617.134 104.538 597.055 107.618C594.095 108.082 591.153 108.512 588.193 108.942L586.06 109.252C579.257 110.113 572.455 110.915 565.653 111.661C551.601 113.175 537.515 114.414 523.394 115.378C491.768 117.58 460.057 118.595 428.363 118.647C397.219 118.647 366.058 117.769 334.983 115.722C320.805 114.793 306.661 113.611 292.552 112.177C286.134 111.506 279.733 110.801 273.333 110.009L267.241 109.235L265.917 109.046L259.602 108.134C246.697 106.189 233.792 103.953 221.025 101.251C219.737 100.965 218.584 100.249 217.758 99.2193C216.932 98.1901 216.482 96.9099 216.482 95.5903C216.482 94.2706 216.932 92.9904 217.758 91.9612C218.584 90.9319 219.737 90.2152 221.025 89.9293H221.266C232.33 87.5721 243.479 85.5589 254.663 83.8038C258.392 83.2188 262.131 82.6453 265.882 82.0832H265.985C272.988 81.6186 280.026 80.3625 286.994 79.5366C347.624 73.2301 408.614 71.0801 469.538 73.1014C499.115 73.9618 528.676 75.6996 558.116 78.6935C564.448 79.3474 570.746 80.0357 577.043 80.8099C579.452 81.1025 581.878 81.4465 584.305 81.7391L589.191 82.4445C603.438 84.5667 617.61 87.1419 631.708 90.1703C652.597 94.7128 679.422 96.1925 688.713 119.077C691.673 126.338 693.015 134.408 694.649 142.03L696.732 151.752C696.786 151.926 696.826 152.105 696.852 152.285C701.773 175.227 706.7 198.169 711.632 221.111C711.994 222.806 712.002 224.557 711.657 226.255C711.312 227.954 710.621 229.562 709.626 230.982C708.632 232.401 707.355 233.6 705.877 234.504C704.398 235.408 702.75 235.997 701.033 236.236H700.895L697.884 236.649L694.908 237.044C685.478 238.272 676.038 239.419 666.586 240.486C647.968 242.608 629.322 244.443 610.648 245.992C573.539 249.077 536.356 251.102 499.098 252.066C480.114 252.57 461.135 252.806 442.162 252.771C366.643 252.712 291.189 248.322 216.173 239.625C208.051 238.662 199.93 237.629 191.808 236.58C198.106 237.389 187.231 235.96 185.029 235.651C179.867 234.928 174.705 234.177 169.543 233.397C152.216 230.798 134.993 227.598 117.7 224.793C96.7944 221.352 76.8005 223.073 57.8906 233.397C42.3685 241.891 29.8055 254.916 21.8776 270.735C13.7217 287.597 11.2956 305.956 7.64786 324.075C4.00009 342.193 -1.67805 361.688 0.472751 380.288C5.10128 420.431 33.165 453.054 73.5313 460.35C111.506 467.232 149.687 472.807 187.971 477.556C338.361 495.975 490.294 498.178 641.155 484.129C653.44 482.982 665.708 481.732 677.959 480.378C681.786 479.958 685.658 480.398 689.292 481.668C692.926 482.938 696.23 485.005 698.962 487.717C701.694 490.429 703.784 493.718 705.08 497.342C706.377 500.967 706.846 504.836 706.453 508.665L702.633 545.797C694.936 620.828 687.239 695.854 679.542 770.874C671.513 849.657 663.431 928.434 655.298 1007.2C653.004 1029.39 650.71 1051.57 648.416 1073.74C646.213 1095.58 645.904 1118.1 641.757 1139.68C635.218 1173.61 612.248 1194.45 578.73 1202.07C548.022 1209.06 516.652 1212.73 485.161 1213.01C450.249 1213.2 415.355 1211.65 380.443 1211.84C343.173 1212.05 297.525 1208.61 268.756 1180.87C243.479 1156.51 239.986 1118.36 236.545 1085.37C231.957 1041.7 227.409 998.039 222.9 954.381L197.607 711.615L181.244 554.538C180.968 551.94 180.693 549.376 180.435 546.76C178.473 528.023 165.207 509.681 144.301 510.627C126.407 511.418 106.069 526.629 108.168 546.76L120.298 663.214L145.385 904.104C152.532 972.528 159.661 1040.96 166.773 1109.41C168.15 1122.52 169.44 1135.67 170.885 1148.78C178.749 1220.43 233.465 1259.04 301.224 1269.91C340.799 1276.28 381.337 1277.59 421.497 1278.24C472.979 1279.07 524.977 1281.05 575.615 1271.72C650.653 1257.95 706.952 1207.85 714.987 1130.13C717.282 1107.69 719.576 1085.25 721.87 1062.8C729.498 988.559 737.115 914.313 744.72 840.061L769.601 597.451L781.009 486.263C781.577 480.749 783.905 475.565 787.649 471.478C791.392 467.391 796.352 464.617 801.794 463.567C823.25 459.386 843.761 452.245 859.023 435.916C883.318 409.918 888.153 376.021 879.567 341.849Z" fill="#0D0C22"></path>
+            </svg>
+        </button>
 
         <!-- Back to top button -->
         <button id="backToTopBtn" class="back-to-top-btn">
@@ -1023,6 +1050,14 @@
         <!-- Main audio mute button -->
         <button id="toggleMainAudioBtn" class="toggle-mute-btn fixed-position">
             <span class="material-symbols-rounded">volume_up</span>
+        </button>
+        
+        <!-- Floating capture all button -->
+        <button id="saveAsPictureBtn" class="toggle-capture-btn dual-camera-mode">
+            <div class="photo-icon-container">
+                <span class="material-symbols-rounded">photo_library</span>
+                <span class="material-symbols-rounded camera-icon">photo_camera</span>
+            </div>
         </button>
         
         <!-- Debug toggle button - rename to settings -->
@@ -1056,6 +1091,15 @@
                     <label for="muteAllSoundsToggle" class="setting-label">Mute All Sounds</label>
                     <label class="toggle-switch">
                         <input type="checkbox" id="muteAllSoundsToggle">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+                
+                <!-- Custom Keypad Toggle -->
+                <div class="setting-item">
+                    <label for="useCustomKeypadToggle" class="setting-label">Use Custom Keypad</label>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="useCustomKeypadToggle">
                         <span class="toggle-slider"></span>
                     </label>
                 </div>
@@ -1193,12 +1237,12 @@
                     </div>
                 </div>
                 <div class="help-feature">
-                    <h4><span class="material-symbols-rounded" style="font-size: 18px; vertical-align: middle; color: #4CAF50; margin-right: 5px;">leaderboard</span>Leaderboard</h4>
+                    <h4><span class="material-symbols-rounded" style="font-size: 18px; vertical-align: middle; color: #4CAF50; margin-right: 5px;">emoji_events</span>Leaderboard</h4>
                     <p>Track player progress with our dynamic leaderboard - complete with cool sound effects and animations that would make any pickleball paddle proud!</p>
                     <div class="feature-visual">
                         <div style="width: 100%; display: flex; justify-content: space-around;">
                             <div class="button-example primary">
-                                <span class="material-symbols-rounded" style="font-size: 16px; vertical-align: middle; margin-right: 5px;">leaderboard</span>
+                                <span class="material-symbols-rounded" style="font-size: 16px; vertical-align: middle; margin-right: 5px;">emoji_events</span>
                                 LEADERBOARD
                             </div>
                             <div class="button-example" style="background-color: #FF9800;">
@@ -1619,39 +1663,51 @@
             
             // Setup audio state variables first
             let isMainAudioMuted = localStorage.getItem('isMainAudioMuted') === 'true';
-            let isLeaderboardMuted = localStorage.getItem('isLeaderboardAudioMuted') === 'true';
+            let isLeaderboardMuted = isMainAudioMuted; // Always keep both in sync
+            localStorage.setItem('isLeaderboardAudioMuted', isMainAudioMuted.toString()); // Ensure they stay synced in localStorage too
             
             // Add debug logging for settings values
             console.log('Initial settings values:', {
                 isMainAudioMuted,
                 isLeaderboardMuted,
                 skipIntro: localStorage.getItem('skipIntro') === 'true',
-                muteAllSounds: localStorage.getItem('muteAllSounds') === 'true'
+                muteAllSounds: localStorage.getItem('muteAllSounds') === 'true',
+                useCustomKeypad: localStorage.getItem('useCustomKeypad') !== 'false'
             });
             
             // Initialize settings toggles
             const skipIntroToggle = document.getElementById('skipIntroToggle');
             const muteAllSoundsToggle = document.getElementById('muteAllSoundsToggle');
+            const useCustomKeypadToggle = document.getElementById('useCustomKeypadToggle');
+            const saveAsPictureBtn = document.getElementById('saveAsPictureBtn');
             
             // Check localStorage for settings
             let skipIntro = localStorage.getItem('skipIntro') === 'true';
+            // muteAllSounds will control ALL audio including music and sound effects (sFX elements)
             let muteAllSounds = localStorage.getItem('muteAllSounds') === 'true';
+            let useCustomKeypad = localStorage.getItem('useCustomKeypad') !== 'false';
             
             // Set initial toggle states
             skipIntroToggle.checked = skipIntro;
             muteAllSoundsToggle.checked = muteAllSounds;
+            useCustomKeypadToggle.checked = useCustomKeypad;
             
             // Apply skip intro setting if enabled
             if (skipIntro) {
                 introContainer.style.display = 'none';
-                showGuideArrow();
+                if (!window.guideArrowInitialized) {
+                    window.guideArrowInitialized = true;
+                    setTimeout(() => {
+                        showGuideArrow();
+                    }, 200);
+                }
             }
             
             // Apply mute all sounds setting if enabled
             if (muteAllSounds) {
                 // Set muted state for both audio elements
                 isMainAudioMuted = true;
-                isLeaderboardMuted = true;
+                isLeaderboardMuted = true; // Keep both in sync
                 
                 // Update localStorage
                 localStorage.setItem('isMainAudioMuted', 'true');
@@ -1661,14 +1717,6 @@
                 toggleMainAudioBtn.querySelector('.material-symbols-rounded').textContent = 'volume_off';
                 toggleMainAudioBtn.classList.add('muted');
                 toggleMainAudioBtn.setAttribute('data-tooltip', 'Turned off in settings - gear icon');
-                
-                // Also update leaderboard mute button if it exists
-                const toggleLeaderboardMute = document.getElementById('toggleLeaderboardMute');
-                if (toggleLeaderboardMute) {
-                    toggleLeaderboardMute.querySelector('.material-symbols-rounded').textContent = 'volume_off';
-                    toggleLeaderboardMute.classList.add('muted');
-                    toggleLeaderboardMute.setAttribute('data-tooltip', 'Turned off in settings - gear icon');
-                }
                 
                 // Immediately stop any playing audio for iOS/Safari compatibility
                 introAudio.pause();
@@ -1710,16 +1758,12 @@
                 if (muteAllSounds) {
                     // Save current states before muting everything
                     localStorage.setItem('previousMainAudioState', isMainAudioMuted.toString());
-                    localStorage.setItem('previousLeaderboardAudioState', isLeaderboardMuted.toString());
                     
-                    console.log('Saved previous audio states:', {
-                        mainAudio: isMainAudioMuted,
-                        leaderboardAudio: isLeaderboardMuted
-                    });
+                    console.log('Saved previous audio state:', isMainAudioMuted);
                     
                     // Mute all audio elements
                     isMainAudioMuted = true;
-                    isLeaderboardMuted = true;
+                    isLeaderboardMuted = true; // Keep both in sync
                     
                     // Update localStorage
                     localStorage.setItem('isMainAudioMuted', 'true');
@@ -1730,14 +1774,6 @@
                     toggleMainAudioBtn.classList.add('muted');
                     toggleMainAudioBtn.setAttribute('data-tooltip', 'Turned off in settings - gear icon');
                     
-                    // Also update leaderboard mute button if it exists
-                    const toggleLeaderboardMute = document.getElementById('toggleLeaderboardMute');
-                    if (toggleLeaderboardMute) {
-                        toggleLeaderboardMute.querySelector('.material-symbols-rounded').textContent = 'volume_off';
-                        toggleLeaderboardMute.classList.add('muted');
-                        toggleLeaderboardMute.setAttribute('data-tooltip', 'Turned off in settings - gear icon');
-                    }
-                    
                     // Immediately stop any playing audio for iOS/Safari compatibility
                     introAudio.pause();
                     introAudio.currentTime = 0;
@@ -1746,18 +1782,14 @@
                     leaderboardAudio.pause();
                     leaderboardAudio.currentTime = 0;
                 } else {
-                    // Restore previous audio states
+                    // Restore previous audio states - now both will be the same
                     const previousMainAudioState = localStorage.getItem('previousMainAudioState') === 'true';
-                    const previousLeaderboardAudioState = localStorage.getItem('previousLeaderboardAudioState') === 'true';
                     
-                    console.log('Restoring previous audio states:', {
-                        mainAudio: previousMainAudioState,
-                        leaderboardAudio: previousLeaderboardAudioState
-                    });
+                    console.log('Restoring previous audio state:', previousMainAudioState);
                     
-                    // Set audio states to previous values
+                    // Set both audio states to the same value
                     isMainAudioMuted = previousMainAudioState;
-                    isLeaderboardMuted = previousLeaderboardAudioState;
+                    isLeaderboardMuted = previousMainAudioState; // Keep both in sync
                     
                     // Update localStorage
                     localStorage.setItem('isMainAudioMuted', isMainAudioMuted.toString());
@@ -1772,19 +1804,6 @@
                         toggleMainAudioBtn.querySelector('.material-symbols-rounded').textContent = 'volume_up';
                         toggleMainAudioBtn.classList.remove('muted');
                     }
-                    
-                    // Update leaderboard mute UI if it exists
-                    const toggleLeaderboardMute = document.getElementById('toggleLeaderboardMute');
-                    if (toggleLeaderboardMute) {
-                        toggleLeaderboardMute.removeAttribute('data-tooltip');
-                        if (isLeaderboardMuted) {
-                            toggleLeaderboardMute.querySelector('.material-symbols-rounded').textContent = 'volume_off';
-                            toggleLeaderboardMute.classList.add('muted');
-                        } else {
-                            toggleLeaderboardMute.querySelector('.material-symbols-rounded').textContent = 'volume_up';
-                            toggleLeaderboardMute.classList.remove('muted');
-                        }
-                    }
                 }
                 
                 // Log to debug area
@@ -1797,10 +1816,35 @@
                 }
                 
                 // Show toast for user feedback
-                showToast(`All sounds ${muteAllSounds ? 'muted' : 'enabled'}`, "info", 2000);
+                showToast(`All sounds (music & sound effects) ${muteAllSounds ? 'muted' : 'enabled'}`, "info", 2000);
             });
             
-            // Update toggle main audio button click handler to respect the global setting
+            // Custom Keypad Toggle Event Listener
+            useCustomKeypadToggle.addEventListener('change', function() {
+                useCustomKeypad = this.checked;
+                localStorage.setItem('useCustomKeypad', useCustomKeypad.toString());
+                
+                // Clear console log for debugging
+                console.log(`Use custom keypad toggled to: ${useCustomKeypad}`);
+                console.log('Current localStorage value:', localStorage.getItem('useCustomKeypad'));
+                
+                // Update score input fields
+                updateScoreInputsReadonly(useCustomKeypad);
+                
+                // Log to debug area
+                const debugArea = document.getElementById('debugArea');
+                if (debugArea) {
+                    const timestamp = new Date().toISOString();
+                    debugArea.value += `${timestamp} - Custom keypad setting changed to: ${useCustomKeypad}\n`;
+                    // Scroll to bottom
+                    debugArea.scrollTop = debugArea.scrollHeight;
+                }
+                
+                // Show toast for user feedback
+                showToast(`Custom keypad ${useCustomKeypad ? 'enabled' : 'disabled - using device keyboard'}`, "info", 2000);
+            });
+            
+            // Update toggle main audio button click handler to mute/unmute all music at once
             toggleMainAudioBtn.addEventListener('click', function() {
                 if (muteAllSounds) {
                     // Show a toast notification
@@ -1808,29 +1852,44 @@
                     return;
                 }
                 
+                // Toggle both audio sources at once
                 isMainAudioMuted = !isMainAudioMuted;
+                isLeaderboardMuted = isMainAudioMuted; // Keep both in sync
+                
+                // Update localStorage for both
                 localStorage.setItem('isMainAudioMuted', isMainAudioMuted.toString());
+                localStorage.setItem('isLeaderboardAudioMuted', isLeaderboardMuted.toString());
                 
                 // Log for debugging
-                console.log(`Main audio muted toggled to: ${isMainAudioMuted}`);
-                console.log('Current localStorage value:', localStorage.getItem('isMainAudioMuted'));
+                console.log(`All music muted toggled to: ${isMainAudioMuted}`);
                 
                 if (isMainAudioMuted) {
                     // Change icon to muted
                     toggleMainAudioBtn.querySelector('.material-symbols-rounded').textContent = 'volume_off';
                     toggleMainAudioBtn.classList.add('muted');
-                    // Immediately pause the audio for iOS/Safari compatibility
+                    
+                    // Pause both audio elements
                     introAudio.pause();
                     introAudio.currentTime = 0;
+                    leaderboardAudio.pause();
+                    leaderboardAudio.currentTime = 0;
+                    
+                    // Show toast notification
+                    showToast("All music muted", "info", 2000);
                 } else {
                     // Change icon to unmuted
                     toggleMainAudioBtn.querySelector('.material-symbols-rounded').textContent = 'volume_up';
                     toggleMainAudioBtn.classList.remove('muted');
                     
-                    // If we're on the intro screen, play the audio
-                    if (introContainer && !introContainer.classList.contains('animate-out') && introContainer.style.display !== 'none') {
+                    // Play the appropriate audio based on which screen is visible
+                    if (document.getElementById('podiumDisplay').classList.contains('active')) {
+                        safePlayAudio(leaderboardAudio);
+                    } else if (introContainer && !introContainer.classList.contains('animate-out') && introContainer.style.display !== 'none') {
                         safePlayAudio(introAudio);
                     }
+                    
+                    // Show toast notification
+                    showToast("All music unmuted", "info", 2000);
                 }
             });
             
@@ -1885,7 +1944,12 @@
                         introContainer.style.display = 'none';
                         
                         // Show guide arrow after intro animation completes
-                        showGuideArrow();
+                        if (!window.guideArrowInitialized) {
+                            window.guideArrowInitialized = true;
+                            setTimeout(() => {
+                                showGuideArrow();
+                            }, 200);
+                        }
                     }, 1000); // Should match the CSS transition duration
                 }, 600);
             });
@@ -1895,16 +1959,6 @@
             const showPodiumBtn = document.getElementById('showPodiumBtn');
             const floatingLeaderboardBtn = document.getElementById('floatingLeaderboardBtn');
             const closePodiumBtn = document.getElementById('closePodiumBtn');
-            const toggleLeaderboardMute = document.getElementById('toggleLeaderboardMute');
-            
-            // Update toggle button icon based on mute state
-            if (isLeaderboardMuted) {
-                toggleLeaderboardMute.querySelector('.material-symbols-rounded').textContent = 'volume_off';
-                toggleLeaderboardMute.classList.add('muted');
-            } else {
-                toggleLeaderboardMute.querySelector('.material-symbols-rounded').textContent = 'volume_up';
-                toggleLeaderboardMute.classList.remove('muted');
-            }
             
             // Function to quickly fade out intro audio
             function fadeOutIntroAudio(immediate = false) {
@@ -1952,12 +2006,44 @@
                 return playPromise;
             }
             
+            // Function to safely play a sound effect (for future SFX)
+            function playSoundEffect(sfxId) {
+                // Don't play if all sounds are muted
+                if (muteAllSounds) return;
+                
+                // Get the sound effect element
+                const sfxElement = document.getElementById(sfxId);
+                if (!sfxElement) {
+                    console.warn(`Sound effect with id ${sfxId} not found`);
+                    return;
+                }
+                
+                // Reset and play
+                sfxElement.currentTime = 0;
+                
+                // Use a user interaction promise to play audio
+                const playPromise = sfxElement.play();
+                
+                // Handle the promise to catch and log any errors
+                if (playPromise !== undefined) {
+                    playPromise.catch(error => {
+                        console.log('SFX playback was prevented by the browser:', error);
+                        // On iOS, we might need to handle this case differently
+                        if (error.name === 'NotAllowedError') {
+                            console.log('Safari/iOS blocked autoplay. User interaction required.');
+                        }
+                    });
+                }
+                
+                return playPromise;
+            }
+            
             // Function to play leaderboard audio
             function playLeaderboardAudio() {
                 // First fade out intro audio if it's playing
                 fadeOutIntroAudio();
                 
-                if (!isLeaderboardMuted) {
+                if (!isMainAudioMuted) { // Use isMainAudioMuted since both are in sync now
                     // Volume is already set to 0.3 (30%) on initialization
                     leaderboardAudio.currentTime = 0; // Reset to beginning
                     safePlayAudio(leaderboardAudio);
@@ -1974,153 +2060,263 @@
             }
             
             // Play audio when leaderboard is opened
-            showPodiumBtn.addEventListener('click', playLeaderboardAudio);
-            floatingLeaderboardBtn.addEventListener('click', playLeaderboardAudio);
+            showPodiumBtn.addEventListener('click', function() {
+                console.log("showPodiumBtn clicked");
+                showPodium();
+                playLeaderboardAudio();
+            });
+            
+            floatingLeaderboardBtn.addEventListener('click', function() {
+                console.log("floatingLeaderboardBtn clicked");
+                showPodium();
+                playLeaderboardAudio();
+            });
             
             // Stop audio when leaderboard is closed
             closePodiumBtn.addEventListener('click', stopLeaderboardAudio);
             
-            // Toggle mute button functionality
-            toggleLeaderboardMute.addEventListener('click', function() {
-                if (muteAllSounds) {
-                    // Show a toast notification
-                    showToast("Sound is disabled in settings. Check the gear icon to enable.", "info", 3000);
-                    return;
-                }
-                
-                isLeaderboardMuted = !isLeaderboardMuted;
-                localStorage.setItem('isLeaderboardAudioMuted', isLeaderboardMuted.toString());
-                
-                // Log for debugging
-                console.log(`Leaderboard audio muted toggled to: ${isLeaderboardMuted}`);
-                console.log('Current localStorage value:', localStorage.getItem('isLeaderboardAudioMuted'));
-                
+            // Function to update main audio button to reflect leaderboard audio state
+            function updateMainAudioButtonForPodium() {
                 if (isLeaderboardMuted) {
-                    // Change icon to muted
-                    toggleLeaderboardMute.querySelector('.material-symbols-rounded').textContent = 'volume_off';
-                    toggleLeaderboardMute.classList.add('muted');
-                    // Immediately stop audio for iOS/Safari compatibility
-                    leaderboardAudio.pause();
-                    leaderboardAudio.currentTime = 0;
+                    toggleMainAudioBtn.querySelector('.material-symbols-rounded').textContent = 'volume_off';
+                    toggleMainAudioBtn.classList.add('muted');
                 } else {
-                    // Change icon to unmuted
-                    toggleLeaderboardMute.querySelector('.material-symbols-rounded').textContent = 'volume_up';
-                    toggleLeaderboardMute.classList.remove('muted');
-                    
-                    // Only start playing if the podium is currently visible
-                    if (document.getElementById('podiumDisplay').classList.contains('active')) {
-                        safePlayAudio(leaderboardAudio);
-                    }
+                    toggleMainAudioBtn.querySelector('.material-symbols-rounded').textContent = 'volume_up';
+                    toggleMainAudioBtn.classList.remove('muted');
                 }
-            });
+            }
             
             // Function to show toast notifications
-            function showToast(message, type = 'info', duration = 3000) {
-                const toastContainer = document.getElementById('toastContainer');
-                
-                // Create toast element
+            function showToast(message, type, duration) {
                 const toast = document.createElement('div');
                 toast.classList.add('toast', `toast-${type}`);
-                toast.textContent = message;
-                
-                // Add to container
-                toastContainer.appendChild(toast);
-                
-                // Show with animation
-                setTimeout(() => toast.classList.add('show'), 10);
-                
-                // Remove after duration
+                toast.innerHTML = `
+                    <div class="toast-icon">${getToastIcon(type)}</div>
+                    <div class="toast-message">${message}</div>
+                    <button class="toast-close">×</button>
+                `;
+                toast.querySelector('.toast-close').addEventListener('click', () => {
+                    toast.classList.remove('active');
+                    setTimeout(() => {
+                        toast.remove();
+                    }, 300);
+                });
+                toast.classList.add('active');
+                document.getElementById('toastContainer').appendChild(toast);
                 setTimeout(() => {
-                    toast.classList.remove('show');
-                    setTimeout(() => toastContainer.removeChild(toast), 300);
+                    toast.classList.remove('active');
+                    setTimeout(() => {
+                        toast.remove();
+                    }, 300);
                 }, duration);
+            }
+            
+            // Function to get toast icon based on type
+            function getToastIcon(type) {
+                switch (type) {
+                    case 'success': return '✅';
+                    case 'error': return '❌';
+                    case 'info': return 'ℹ️';
+                    case 'warning': return '⚠️';
+                    default: return '🔔';
+                }
             }
         });
         
         // Function to show the guide arrow and handle its behavior
-        function showGuideArrow() {
-            const guideArrow = document.getElementById('guideArrow');
-            const playerInput = document.getElementById('playerInput');
-            const continueTournamentBtn = document.getElementById('startTournament'); // This is the "CONTINUE TOURNAMENT" button
+        // Use a module pattern to prevent multiple calls in quick succession
+        const guideArrowHandler = (function() {
+            let isShowing = false;
+            let lastShownTime = 0;
+            const COOLDOWN_TIME = 500; // ms
             
-            // Check for visible data in the Round 1 section which indicates loaded data
-            const hasVisibleTournament = document.querySelector('.round-container') !== null;
-            
-            // Also check localStorage as backup method
-            let hasStoredData = false;
-            try {
-                const storedData = localStorage.getItem('tournamentData');
-                if (storedData) {
-                    const parsedData = JSON.parse(storedData);
-                    hasStoredData = parsedData && parsedData.players && parsedData.players.length > 0;
-                }
-            } catch (e) {
-                console.error("Error checking tournament data:", e);
-            }
-            
-            // Either visible tournament or stored data means we should point to the continue button
-            const hasData = hasVisibleTournament || hasStoredData;
-            console.log("Guide arrow check - visible tournament:", hasVisibleTournament, "stored data:", hasStoredData);
-            
-            // Target element based on whether data is loaded
-            const targetElement = hasData ? continueTournamentBtn : playerInput;
-            const targetText = hasData ? "Continue!" : "Start here!";
-            
-            // Position function that will be called on resize and scroll too
-            function positionArrow() {
-                const elementRect = targetElement.getBoundingClientRect();
-                const arrowIcon = document.querySelector('.guide-arrow-point');
+            return function showGuideArrow() {
+                console.log("showGuideArrow called");
                 
-                if (hasData) {
-                    // For continue tournament button - position to left of button, centered vertically
-                    guideArrow.style.top = `${elementRect.top + (elementRect.height / 2) - (guideArrow.offsetHeight / 2)}px`;
-                    const leftPosition = Math.max(10, elementRect.left - guideArrow.offsetWidth - 20);
-                    guideArrow.style.left = `${leftPosition}px`;
-                    
-                    // Change to east arrow for pointing to the continue button
-                    arrowIcon.textContent = "east";
-                    arrowIcon.style.animation = "point-arrow-right 1s ease-in-out infinite";
+                // Prevent multiple calls within cooldown period
+                const now = Date.now();
+                if (isShowing || (now - lastShownTime < COOLDOWN_TIME)) {
+                    console.log("Guide arrow already showing or called too soon, skipping");
+                    return;
+                }
+                
+                isShowing = true;
+                lastShownTime = now;
+                
+                // Remove any existing guide arrow to avoid duplicates
+                const existingGuideArrow = document.getElementById('guideArrow');
+                if (existingGuideArrow) {
+                    existingGuideArrow.remove();
+                }
+                
+                // Recreate the guide arrow
+                const guideArrowHTML = `
+                    <div id="guideArrow" class="guide-arrow">
+                        <div class="guide-arrow-content">
+                            <span class="guide-pickle">🥒</span>
+                            <span class="guide-arrow-point material-symbols-rounded">arrow_downward</span>
+                        </div>
+                        <p class="guide-text">Start here!</p>
+                    </div>`;
+                
+                // Append to navigation
+                const navigation = document.querySelector('.navigation');
+                if (navigation) {
+                    navigation.insertAdjacentHTML('beforeend', guideArrowHTML);
                 } else {
-                    // For player input textarea - position above the LEFT side of the input
-                    guideArrow.style.top = `${elementRect.top - guideArrow.offsetHeight - 15}px`;
-                    guideArrow.style.left = `${elementRect.left + 30}px`;
-                    
-                    // Use downward arrow for pointing to the text field
-                    arrowIcon.textContent = "arrow_downward";
-                    arrowIcon.style.animation = "point-arrow-down 1s ease-in-out infinite";
+                    // If navigation doesn't exist, append to body
+                    document.body.insertAdjacentHTML('beforeend', guideArrowHTML);
                 }
                 
-                // Update text
-                guideArrow.querySelector('.guide-text').textContent = targetText;
-            }
-            
-            // Make the arrow visible first
-            guideArrow.classList.add('visible');
-            
-            // Position initially after a tiny delay to ensure visibility
-            setTimeout(positionArrow, 50);
-            
-            // Reposition on window resize and scroll
-            window.addEventListener('resize', positionArrow);
-            window.addEventListener('scroll', positionArrow);
-            
-            // Remove the arrow after 10 seconds
-            setTimeout(() => {
-                guideArrow.classList.remove('visible');
-                // Remove event listeners
-                window.removeEventListener('resize', positionArrow);
-                window.removeEventListener('scroll', positionArrow);
+                const guideArrow = document.getElementById('guideArrow');
+                const playerInput = document.getElementById('playerInput');
+                const continueTournamentBtn = document.getElementById('startTournament'); // This is the "CONTINUE PLAYING" button
                 
-                // Remove from DOM after animation
+                // Check for visible data in the Round 1 section which indicates loaded data
+                const hasVisibleTournament = document.querySelector('.round-container') !== null;
+                
+                // Check all possible localStorage keys where state might be stored
+                let hasStoredData = false;
+                try {
+                    // Check multiple possible storage keys
+                    const stateKeys = ['pickleballCompetitionState', 'tournamentData', 'pickle-state'];
+                    
+                    for (const key of stateKeys) {
+                        const storedData = localStorage.getItem(key);
+                        if (storedData) {
+                            try {
+                                const parsedData = JSON.parse(storedData);
+                                if (parsedData && parsedData.players && parsedData.players.length > 0) {
+                                    hasStoredData = true;
+                                    console.log(`Found stored data in key: ${key}`);
+                                    break;
+                                }
+                            } catch (parseError) {
+                                console.error(`Error parsing ${key}:`, parseError);
+                            }
+                        }
+                    }
+                } catch (e) {
+                    console.error("Error checking tournament data:", e);
+                }
+                
+                // Either visible tournament or stored data means we should point to the continue button
+                const hasData = hasVisibleTournament || hasStoredData;
+                console.log("Guide arrow check - visible tournament:", hasVisibleTournament, "stored data:", hasStoredData);
+                
+                let targetElement, targetText;
+                
+                if (hasData && continueTournamentBtn) {
+                    targetElement = continueTournamentBtn;
+                    targetText = "Continue!";
+                    console.log("Targeting continue button");
+                } else if (playerInput) {
+                    targetElement = playerInput;
+                    targetText = "Start here!";
+                    console.log("Targeting player input");
+                } else {
+                    console.error("Could not find target element for guide arrow");
+                    if (guideArrow) guideArrow.remove();
+                    isShowing = false;
+                    return;
+                }
+                
+                // Keep guideArrow invisible until positioned properly
+                if (guideArrow) {
+                    guideArrow.style.opacity = '0';
+                }
+                
+                // Position function that will be called on resize and scroll too
+                function positionArrow() {
+                    if (!targetElement || !guideArrow) {
+                        console.error("Target element or guide arrow not found");
+                        isShowing = false;
+                        return;
+                    }
+                    
+                    const elementRect = targetElement.getBoundingClientRect();
+                    const arrowIcon = guideArrow.querySelector('.guide-arrow-point');
+                    
+                    if (!arrowIcon) {
+                        console.error("Arrow icon element not found");
+                        isShowing = false;
+                        return;
+                    }
+                    
+                    if (hasData) {
+                        // For continue playing button - position to left of button, centered vertically
+                        guideArrow.style.top = `${elementRect.top + (elementRect.height / 2) - (guideArrow.offsetHeight / 2)}px`;
+                        const leftPosition = Math.max(10, elementRect.left - guideArrow.offsetWidth - 20);
+                        guideArrow.style.left = `${leftPosition}px`;
+                        
+                        // Change to east arrow for pointing to the continue button
+                        arrowIcon.textContent = "east";
+                        arrowIcon.style.animation = "point-arrow-right 1s ease-in-out infinite";
+                    } else {
+                        // For player input textarea - position above the LEFT side of the input
+                        guideArrow.style.top = `${elementRect.top - guideArrow.offsetHeight - 15}px`;
+                        guideArrow.style.left = `${elementRect.left + 30}px`;
+                        
+                        // Use downward arrow for pointing to the text field
+                        arrowIcon.textContent = "arrow_downward";
+                        arrowIcon.style.animation = "point-arrow-down 1s ease-in-out infinite";
+                    }
+                    
+                    // Update text
+                    const textEl = guideArrow.querySelector('.guide-text');
+                    if (textEl) {
+                        textEl.textContent = targetText;
+                    }
+                }
+                
+                // Position first, then make visible to prevent flicker
                 setTimeout(() => {
-                    guideArrow.remove();
-                }, 500);
-            }, 10000);
+                    if (guideArrow) {
+                        positionArrow();
+                        
+                        // Only add the visible class after positioning
+                        setTimeout(() => {
+                            guideArrow.classList.add('visible');
+                            guideArrow.style.opacity = '';
+                        }, 50);
+                        
+                        // Reposition on window resize and scroll
+                        window.addEventListener('resize', positionArrow);
+                        window.addEventListener('scroll', positionArrow);
+                        
+                        // Remove the arrow after 12 seconds
+                        setTimeout(() => {
+                            if (guideArrow) {
+                                guideArrow.classList.remove('visible');
+                                // Remove event listeners
+                                window.removeEventListener('resize', positionArrow);
+                                window.removeEventListener('scroll', positionArrow);
+                                
+                                // Remove from DOM after animation
+                                setTimeout(() => {
+                                    if (guideArrow && guideArrow.parentNode) {
+                                        guideArrow.remove();
+                                    }
+                                    isShowing = false;
+                                }, 500);
+                            }
+                        }, 12000);
+                    }
+                }, 200);
+            };
+        })();
+        
+        // Replace all showGuideArrow with guideArrowHandler
+        function showGuideArrow() {
+            guideArrowHandler();
         }
         
         // Define the scroll to top function and make it globally accessible
         window.scrollTop = function() { 
-            document.body.scrollTop = document.documentElement.scrollTop = 0; 
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
         }
         
         // Add event listener to the back to top button
@@ -2130,6 +2326,19 @@
         document.getElementById('toggleDebugBtn').addEventListener('click', function() {
             const debugArea = document.getElementById('debugAreaContainer');
             debugArea.style.display = debugArea.style.display === 'none' ? 'block' : 'none';
+        });
+        
+        // Close settings panel when clicking outside of it
+        document.addEventListener('click', function(event) {
+            const debugArea = document.getElementById('debugAreaContainer');
+            const toggleDebugBtn = document.getElementById('toggleDebugBtn');
+            
+            // Check if settings panel is visible and click is outside the panel and not on the gear button
+            if (debugArea.style.display === 'block' && 
+                !debugArea.contains(event.target) && 
+                !toggleDebugBtn.contains(event.target)) {
+                debugArea.style.display = 'none';
+            }
         });
         
         // Add event listener for the info toggle button
@@ -2211,13 +2420,757 @@
         
         // Function to capture all content of an element as an image
         function captureElementAsImage(element, filename) {
-            // Add the photo-capture-mode class to ensure all content is visible
-            element.classList.add('photo-capture-mode');
+            // For match history display with a unique approach
+            if (element.id === 'matchHistoryDisplay') {
+                console.log('Capturing Match History display as image');
+                // First get the match content
+                const content = element.querySelector('#matchHistoryContent');
+                
+                // Save original style to restore later
+                const originalStyle = element.style.cssText;                
+                // Apply special formatting - use match-history-capture-mode class instead of photo-capture-mode
+                element.classList.add('match-history-capture-mode');
+                console.log('Applied special formatting for capture');
+                
+                // Save original width/size values to restore later
+                const originalWidth = element.style.width;
+                const originalHeight = element.style.height;
+                
+                // Set fixed width for capture that's independent of screen size
+                element.style.width = '1200px';  // Set a fixed width large enough for all content
+                element.style.height = 'auto';
+                element.style.maxWidth = 'none';
+                element.style.minWidth = '1200px';
+                
+                // Check if there's already a title and logo
+                const existingTitle = element.querySelector('h2');
+                let logoContainer = null;
+                
+                // Only add logo if it doesn't already exist
+                if (!element.querySelector('img[alt="Pickle Pairs Logo"]')) {
+                // Add logo to the top of content for the capture
+                    logoContainer = document.createElement('div');
+                logoContainer.style.textAlign = 'center';
+                logoContainer.style.marginBottom = '15px';
+                logoContainer.innerHTML = '<img src="simplelogotbase64renamed.png" alt="Pickle Pairs Logo" style="max-width: 150px; margin: 0 auto;" crossorigin="anonymous">';
+                    
+                    // Add logo before the content but after the title
+                    if (existingTitle) {
+                        existingTitle.after(logoContainer);
+                    } else {
+                content.insertBefore(logoContainer, content.firstChild);
+                    }
+                console.log('Added logo for match history capture');
+                }
+                
+                // Ensure date display is properly styled
+                const dateDisplay = element.querySelector('#dateDisplay');
+                if (dateDisplay) {
+                    dateDisplay.style.textAlign = 'center';
+                    dateDisplay.style.margin = '15px auto 25px';
+                    dateDisplay.style.width = 'auto';
+                } else {
+                    // If date display doesn't exist, create it
+                    const newDateDisplay = document.createElement('div');
+                    newDateDisplay.id = 'dateDisplay';
+                    newDateDisplay.style.textAlign = 'center';
+                    newDateDisplay.style.margin = '15px auto 25px';
+                    newDateDisplay.style.width = 'auto';
+                    newDateDisplay.style.fontWeight = 'bold';
+                    newDateDisplay.style.fontSize = '18px';
+                    newDateDisplay.style.borderBottom = '2px solid var(--primary)';
+                    newDateDisplay.style.paddingBottom = '10px';
+                    
+                    // Format current date
+                    const currentDate = new Date();
+                    const formattedDate = currentDate.toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric'
+                    });
+                    newDateDisplay.textContent = formattedDate;
+                    
+                    // Add after logo if it exists, otherwise at the beginning of content
+                    if (logoContainer && logoContainer.parentNode) {
+                        logoContainer.after(newDateDisplay);
+                    } else if (content) {
+                        const existingLogo = content.querySelector('img[alt="Pickle Pairs Logo"]');
+                        if (existingLogo && existingLogo.parentNode) {
+                            existingLogo.parentNode.after(newDateDisplay);
+                        } else {
+                            content.insertBefore(newDateDisplay, content.firstChild);
+                        }
+                    }
+                }
+                
+                // Hide action column header and cells - these are now handled by CSS
+                console.log('Action columns hidden via CSS');
+                
+                // Hide UI controls
+                const closeBtn = document.getElementById('closeMatchHistoryBtn');
+                const originalBtnDisplay = {
+                    closeBtn: closeBtn ? closeBtn.style.display : '',
+                };
+                
+                if (closeBtn) closeBtn.style.display = 'none';
+                console.log('Hidden UI controls for capture');
+                
+                // Get header references for later restoration
+                const tableHeaders = element.querySelectorAll('th');
+                const originalHeaders = {};
+                
+                // Save original header content and styles
+                    tableHeaders.forEach((header, index) => {
+                        originalHeaders[index] = header.innerHTML;
+                    if (header.hasAttribute('style')) {
+                        originalHeaders[index + 'style'] = header.getAttribute('style');
+                    }
+                    
+                    // Make sure full text is shown
+                    const headerText = header.querySelector('.header-text');
+                    const headerIcon = header.querySelector('.header-icon');
+                    
+                    if (headerText) {
+                        headerText.style.display = 'inline-block';
+                    }
+                    
+                    if (headerIcon) {
+                        headerIcon.style.display = 'none';
+                    }
+                });
+                
+                // Get the table and prepare it for full content capture
+                const tableWrapper = element.querySelector('.match-history-table-wrapper');
+                const table = tableWrapper ? tableWrapper.querySelector('table') : null;
+                
+                // Save original styles to restore later
+                const originalTableStyles = {
+                    table: table ? {
+                        cssText: table.style.cssText,
+                        maxHeight: table.style.maxHeight,
+                        height: table.style.height,
+                        width: table.style.width,
+                        overflow: table.style.overflow
+                    } : {},
+                    wrapper: tableWrapper ? {
+                        cssText: tableWrapper.style.cssText,
+                        maxHeight: tableWrapper.style.maxHeight,
+                        height: tableWrapper.style.height,
+                        width: tableWrapper.style.width,
+                        overflow: tableWrapper.style.overflow
+                    } : {},
+                    content: content ? {
+                        cssText: content.style.cssText,
+                        maxHeight: content.style.maxHeight,
+                        height: content.style.height,
+                        width: content.style.width,
+                        overflow: content.style.overflow
+                    } : {}
+                };
+                
+                // Explicitly set styles to ensure full table capture
+                if (tableWrapper) {
+                    tableWrapper.style.maxHeight = 'none';
+                    tableWrapper.style.height = 'auto';
+                    tableWrapper.style.width = '100%';
+                    tableWrapper.style.overflow = 'visible';
+                    tableWrapper.style.maxWidth = 'none';
+                }
+                
+                if (table) {
+                    table.style.maxHeight = 'none';
+                    table.style.height = 'auto';
+                    table.style.width = '100%';
+                    table.style.overflow = 'visible';
+                    table.style.maxWidth = 'none';
+                    // Ensure fixed layout to control column widths better
+                    table.style.tableLayout = 'fixed';
+                }
+                
+                if (content) {
+                    content.style.maxHeight = 'none';
+                    content.style.height = 'auto';
+                    content.style.width = '100%';
+                    content.style.overflow = 'visible';
+                    content.style.maxWidth = 'none';
+                }
+                
+                // Update html2canvas settings to ensure all content is captured
+                html2canvas(element, {
+                    scrollX: 0,
+                    scrollY: 0,
+                    scale: 2, // Higher resolution for better quality
+                    useCORS: true,
+                    allowTaint: true,
+                    backgroundColor: '#FFFFFF',
+                    width: 1200, // Use fixed width
+                    windowWidth: 1200,
+                    foreignObjectRendering: false, // Disable for better compatibility on Android
+                    logging: true, // Enable logging for debugging
+                    removeContainer: false, // Don't remove the container to avoid rendering issues
+                    ignoreElements: (element) => {
+                        // Ignore certain elements that might cause problems
+                        return element.classList.contains('action-column') || 
+                               element.classList.contains('action-cell');
+                    },
+                    onclone: function(clonedDoc) {
+                        // Apply our special class to the cloned element as well
+                        const clonedMatchHistory = clonedDoc.querySelector('#matchHistoryDisplay');
+                        if (clonedMatchHistory) {
+                            clonedMatchHistory.classList.add('match-history-capture-mode');
+                            
+                            // Also ensure all content is visible in the clone
+                            const clonedWrapper = clonedMatchHistory.querySelector('.match-history-table-wrapper');
+                            const clonedTable = clonedMatchHistory.querySelector('table');
+                            const clonedContent = clonedMatchHistory.querySelector('#matchHistoryContent');
+                            
+                            if (clonedWrapper) {
+                                clonedWrapper.style.maxHeight = 'none';
+                                clonedWrapper.style.height = 'auto';
+                                clonedWrapper.style.width = '100%';
+                                clonedWrapper.style.overflow = 'visible';
+                                clonedWrapper.style.maxWidth = 'none';
+                            }
+                            
+                            if (clonedTable) {
+                                clonedTable.style.maxHeight = 'none';
+                                clonedTable.style.height = 'auto';
+                                clonedTable.style.width = '100%';
+                                clonedTable.style.overflow = 'visible';
+                                clonedTable.style.maxWidth = 'none';
+                                clonedTable.style.tableLayout = 'fixed';
+                            }
+                            
+                            if (clonedContent) {
+                                clonedContent.style.maxHeight = 'none';
+                                clonedContent.style.height = 'auto';
+                                clonedContent.style.width = '100%';
+                                clonedContent.style.overflow = 'visible';
+                                clonedContent.style.maxWidth = 'none';
+                            }
+                            
+                            // Ensure date display is properly centered in clone
+                            const clonedDateDisplay = clonedMatchHistory.querySelector('#dateDisplay');
+                            if (clonedDateDisplay) {
+                                clonedDateDisplay.style.textAlign = 'center';
+                                clonedDateDisplay.style.margin = '15px auto 25px';
+                                clonedDateDisplay.style.width = 'auto';
+                            }
+                        }
+                    }
+                }).then((canvas) => {
+                    console.log('Canvas generated successfully');
+                    
+                    // Detect iOS/Safari
+                    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
+                                (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+                    const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+                    
+                    console.log(`Device detection in download - iOS: ${isIOS}, Safari: ${isSafari}`);
+                    
+                    // Create download link first - do this before any style changes
+                    const link = document.createElement('a');
+                    const currentDate = new Date().toISOString().slice(0, 10);
+                    const downloadFilename = `${filename}-${currentDate}.png`;
+                    console.log(`Creating download: ${downloadFilename}`);
+                    
+                    // Special handling for iOS/Safari
+                    if (isIOS || isSafari) {
+                        console.log('Using iOS/Safari specific download method');
+                        
+                        // For iOS, we need a different approach
+                        // First create a blob from the canvas
+                        canvas.toBlob(function(blob) {
+                            // Create object URL
+                            const url = URL.createObjectURL(blob);
+                            
+                            // For iOS Safari, we'll use a temporary link with target="_blank"
+                            const tempLink = document.createElement('a');
+                            tempLink.href = url;
+                            tempLink.download = downloadFilename;
+                            tempLink.target = "_blank"; // Open in new tab
+                            tempLink.style.display = "none";
+                            document.body.appendChild(tempLink);
+                            
+                            // Simulate click after a short delay
+                            setTimeout(() => {
+                                const clickEvent = new MouseEvent('click');
+                                tempLink.dispatchEvent(clickEvent);
+                                
+                                // Clean up
+                                setTimeout(() => {
+                                    document.body.removeChild(tempLink);
+                                    URL.revokeObjectURL(url);
+                                }, 100);
+                            }, 100);
+                            
+                            // Show special instructions for iOS
+                            showToast('For iOS: Touch and hold the image, then choose "Save to Photos"', 'info', 6000);
+                        }, 'image/png');
+                    } else {
+                        // Standard approach for other browsers
+                        link.href = canvas.toDataURL('image/png');
+                        link.download = downloadFilename;
+                        
+                        // Try-catch block to handle download errors
+                        try {
+                            link.click();
+                            console.log('Download initiated');
+                        } catch (err) {
+                            console.error('Error initiating download:', err);
+                            // Try alternative download method
+                            try {
+                                // Create a blob and use saveAs
+                                canvas.toBlob(function(blob) {
+                                    if (window.navigator && window.navigator.msSaveOrOpenBlob) {
+                                        // For IE
+                                        window.navigator.msSaveOrOpenBlob(blob, link.download);
+                                    } else {
+                                        // For Android
+                                        const url = URL.createObjectURL(blob);
+                                        const newLink = document.createElement('a');
+                                        newLink.href = url;
+                                        newLink.download = link.download;
+                                        document.body.appendChild(newLink);
+                                        newLink.click();
+                                        document.body.removeChild(newLink);
+                                        URL.revokeObjectURL(url);
+                                    }
+                                });
+                            } catch (blobErr) {
+                                console.error('Error with blob download:', blobErr);
+                                showToast('Download error. Please try again or check permissions.', 'error', 4000);
+                            }
+                        }
+                    }
+                    
+                    // IMPORTANT: First ensure the active class is maintained
+                    const wasActive = element.classList.contains('active');
+                    
+                    // AFTER download completes, restore original styles
+                    element.style.cssText = originalStyle;
+                    element.style.width = originalWidth || '';
+                    element.style.height = originalHeight || '';
+                    element.style.maxWidth = '';
+                    element.style.minWidth = '';
+                    
+                    // Remove special capture class
+                    element.classList.remove('match-history-capture-mode');
+                    
+                    // Remove the logo we added for the image (only if we added one)
+                    if (logoContainer && logoContainer.parentNode) {
+                        logoContainer.parentNode.removeChild(logoContainer);
+                    }
+                    
+                    // Ensure element stays active if it was active before
+                    if (wasActive) {
+                        element.classList.add('active');
+                        element.style.visibility = 'visible';
+                        element.style.opacity = '1';
+                        element.style.display = 'flex';
+                    }
+                                     
+                    // Restore visibility of UI elements
+                    if (closeBtn) closeBtn.style.display = originalBtnDisplay.closeBtn;
+                    
+                    // Restore content style
+                    if (content) {
+                        content.style.cssText = originalTableStyles.content.cssText;
+                        content.style.maxHeight = originalTableStyles.content.maxHeight || '';
+                        content.style.height = originalTableStyles.content.height || '';
+                        content.style.width = originalTableStyles.content.width || '';
+                        content.style.overflow = originalTableStyles.content.overflow || '';
+                        content.style.maxWidth = '';
+                    }
+                    
+                    // Restore table styles
+                    if (table) {
+                        table.style.cssText = originalTableStyles.table.cssText;
+                        table.style.maxHeight = originalTableStyles.table.maxHeight || '';
+                        table.style.height = originalTableStyles.table.height || '';
+                        table.style.width = originalTableStyles.table.width || '';
+                        table.style.overflow = originalTableStyles.table.overflow || '';
+                        table.style.maxWidth = '';
+                        table.style.tableLayout = '';
+                        
+                        // Reset all rows to their original display state
+                        const allRows = table.querySelectorAll('tr');
+                        allRows.forEach(row => {
+                            row.style.display = '';
+                            row.style.visibility = '';
+                        });
+                    }
+                    
+                    if (tableWrapper) {
+                        tableWrapper.style.cssText = originalTableStyles.wrapper.cssText;
+                        tableWrapper.style.maxHeight = originalTableStyles.wrapper.maxHeight || '';
+                        tableWrapper.style.height = originalTableStyles.wrapper.height || '';
+                        tableWrapper.style.width = originalTableStyles.wrapper.width || '';
+                        tableWrapper.style.overflow = originalTableStyles.wrapper.overflow || '';
+                        tableWrapper.style.maxWidth = '';
+                    }
+                    
+                    // Restore headers
+                    if (tableHeaders && tableHeaders.length > 0 && typeof originalHeaders !== 'undefined') {
+                        tableHeaders.forEach((header, index) => {
+                            if (originalHeaders[index]) {
+                                header.innerHTML = originalHeaders[index];
+                                // Reset all applied inline styles
+                                header.removeAttribute('style');
+                                if (originalHeaders[index + 'style']) {
+                                    header.setAttribute('style', originalHeaders[index + 'style']);
+                                }
+                            }
+                        });
+                    }
+                    
+                    // Restore date display
+                    if (dateDisplay) {
+                        dateDisplay.removeAttribute('style');
+                    }
+                    
+                    // Show success message directly here
+                    console.log('Match History panel restored after image capture');
+                    console.log(`Final Match History state: active=${element.classList.contains('active')}, visibility=${element.style.visibility}, display=${element.style.display}`);
+                    
+                    // Dispatch event to signal match history capture is complete
+                    document.dispatchEvent(new CustomEvent('matchHistoryCaptureComplete'));
+                    
+                    showToast('Match History saved as image.', 'success', 4000);
+                });
+                
+                // Return early since we've handled this case specifically
+                return;
+            }
             
-            // Save the original styles
+            // Special handling for podium display (leaderboard)
+            if (element.id === 'podiumDisplay') {
+                console.log('Capturing podium display as image');
+                
+                // Save original width/size values to restore later
+                const originalWidth = element.style.width;
+                const originalHeight = element.style.height;
+                
+                // Set fixed width for capture that's independent of screen size
+                element.style.width = '1200px';  // Set a fixed width large enough for all content
+                element.style.height = 'auto';
+                element.style.maxWidth = 'none';
+                element.style.minWidth = '1200px';
+                
+                // Add logo to the top for the capture if not already present
+                let logoContainer = element.querySelector('img[alt="Pickle Pairs Logo"]');
+                let addedLogoContainer = false;
+                
+                if (!logoContainer) {
+                    logoContainer = document.createElement('div');
+                    logoContainer.style.textAlign = 'center';
+                    logoContainer.style.marginBottom = '15px';
+                    logoContainer.innerHTML = '<img src="simplelogotbase64renamed.png" alt="Pickle Pairs Logo" style="max-width: 150px; margin: 0 auto;" crossorigin="anonymous">';
+                    element.insertBefore(logoContainer, element.firstChild);
+                    addedLogoContainer = true;
+                }
+                
+                // Save the original style classes and states
+                const wasActive = element.classList.contains('active');
+                const originalStyle = element.style.cssText;
+                
+                // Save original states of controls to restore later
+                const closeBtn = element.querySelector('#closePodiumBtn');
+                const sortingButtons = element.querySelector('.sorting-buttons');
+                const saveBtn = document.getElementById('saveAsPictureBtn');
+                const toggleMuteBtn = document.getElementById('toggleLeaderboardMute');
+                
+                const originalDisplayState = {
+                    closeBtn: closeBtn ? closeBtn.style.display : '',
+                    sortingButtons: sortingButtons ? sortingButtons.style.display : '',
+                    saveBtn: saveBtn ? saveBtn.style.display : '',
+                    toggleMuteBtn: toggleMuteBtn ? toggleMuteBtn.style.display : ''
+                };
+                
+                // Hide UI controls only for the snapshot
+                if (closeBtn) closeBtn.style.display = 'none';
+                if (sortingButtons) sortingButtons.style.display = 'none';
+                if (saveBtn) saveBtn.style.display = 'none';
+                if (toggleMuteBtn) toggleMuteBtn.style.display = 'none';
+                
+                // Get the table and prepare it for full content capture
+                const tableWrapper = element.querySelector('.table-wrapper');
+                const table = element.querySelector('#playerStatsTable');
+                
+                // Find and remove drop shadows from sticky columns
+                const stickyColumns = table ? table.querySelectorAll('th:nth-child(1), th:nth-child(2), td:nth-child(1), td:nth-child(2)') : [];
+                const originalColumnStyles = [];
+                
+                // Save original styles
+                stickyColumns.forEach((col, index) => {
+                    originalColumnStyles[index] = {
+                        element: col,
+                        boxShadow: col.style.boxShadow,
+                        background: col.style.background,
+                        backgroundColor: col.style.backgroundColor,
+                        border: col.style.border,
+                        borderRight: col.style.borderRight
+                    };
+                    
+                    // Remove shadows and borders for capture
+                    col.style.boxShadow = 'none';
+                    col.style.border = '1px solid #ddd';
+                    col.style.borderRight = '1px solid #ddd';
+                });
+                
+                // Save original styles to restore later
+                const originalTableStyles = {
+                    table: table ? {
+                        cssText: table.style.cssText,
+                        maxHeight: table.style.maxHeight,
+                        height: table.style.height,
+                        width: table.style.width,
+                        overflow: table.style.overflow
+                    } : {},
+                    wrapper: tableWrapper ? {
+                        cssText: tableWrapper.style.cssText,
+                        maxHeight: tableWrapper.style.maxHeight,
+                        height: tableWrapper.style.height,
+                        width: tableWrapper.style.width,
+                        overflow: tableWrapper.style.overflow
+                    } : {}
+                };
+                
+                // Explicitly set styles to ensure full table capture
+                if (tableWrapper) {
+                    tableWrapper.style.maxHeight = 'none';
+                    tableWrapper.style.height = 'auto';
+                    tableWrapper.style.width = '100%';
+                    tableWrapper.style.overflow = 'visible';
+                    tableWrapper.style.maxWidth = 'none';
+                }
+                
+                if (table) {
+                    table.style.maxHeight = 'none';
+                    table.style.height = 'auto';
+                    table.style.width = '100%';
+                    table.style.overflow = 'visible';
+                    table.style.maxWidth = 'none';
+                    // Ensure fixed layout to control column widths better
+                    table.style.tableLayout = 'fixed';
+                    
+                    // Ensure all rows are visible
+                    const rows = table.querySelectorAll('tr');
+                    rows.forEach(row => {
+                        row.style.display = 'table-row';
+                        row.style.visibility = 'visible';
+                    });
+                }
+                
+                // Add the podium-capture-mode class that contains our essential styles
+                element.classList.add('podium-capture-mode');
+                
+                console.log('Creating image of podium display with html2canvas');
+                
+                // Use html2canvas with improved settings
+                html2canvas(element, {
+                    scrollX: 0,
+                    scrollY: 0,
+                    scale: 2, // Higher resolution for better quality
+                    useCORS: true,
+                    allowTaint: true,
+                    backgroundColor: '#FFFFFF',
+                    width: 1200, // Use fixed width
+                    windowWidth: 1200,
+                    onclone: function(clonedDoc) {
+                        // Apply our special class to the cloned element as well
+                        const clonedPodium = clonedDoc.querySelector('#podiumDisplay');
+                        if (clonedPodium) {
+                            clonedPodium.classList.add('podium-capture-mode');
+                            
+                            // Also ensure all content is visible in the clone
+                            const clonedWrapper = clonedPodium.querySelector('.table-wrapper');
+                            const clonedTable = clonedPodium.querySelector('#playerStatsTable');
+                            
+                            if (clonedWrapper) {
+                                clonedWrapper.style.maxHeight = 'none';
+                                clonedWrapper.style.height = 'auto';
+                                clonedWrapper.style.width = '100%';
+                                clonedWrapper.style.overflow = 'visible';
+                                clonedWrapper.style.maxWidth = 'none';
+                            }
+                            
+                            if (clonedTable) {
+                                clonedTable.style.maxHeight = 'none';
+                                clonedTable.style.height = 'auto';
+                                clonedTable.style.width = '100%';
+                                clonedTable.style.overflow = 'visible';
+                                clonedTable.style.maxWidth = 'none';
+                                clonedTable.style.tableLayout = 'fixed';
+                                
+                                // Ensure all rows are visible in the clone
+                                const clonedRows = clonedTable.querySelectorAll('tr');
+                                clonedRows.forEach(row => {
+                                    row.style.display = 'table-row';
+                                    row.style.visibility = 'visible';
+                                });
+                                
+                                // Remove shadows from cloned sticky columns
+                                const clonedStickyColumns = clonedTable.querySelectorAll('th:nth-child(1), th:nth-child(2), td:nth-child(1), td:nth-child(2)');
+                                clonedStickyColumns.forEach(col => {
+                                    col.style.boxShadow = 'none';
+                                    col.style.background = col.tagName === 'TH' ? 'var(--primary)' : 'white';
+                                    col.style.border = '1px solid #ddd';
+                                    col.style.borderRight = '1px solid #ddd';
+                                    col.style.position = 'static'; // Remove sticky positioning
+                                });
+                                
+                                // Make backgrounds consistent
+                                const allCells = clonedTable.querySelectorAll('td, th');
+                                allCells.forEach(cell => {
+                                    if (cell.tagName === 'TH') {
+                                        cell.style.backgroundColor = 'var(--primary)';
+                                        cell.style.color = 'white';
+                                    } else {
+                                        const row = cell.closest('tr');
+                                        const isEven = Array.from(row.parentNode.children).indexOf(row) % 2 === 1;
+                                        cell.style.backgroundColor = isEven ? 'rgb(240, 245, 255)' : 'white';
+                                    }
+                                });
+                            }
+                            
+                            // Hide UI controls in the clone
+                            const clonedCloseBtn = clonedPodium.querySelector('#closePodiumBtn');
+                            const clonedSortingButtons = clonedPodium.querySelector('.sorting-buttons');
+                            if (clonedCloseBtn) clonedCloseBtn.style.display = 'none';
+                            if (clonedSortingButtons) clonedSortingButtons.style.display = 'none';
+                        }
+                    }
+                }).then(canvas => {
+                    console.log('Canvas successfully generated for podium');
+                    
+                    // Create download link
+                    const link = document.createElement('a');
+                    link.href = canvas.toDataURL('image/png');
+                    const currentDate = new Date().toISOString().slice(0, 10);
+                    link.download = `${filename}-${currentDate}.png`;
+                    link.click();
+                    
+                    console.log('Podium image download initiated');
+                    
+                    // Restore original styles AFTER the download completes
+                    element.style.cssText = originalStyle;
+                    element.style.width = originalWidth || '';
+                    element.style.height = originalHeight || '';
+                    element.style.maxWidth = '';
+                    element.style.minWidth = '';
+                    
+                    // Remove capture mode classes
+                    element.classList.remove('podium-capture-mode');
+                    
+                    // If we added a logo container, remove it
+                    if (addedLogoContainer && logoContainer && logoContainer.parentNode) {
+                        logoContainer.parentNode.removeChild(logoContainer);
+                    }
+                    
+                    // Restore element active state
+                    if (wasActive && !element.classList.contains('active')) {
+                        element.classList.add('active');
+                    }
+                    
+                    // Restore visibility of UI controls
+                    if (closeBtn) closeBtn.style.display = originalDisplayState.closeBtn;
+                    if (sortingButtons) sortingButtons.style.display = originalDisplayState.sortingButtons;
+                    if (saveBtn) saveBtn.style.display = originalDisplayState.saveBtn;
+                    if (toggleMuteBtn) toggleMuteBtn.style.display = originalDisplayState.toggleMuteBtn;
+                    
+                    // Restore table styles
+                    if (table) {
+                        table.style.cssText = originalTableStyles.table.cssText;
+                        // Also restore individual properties to ensure they get reset properly
+                        table.style.maxHeight = originalTableStyles.table.maxHeight || '';
+                        table.style.height = originalTableStyles.table.height || '';
+                        table.style.width = originalTableStyles.table.width || '';
+                        table.style.overflow = originalTableStyles.table.overflow || '';
+                        table.style.maxWidth = '';
+                        table.style.tableLayout = '';
+                    }
+                    
+                    if (tableWrapper) {
+                        tableWrapper.style.cssText = originalTableStyles.wrapper.cssText;
+                        // Also restore individual properties
+                        tableWrapper.style.maxHeight = originalTableStyles.wrapper.maxHeight || '';
+                        tableWrapper.style.height = originalTableStyles.wrapper.height || '';
+                        tableWrapper.style.width = originalTableStyles.wrapper.width || '';
+                        tableWrapper.style.overflow = originalTableStyles.wrapper.overflow || '';
+                        tableWrapper.style.maxWidth = '';
+                    }
+                    
+                    // Restore column styles
+                    originalColumnStyles.forEach(col => {
+                        if (col && col.element) {
+                            col.element.style.boxShadow = col.boxShadow || '';
+                            col.element.style.background = col.background || '';
+                            col.element.style.backgroundColor = col.backgroundColor || '';
+                            col.element.style.border = col.border || '';
+                            col.element.style.borderRight = col.borderRight || '';
+                            col.element.style.position = '';
+                        }
+                    });
+                    
+                    // Additional cleanup - restore all table rows to their original state
+                    if (table) {
+                        const rows = table.querySelectorAll('tr');
+                        rows.forEach(row => {
+                            row.style.display = '';
+                            row.style.visibility = '';
+                        });
+                    }
+                    
+                    // Signal completion
+                    document.dispatchEvent(new CustomEvent('podiumCaptureComplete'));
+                    showToast('Leaderboard saved as image.', 'success', 4000);
+                }).catch(error => {
+                    console.error('Error capturing leaderboard with html2canvas:', error);
+                    showToast('Error capturing leaderboard: ' + error.message, 'error', 4000);
+                    
+                    // Restore original styles even on error
+                    element.style.cssText = originalStyle;
+                    element.style.width = originalWidth || '';
+                    element.style.height = originalHeight || '';
+                    element.style.maxWidth = '';
+                    element.style.minWidth = '';
+                    
+                    // Remove capture mode classes
+                    element.classList.remove('podium-capture-mode');
+                    
+                    // Restore column styles even on error
+                    originalColumnStyles.forEach(col => {
+                        if (col && col.element) {
+                            col.element.style.boxShadow = col.boxShadow || '';
+                            col.element.style.background = col.background || '';
+                            col.element.style.backgroundColor = col.backgroundColor || '';
+                            col.element.style.border = col.border || '';
+                            col.element.style.borderRight = col.borderRight || '';
+                            col.element.style.position = '';
+                        }
+                    });
+                    
+                    // Additional cleanup
+                    if (table) {
+                        const rows = table.querySelectorAll('tr');
+                        rows.forEach(row => {
+                            row.style.display = '';
+                            row.style.visibility = '';
+                        });
+                    }
+                    
+                    // Signal completion even on error
+                    document.dispatchEvent(new CustomEvent('podiumCaptureComplete'));
+                });
+                
+                return;
+            }
+            
+            // For other elements, continue with the existing code
             const originalStyle = element.style.cssText;
             
-            // Capture all content with html2canvas
+            // Capture all content with html2canvas for other elements
             html2canvas(element, {
                 scrollX: 0,
                 scrollY: 0,
@@ -2228,10 +3181,6 @@
                 allowTaint: true,
                 backgroundColor: '#FFFFFF'
             }).then((canvas) => {
-                // Remove the photo-capture-mode class and restore original styles
-                element.classList.remove('photo-capture-mode');
-                element.style.cssText = originalStyle;
-                
                 // Create download link
                 const link = document.createElement('a');
                 link.href = canvas.toDataURL('image/png');
@@ -2241,70 +3190,662 @@
             });
         }
         
-        // Add event listener for the Match History save as image button
-        document.getElementById('saveMatchHistoryAsPictureBtn').addEventListener('click', function() {
-            const matchHistoryDisplay = document.getElementById('matchHistoryDisplay');
-            captureElementAsImage(matchHistoryDisplay, 'match-history');
-        });
-        
-        // Add event listener for the Capture All button
-        document.getElementById('captureAllBtn').addEventListener('click', function() {
-            // Show both displays temporarily
-            const podiumDisplay = document.getElementById('podiumDisplay');
-            const matchHistoryDisplay = document.getElementById('matchHistoryDisplay');
-            
-            // First show the podium and capture it
-            podiumDisplay.classList.add('active');
-            captureElementAsImage(podiumDisplay, 'leaderboard');
-            
-            // Then show the match history and capture it (after a slight delay)
-            setTimeout(function() {
-                podiumDisplay.classList.remove('active');
-                matchHistoryDisplay.classList.add('active');
-                
-                captureElementAsImage(matchHistoryDisplay, 'match-history');
-                
-                // Hide match history after another delay
-                setTimeout(function() {
-                    matchHistoryDisplay.classList.remove('active');
-                }, 500);
-            }, 1000);
-        });
-        
-        // Dancing pickle guide functionality
-        document.getElementById('dancingPickleGuide').addEventListener('click', function() {
-            // Find the Pro Tips section by its heading text
-            const proTipsHeading = Array.from(document.querySelectorAll('.help-section h3')).find(
-                h => h.textContent.includes('Pro Tips')
-            );
-            
-            // If found, scroll to its parent section
-            if (proTipsHeading) {
-                const proTipsSection = proTipsHeading.closest('.help-section');
-                const helpPanel = document.getElementById('helpPanel');
-                const offset = proTipsSection.offsetTop - 20;
-                helpPanel.scrollTo({
-                    top: offset,
-                    behavior: 'smooth'
-                });
-                
-                // Add a brief highlight animation to the Pro Tips section
-                proTipsSection.style.transition = 'background-color 0.5s';
-                proTipsSection.style.backgroundColor = 'rgba(76, 175, 80, 0.1)';
-                setTimeout(() => {
-                    proTipsSection.style.backgroundColor = 'transparent';
-                    setTimeout(() => {
-                        proTipsSection.style.transition = '';
-                    }, 500);
-                }, 1000);
-            }
-        });
     </script>
     
     <!-- Toast Notification Container -->
     <div id="toastContainer" class="toast-container"></div>
 
-    <script src="script.js"></script>
+    <script src="script-1744668356518.obfuscated.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    <script>
+        // Add a script to ensure the settings panel z-index is properly set
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOMContentLoaded from index.html');
+            
+            // Add event listener for scrollToCurrentRound button
+            document.getElementById('scrollToCurrentRound').addEventListener('click', function() {
+                scrollToCurrentRound();
+            });
+            
+            // Add explicit event listener for support button
+            document.getElementById('supportButton').addEventListener('click', function() {
+                const supportPanel = document.getElementById('support-panel');
+                supportPanel.classList.toggle('open');
+            });
+            
+            // Ensure settings panel has the correct z-index
+            const debugArea = document.getElementById('debugAreaContainer');
+            if (debugArea) {
+                debugArea.style.zIndex = "2200";
+            }
+            
+            // Initialize the numeric keypad
+            if (typeof initNumericKeypad === 'function') {
+                initNumericKeypad();
+                console.log('Numeric keypad initialized');
+                
+                // Handle state restoration here to prevent multiple calls
+                // Set a small timeout to ensure all initialization is complete
+                if (!window.stateRestorationScheduled && (localStorage.getItem('pickleballCompetitionState') || 
+                    localStorage.getItem('tournamentData') || localStorage.getItem('pickle-state'))) {
+                    window.stateRestorationScheduled = true;
+                    setTimeout(() => {
+                        if (typeof restoreState === 'function') {
+                            restoreState();
+                        }
+                    }, 100);
+                }
+            }
+            
+            // Only initialize the guide arrow once after a short delay
+            // This ensures the page elements are properly loaded
+            if (!window.guideArrowInitialized) {
+                window.guideArrowInitialized = true;
+                setTimeout(() => {
+                    showGuideArrow();
+                }, 700);
+            }
+            
+            // Function to update the appearance of the floating capture button
+            // REMOVED: Duplicate function definition - now defined in global scope
+            
+            // Set up match history button listeners for updating capture button appearance
+            setupMatchHistoryListeners();
+            
+            // Initialize capture button appearance
+            updateCaptureButtonAppearance();
+        });
+        
+        // Function to update the appearance of the floating capture button - moved to global scope
+        function updateCaptureButtonAppearance() {
+            const matchHistoryDisplay = document.getElementById('matchHistoryDisplay');
+            const podiumDisplay = document.getElementById('podiumDisplay');
+            const saveAsPictureBtn = document.getElementById('saveAsPictureBtn');
+            
+            // Check if all elements exist before proceeding
+            if (!matchHistoryDisplay || !podiumDisplay || !saveAsPictureBtn) {
+                console.warn('One or more elements not found for updateCaptureButtonAppearance');
+                return; // Exit function if any element is missing
+            }
+            
+            if (matchHistoryDisplay.classList.contains('active') || podiumDisplay.classList.contains('active')) {
+                // If match history or podium is active, show single camera icon
+                saveAsPictureBtn.classList.add('toggle-capture-btn');
+                saveAsPictureBtn.classList.add('single-camera-mode');
+                saveAsPictureBtn.classList.remove('dual-camera-mode');
+            } else {
+                // Otherwise show the dual icon
+                saveAsPictureBtn.classList.add('toggle-capture-btn');
+                saveAsPictureBtn.classList.remove('single-camera-mode');
+                saveAsPictureBtn.classList.add('dual-camera-mode');
+            }
+        }
+        
+        document.getElementById('saveAsPictureBtn').addEventListener('click', () => {
+        const matchHistoryDisplay = document.getElementById('matchHistoryDisplay');
+        const podiumDisplay = document.getElementById('podiumDisplay');
+        
+        console.log('--- SAVE AS PICTURE BUTTON CLICKED ---');
+        console.log(`Match History state: active=${matchHistoryDisplay.classList.contains('active')}, visibility=${matchHistoryDisplay.style.visibility}, display=${matchHistoryDisplay.style.display}`);
+        console.log(`Podium state: active=${podiumDisplay.classList.contains('active')}, visibility=${podiumDisplay.style.visibility}, display=${podiumDisplay.style.display}`);
+        
+        // Show a toast to indicate the process has started
+        showToast('Generating images...', 'info', 2000);
+        
+        // Case 1: Match history is already active - capture just that
+        if (matchHistoryDisplay.classList.contains('active')) {
+            console.log('Match History is active - capturing only Match History');
+            // Save original state so we can restore it after capture
+            const originalVisibility = matchHistoryDisplay.style.visibility;
+            const originalOpacity = matchHistoryDisplay.style.opacity;
+            const originalDisplay = matchHistoryDisplay.style.display;
+            
+            console.log(`Original Match History state: visibility=${originalVisibility}, opacity=${originalOpacity}, display=${originalDisplay}`);
+            
+            // Capture the element - no need for setTimeout here
+            captureElementAsImage(matchHistoryDisplay, 'match-history');
+            
+            // NOTE: We're removing this setTimeout because restoration now happens inside 
+            // the html2canvas then() callback in captureElementAsImage function
+            // The success toast will also be shown inside the callback after restore
+        }
+        // Case 2: Podium is already active - capture just that
+        else if (podiumDisplay.classList.contains('active')) {
+            captureElementAsImage(podiumDisplay, 'leaderboard');
+        }
+        // Case 3: Neither is active - capture both sequentially
+        else {
+            // Use the background capture method for cleaner handling
+            captureElementsInBackground();
+        }
+        });
+        
+        // Add context menu for background capture
+        document.getElementById('saveAsPictureBtn').addEventListener('contextmenu', (e) => {
+            e.preventDefault(); // Prevent default context menu
+            captureElementsInBackground();
+            return false;
+        });
+        
+        // Add tooltip to inform users about right-click option
+        const saveAsPictureBtn = document.getElementById('saveAsPictureBtn');
+        if (saveAsPictureBtn) {
+            saveAsPictureBtn.title = "Left-click: Capture with UI panels | Right-click: Silent capture in background";
+        }
+
+        // Function to setup match history visibility change listeners
+        function setupMatchHistoryListeners() {
+            // Listen for match history being shown
+            document.getElementById('matchesPlayed').addEventListener('click', function() {
+                setTimeout(updateCaptureButtonAppearance, 100);
+            });
+            
+            // Listen for match history being closed
+            document.getElementById('closeMatchHistoryBtn').addEventListener('click', function() {
+                setTimeout(updateCaptureButtonAppearance, 100);
+            });
+            
+            // Listen for podium display being shown
+            document.getElementById('showPodiumBtn').addEventListener('click', function() {
+                setTimeout(updateCaptureButtonAppearance, 100);
+            });
+            
+            // Listen for floating leaderboard button
+            const floatingLeaderboardBtn = document.getElementById('floatingLeaderboardBtn');
+            if (floatingLeaderboardBtn) {
+                floatingLeaderboardBtn.addEventListener('click', function() {
+                    setTimeout(updateCaptureButtonAppearance, 100);
+                });
+            }
+            
+            // Listen for podium display being closed
+            document.getElementById('closePodiumBtn').addEventListener('click', function() {
+                setTimeout(updateCaptureButtonAppearance, 100);
+            });
+        }
+
+        // Function to capture both elements without showing them in the UI
+        function captureElementsInBackground() {
+            // Show toast to indicate process has started
+            showToast('Generating images...', 'info', 2000);
+            
+            // Get the elements
+            const matchHistoryDisplay = document.getElementById('matchHistoryDisplay');
+            const podiumDisplay = document.getElementById('podiumDisplay');
+            const matchHistoryContent = document.getElementById('matchHistoryContent');
+            
+            console.log('--- BACKGROUND CAPTURE START ---');
+            
+            // Save original visibility states
+            const originalMatchHistoryState = {
+                visibility: matchHistoryDisplay.style.visibility,
+                opacity: matchHistoryDisplay.style.opacity,
+                display: matchHistoryDisplay.style.display,
+                active: matchHistoryDisplay.classList.contains('active'),
+                position: matchHistoryDisplay.style.position,
+                zIndex: matchHistoryDisplay.style.zIndex,
+                width: matchHistoryDisplay.style.width,
+                height: matchHistoryDisplay.style.height,
+                maxWidth: matchHistoryDisplay.style.maxWidth,
+                minWidth: matchHistoryDisplay.style.minWidth
+            };
+            
+            const originalPodiumState = {
+                visibility: podiumDisplay.style.visibility,
+                opacity: podiumDisplay.style.opacity,
+                display: podiumDisplay.style.display,
+                active: podiumDisplay.classList.contains('active'),
+                position: podiumDisplay.style.position,
+                zIndex: podiumDisplay.style.zIndex,
+                width: podiumDisplay.style.width,
+                height: podiumDisplay.style.height,
+                maxWidth: podiumDisplay.style.maxWidth,
+                minWidth: podiumDisplay.style.minWidth
+            };
+            
+            // Prepare match history for capture - make it positioned off-screen but fully rendered
+            matchHistoryDisplay.classList.add('active'); // Need active class for structure
+            matchHistoryDisplay.style.position = 'absolute';
+            matchHistoryDisplay.style.left = '-9999px'; // Position off-screen instead of hiding
+            matchHistoryDisplay.style.visibility = 'visible'; // Keep visible for proper rendering
+            matchHistoryDisplay.style.opacity = '1'; // Keep opacity normal for rendering
+            matchHistoryDisplay.style.display = 'flex';
+            matchHistoryDisplay.style.zIndex = '999999'; // High z-index to ensure it's on top of any stacking context
+            matchHistoryDisplay.style.pointerEvents = 'none'; // Prevent interactions
+            
+            // Set fixed width for capture
+            matchHistoryDisplay.style.width = '1200px';
+            matchHistoryDisplay.style.height = 'auto';
+            matchHistoryDisplay.style.maxWidth = 'none';
+            matchHistoryDisplay.style.minWidth = '1200px';
+            
+            // Clear current content and explicitly rebuild it
+            matchHistoryContent.innerHTML = '';
+            
+            // Add date display
+            const dateElement = document.createElement('div');
+            dateElement.id = 'dateDisplay';
+            matchHistoryContent.appendChild(dateElement);
+            displayCurrentDate(dateElement);
+            
+            // Either show empty state or build the match history table
+            if (matches.length === 0) {
+                matchHistoryContent.innerHTML += '<div class="empty-state">No matches have been played yet.</div>';
+            } else {
+                // Explicitly build the table with our function
+                if (typeof buildMatchHistoryTable === 'function') {
+                    buildMatchHistoryTable(matchHistoryContent);
+                } else {
+                    // Fallback if function isn't available
+                    console.log('Building match history table manually');
+                    
+                    // Create a scrollable wrapper for the table
+                    const tableWrapper = document.createElement('div');
+                    tableWrapper.className = 'match-history-table-wrapper';
+                    
+                    // Create a table to display match history
+                    const table = document.createElement('table');
+                    table.innerHTML = `
+                        <thead>
+                            <tr>
+                                <th>
+                                    <span class="header-text">Round</span>
+                                    <span class="header-icon" title="Round"><span class="material-symbols-rounded">filter_1</span></span>
+                                </th>
+                                <th>
+                                    <span class="header-text">Match</span>
+                                    <span class="header-icon" title="Match"><span class="material-symbols-rounded">sports_tennis</span></span>
+                                </th>
+                                <th>
+                                    <span class="header-text">Team 1</span>
+                                    <span class="header-icon" title="Team 1"><span class="material-symbols-rounded">group</span><span class="team-number">1</span></span>
+                                </th>
+                                <th>
+                                    <span class="header-text">Team 2</span>
+                                    <span class="header-icon" title="Team 2"><span class="material-symbols-rounded">group</span><span class="team-number">2</span></span>
+                                </th>
+                                <th>
+                                    <span class="header-text">Score</span>
+                                    <span class="header-icon" title="Score"><span class="material-symbols-rounded">scoreboard</span></span>
+                                </th>
+                                <th class="action-column">
+                                    <span class="header-text">Actions</span>
+                                    <span class="header-icon" title="Actions"><span class="material-symbols-rounded">edit</span></span>
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    `;
+                    const tableBody = table.querySelector('tbody');
+                    
+                    // Group matches by round and track match occurrences
+                    const matchColors = {}; // To store a unique color for each repeated match
+                    const matchKeyMap = {}; // To count occurrences of each match key
+                
+                    // First, sort matches by round, then by original index
+                    const sortedMatches = matches.map((match, index) => ({
+                        match,
+                        originalIndex: index
+                    })).sort((a, b) => {
+                        // Sort by round first (ascending)
+                        if (a.match.round !== b.match.round) {
+                            return a.match.round - b.match.round;
+                        }
+                        // If rounds are the same, sort by original index
+                        return a.originalIndex - b.originalIndex;
+                    });
+                
+                    // Count match occurrences and prepare color mapping
+                    sortedMatches.forEach(({ match }) => {
+                        const matchKey = generateMatchKey(match.team1, match.team2);
+                
+                        // Count occurrences of each match
+                        if (!matchKeyMap[matchKey]) {
+                            matchKeyMap[matchKey] = { count: 0, color: null };
+                        }
+                        matchKeyMap[matchKey].count++;
+                
+                        // Assign a color if it's a repeated match
+                        if (matchKeyMap[matchKey].count > 1 && !matchKeyMap[matchKey].color) {
+                            matchKeyMap[matchKey].color = generateUniqueColor(Object.keys(matchColors).length);
+                            matchColors[matchKey] = matchKeyMap[matchKey].color;
+                        }
+                    });
+                
+                    // Display matches in sorted order but keep original index reference for edit functionality
+                    sortedMatches.forEach(({ match, originalIndex }, displayIndex) => {
+                        const matchKey = generateMatchKey(match.team1, match.team2);
+                        const row = document.createElement('tr');
+                        row.setAttribute('data-match-index', originalIndex); // Keep original index for edit functionality
+                
+                        // Apply the assigned color for repeated matches
+                        if (matchColors[matchKey]) {
+                            row.style.backgroundColor = matchColors[matchKey];
+                        }
+                        
+                        // Display the actual round number
+                        row.innerHTML = `
+                            <td>${match.round}</td>
+                            <td>${displayIndex + 1}</td>
+                            <td class="team-cell ${match.team1Score > match.team2Score ? 'history-winner-team' : (match.team1Score === match.team2Score && match.team1Score > 0 ? 'history-tie-team' : '')}">
+                                <div class="team-players team1-players">
+                                    ${match.team1.map(player => 
+                                        `<span class="team1-badge">${player.name}</span>`).join('')}
+                                </div>
+                            </td>
+                            <td class="team-cell ${match.team2Score > match.team1Score ? 'history-winner-team' : (match.team1Score === match.team2Score && match.team2Score > 0 ? 'history-tie-team' : '')}">
+                                <div class="team-players team2-players">
+                                    ${match.team2.map(player => 
+                                        `<span class="team2-badge">${player.name}</span>`).join('')}
+                                </div>
+                            </td>
+                            <td><strong>${match.team1Score || 0} - ${match.team2Score || 0}</strong></td>
+                            <td class="action-cell"><button class="edit-match-btn" data-match-index="${originalIndex}">
+                                <span class="material-symbols-rounded">edit</span>
+                            </button></td>
+                        `;
+                        tableBody.appendChild(row);
+                    });
+                
+                    // Add the table to the wrapper and the wrapper to the content
+                    tableWrapper.appendChild(table);
+                    matchHistoryContent.appendChild(tableWrapper);
+                }
+            }
+            
+            // Listen for match history capture completion
+            const matchHistoryCaptureListener = function() {
+                document.removeEventListener('matchHistoryCaptureComplete', matchHistoryCaptureListener);
+                
+                console.log('Match History capture completed, now capturing podium');
+                
+                // Detect iOS/Safari for increased delays
+                const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
+                             (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+                const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+                
+                // Use much longer delay for iOS/Safari between captures
+                const secondCaptureDelay = (isIOS || isSafari) ? 2500 : 500;
+                console.log(`Using second capture delay of ${secondCaptureDelay}ms for iOS: ${isIOS}, Safari: ${isSafari}`);
+                
+                // Restore original match history state
+                if (!originalMatchHistoryState.active) {
+                    matchHistoryDisplay.classList.remove('active');
+                }
+                matchHistoryDisplay.style.position = originalMatchHistoryState.position || '';
+                matchHistoryDisplay.style.left = 'auto';
+                matchHistoryDisplay.style.visibility = originalMatchHistoryState.visibility || '';
+                matchHistoryDisplay.style.opacity = originalMatchHistoryState.opacity || '';
+                matchHistoryDisplay.style.display = originalMatchHistoryState.display || '';
+                matchHistoryDisplay.style.zIndex = originalMatchHistoryState.zIndex || '';
+                matchHistoryDisplay.style.pointerEvents = 'auto';
+                matchHistoryDisplay.style.width = originalMatchHistoryState.width || '';
+                matchHistoryDisplay.style.height = originalMatchHistoryState.height || '';
+                matchHistoryDisplay.style.maxWidth = originalMatchHistoryState.maxWidth || '';
+                matchHistoryDisplay.style.minWidth = originalMatchHistoryState.minWidth || '';
+                
+                // Also remove the capture mode class to reset all CSS styles
+                matchHistoryDisplay.classList.remove('match-history-capture-mode');
+                
+                // Reset any table styles that might have been set
+                const matchHistoryContent = matchHistoryDisplay.querySelector('#matchHistoryContent');
+                if (matchHistoryContent) {
+                    matchHistoryContent.style.maxHeight = '';
+                    matchHistoryContent.style.height = '';
+                    matchHistoryContent.style.width = '';
+                    matchHistoryContent.style.overflow = '';
+                    matchHistoryContent.style.maxWidth = '';
+                }
+                
+                // Reset table wrapper and table styles
+                const historyTableWrapper = matchHistoryDisplay.querySelector('.match-history-table-wrapper');
+                const historyTable = historyTableWrapper ? historyTableWrapper.querySelector('table') : null;
+                
+                if (historyTableWrapper) {
+                    historyTableWrapper.style.maxHeight = '';
+                    historyTableWrapper.style.height = '';
+                    historyTableWrapper.style.width = '';
+                    historyTableWrapper.style.overflow = '';
+                    historyTableWrapper.style.maxWidth = '';
+                }
+                
+                if (historyTable) {
+                    historyTable.style.maxHeight = '';
+                    historyTable.style.height = '';
+                    historyTable.style.width = '';
+                    historyTable.style.overflow = '';
+                    historyTable.style.maxWidth = '';
+                    historyTable.style.tableLayout = '';
+                    
+                    // Reset all rows
+                    const rows = historyTable.querySelectorAll('tr');
+                    rows.forEach(row => {
+                        row.style.display = '';
+                        row.style.visibility = '';
+                    });
+                }
+                
+                // Now start podium capture with the same technique but with delay for iOS
+                setTimeout(() => {
+                    if (!podiumDisplay) {
+                        console.error('Podium display element not found, cannot capture');
+                        showToast('Only match history was captured.', 'info', 4000);
+                        return;
+                    }
+
+                    podiumDisplay.classList.add('active');
+                    podiumDisplay.style.position = 'absolute';
+                    podiumDisplay.style.left = '-9999px'; // Position off-screen
+                    podiumDisplay.style.visibility = 'visible';
+                    podiumDisplay.style.opacity = '1';
+                    podiumDisplay.style.display = 'flex';
+                    podiumDisplay.style.zIndex = '999999';
+                    podiumDisplay.style.pointerEvents = 'none';
+                    
+                    // Set fixed width for podium capture
+                    podiumDisplay.style.width = '1200px';
+                    podiumDisplay.style.height = 'auto';
+                    podiumDisplay.style.maxWidth = 'none';
+                    podiumDisplay.style.minWidth = '1200px';
+                    
+                    // Add our new class for podium capture
+                    podiumDisplay.classList.add('podium-capture-mode');
+                    
+                    // Get the table and prepare it for full capture
+                    const podiumTableWrapper = podiumDisplay.querySelector('.table-wrapper');
+                    const podiumTable = podiumDisplay.querySelector('#playerStatsTable');
+                    
+                    if (podiumTableWrapper) {
+                        podiumTableWrapper.style.maxHeight = 'none';
+                        podiumTableWrapper.style.height = 'auto';
+                        podiumTableWrapper.style.width = '100%';
+                        podiumTableWrapper.style.overflow = 'visible';
+                        podiumTableWrapper.style.maxWidth = '1160px';
+                    }
+                    
+                    if (podiumTable) {
+                        podiumTable.style.maxHeight = 'none';
+                        podiumTable.style.height = 'auto';
+                        podiumTable.style.width = '100%';
+                        podiumTable.style.overflow = 'visible';
+                        podiumTable.style.maxWidth = '1160px';
+                        podiumTable.style.tableLayout = 'fixed';
+                        
+                        // Ensure all rows are visible
+                        const podiumRows = podiumTable.querySelectorAll('tr');
+                        podiumRows.forEach(row => {
+                            row.style.display = 'table-row';
+                            row.style.visibility = 'visible';
+                        });
+                    }
+                    
+                    // Add additional delay for iOS/Safari to ensure downloads complete properly
+                    setTimeout(() => {
+                        // Listen for podium capture completion
+                        const podiumCaptureListener = function() {
+                            document.removeEventListener('podiumCaptureComplete', podiumCaptureListener);
+                            
+                            console.log('Podium capture completed, restoring original state');
+                            
+                            // Restore original podium state
+                            if (!originalPodiumState.active) {
+                                podiumDisplay.classList.remove('active');
+                            }
+                            podiumDisplay.style.position = originalPodiumState.position || '';
+                            podiumDisplay.style.left = 'auto';
+                            podiumDisplay.style.visibility = originalPodiumState.visibility || '';
+                            podiumDisplay.style.opacity = originalPodiumState.opacity || '';
+                            podiumDisplay.style.display = originalPodiumState.display || '';
+                            podiumDisplay.style.zIndex = originalPodiumState.zIndex || '';
+                            podiumDisplay.style.pointerEvents = 'auto';
+                            podiumDisplay.style.width = originalPodiumState.width || '';
+                            podiumDisplay.style.height = originalPodiumState.height || '';
+                            podiumDisplay.style.maxWidth = originalPodiumState.maxWidth || '';
+                            podiumDisplay.style.minWidth = originalPodiumState.minWidth || '';
+                            
+                            // Remove the capture mode class
+                            podiumDisplay.classList.remove('podium-capture-mode');
+                            
+                            // Reset table wrapper and table styles
+                            const podiumTableWrapper = podiumDisplay.querySelector('.table-wrapper');
+                            const podiumTable = podiumDisplay.querySelector('#playerStatsTable');
+                            
+                            if (podiumTableWrapper) {
+                                podiumTableWrapper.style.maxHeight = '';
+                                podiumTableWrapper.style.height = '';
+                                podiumTableWrapper.style.width = '';
+                                podiumTableWrapper.style.overflow = '';
+                                podiumTableWrapper.style.maxWidth = '';
+                            }
+                            
+                            if (podiumTable) {
+                                podiumTable.style.maxHeight = '';
+                                podiumTable.style.height = '';
+                                podiumTable.style.width = '';
+                                podiumTable.style.overflow = '';
+                                podiumTable.style.maxWidth = '';
+                                podiumTable.style.tableLayout = '';
+                                
+                                // Reset all rows
+                                const podiumRows = podiumTable.querySelectorAll('tr');
+                                podiumRows.forEach(row => {
+                                    row.style.display = '';
+                                    row.style.visibility = '';
+                                });
+                                
+                                // Reset sticky columns
+                                const stickyColumns = podiumTable.querySelectorAll('th:nth-child(1), th:nth-child(2), td:nth-child(1), td:nth-child(2)');
+                                stickyColumns.forEach(col => {
+                                    col.style.boxShadow = '';
+                                    col.style.background = '';
+                                    col.style.backgroundColor = '';
+                                    col.style.border = '';
+                                    col.style.borderRight = '';
+                                    col.style.position = '';
+                                });
+                            }
+                            
+                            // For iOS/Safari, show a completion message with instructions
+                            if (isIOS || isSafari) {
+                                showToast('Both images generated. For iOS: Check your browser downloads or save from the opened images.', 'success', 6000);
+                            } else {
+                                showToast('Both images saved.', 'success', 4000);
+                            }
+                        };
+                        
+                        document.addEventListener('podiumCaptureComplete', podiumCaptureListener);
+                        
+                        // Capture the podium
+                        captureElementAsImage(podiumDisplay, 'leaderboard');
+                    }, isIOS || isSafari ? 1000 : 0);
+                }, secondCaptureDelay);
+            };
+            
+            document.addEventListener('matchHistoryCaptureComplete', matchHistoryCaptureListener);
+            
+            // Detect iOS/Safari
+            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
+                         (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+            const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+            
+            // Use longer delays and different approach for iOS/Safari
+            const delayTime = (isIOS || isSafari) ? 1000 : 500;
+            console.log(`Device detection - iOS: ${isIOS}, Safari: ${isSafari}, using delay: ${delayTime}ms`);
+            
+            setTimeout(() => {
+                // Add our new class for match history capture
+                matchHistoryDisplay.classList.add('match-history-capture-mode');
+                
+                // Ensure all content is fully visible
+                const matchHistoryContent = matchHistoryDisplay.querySelector('#matchHistoryContent');
+                if (matchHistoryContent) {
+                    matchHistoryContent.style.maxHeight = 'none';
+                    matchHistoryContent.style.height = 'auto';
+                    matchHistoryContent.style.width = '100%';
+                    matchHistoryContent.style.overflow = 'visible';
+                    matchHistoryContent.style.maxWidth = '1160px';
+                }
+                
+                // Get the table and prepare it for full capture
+                const historyTableWrapper = matchHistoryDisplay.querySelector('.match-history-table-wrapper');
+                const historyTable = historyTableWrapper ? historyTableWrapper.querySelector('table') : null;
+                
+                if (historyTableWrapper) {
+                    historyTableWrapper.style.maxHeight = 'none';
+                    historyTableWrapper.style.height = 'auto';
+                    historyTableWrapper.style.width = '100%';
+                    historyTableWrapper.style.overflow = 'visible';
+                    historyTableWrapper.style.maxWidth = '1160px';
+                }
+                
+                if (historyTable) {
+                    historyTable.style.maxHeight = 'none';
+                    historyTable.style.height = 'auto';
+                    historyTable.style.width = '100%';
+                    historyTable.style.overflow = 'visible';
+                    historyTable.style.maxWidth = '1160px';
+                    historyTable.style.tableLayout = 'fixed';
+                    
+                    // Ensure all rows are visible
+                    const rows = historyTable.querySelectorAll('tr');
+                    rows.forEach(row => {
+                        row.style.display = 'table-row';
+                        row.style.visibility = 'visible';
+                    });
+                }
+                
+                // Add extra delay for Android rendering
+                setTimeout(() => {
+                    console.log('Initiating match history capture after delay');
+                    captureElementAsImage(matchHistoryDisplay, 'match-history');
+                }, delayTime); // Use adaptive delay time
+            }, delayTime); // Use adaptive delay time
+        }
+        
+        // Listen for podium display being closed
+            document.getElementById('closePodiumBtn').addEventListener('click', function() {
+                setTimeout(updateCaptureButtonAppearance, 100);
+            });
+        
+        // Add keyboard shortcut for background capture (Ctrl+Shift+S)
+        document.addEventListener('keydown', function(e) {
+            // Check if Ctrl+Shift+S was pressed
+            if (e.ctrlKey && e.shiftKey && e.key === 'S') {
+                e.preventDefault(); // Prevent default browser save action
+                captureElementsInBackground();
+            }
+        });
+        
+        // Support panel toggle function
+        function toggleSupportPanel() {
+            console.log('toggleSupportPanel called');
+            const supportPanel = document.getElementById('support-panel');
+            if (supportPanel) {
+                supportPanel.classList.toggle('open');
+            } else {
+                console.error('Support panel element not found');
+            }
+        }
+    </script>
 </body>
 </html>
