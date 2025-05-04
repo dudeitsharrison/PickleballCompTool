@@ -1,5 +1,14 @@
 /* PICKLEBALL TOURNAMENT TRACKER - Main Stylesheet */
 
+/* Prevent unwanted zooming and ensure proper layout on mobile */
+* {
+    -webkit-text-size-adjust: 100%;
+    -ms-text-size-adjust: 100%;
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
 :root {
     /* Color Palette */
     --primary: #2B90D9;       /* Vibrant blue */
@@ -67,6 +76,9 @@ html {
     font-size: 16px;
     overflow-x: hidden; /* Prevent horizontal scrolling */
     /* Removed smooth scrolling to prevent auto-scroll on page load */
+    height: 100%;
+    width: 100%;
+    position: relative;
 }
 
 body {
@@ -83,6 +95,30 @@ body {
     position: absolute;
     top: 75px;
     overflow-x: hidden; /* Prevent horizontal scrolling */
+    width: 100%;
+    -webkit-overflow-scrolling: touch; /* Smoother scrolling on iOS */
+}
+
+/* Ensure ads don't break layout */
+ins.adsbygoogle {
+    display: block;
+    overflow: hidden;
+    max-width: 100%;
+}
+
+/* Orientation change handling */
+@media screen and (orientation: portrait) {
+    html, body {
+        width: 100%;
+        overflow-x: hidden;
+    }
+}
+
+@media screen and (orientation: landscape) {
+    html, body {
+        width: 100%;
+        overflow-x: hidden;
+    }
 }
 
 .container {
