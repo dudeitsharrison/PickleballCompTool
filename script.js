@@ -5795,8 +5795,8 @@ function createNumericKeypad() {
     display.id = 'keypadDisplay';
     keypad.appendChild(display);
     
-    // Create number buttons starting from 13 down to 0 (most common scores first)
-    const commonScores = [13, 12, 11, 10];
+    // Create number buttons starting from 15 down to 0 (most common scores first)
+    const commonScores = [15, 14, 13, 12, 11, 10];
     const singleDigits = [9, 8, 7, 6, 5, 4, 3, 2, 1, 0];
     
     // Add the common score buttons first (these are special and replace the current value)
@@ -5805,8 +5805,8 @@ function createNumericKeypad() {
         button.textContent = num;
         button.classList.add('keypad-btn', 'common-score-btn');
         
-        // Add special class for the winning score (11)
-        if (num === 11) {
+        // Add special class for the winning score (11) and 15
+        if (num === 11 || num === 15) {
             button.classList.add('keypad-winning-btn');
         }
         
@@ -5854,6 +5854,8 @@ function createNumericKeypad() {
     // Current active input field and state
     let activeInput = null;
     let currentValue = '';
+    let hasStartedWithOneOrTwo = false;
+    let isFirstPress = true;
     
     // Update the display with the current value
     function updateDisplay() {
@@ -5883,27 +5885,63 @@ function createNumericKeypad() {
         if (target.classList.contains('backspace-btn') && activeInput) {
             // Remove the last character
             currentValue = currentValue.toString().slice(0, -1);
+            // Reset the flag if backspace makes the value empty
+            if (currentValue === '') {
+                hasStartedWithOneOrTwo = false;
+                isFirstPress = true;
+            }
             updateDisplay();
             return;
         }
         
-        // Common score button clicked (10, 11, 12, 13) - replace entire value
+        // Common score button clicked (10, 11, 12, 13, 14, 15) - replace entire value
         if (target.classList.contains('common-score-btn') && activeInput) {
             const value = target.getAttribute('data-value');
             currentValue = value;
+            hasStartedWithOneOrTwo = false; // Reset the flag
+            isFirstPress = false; // No longer first press
             updateDisplay();
             
-            // Auto-submit for two-digit numbers (10, 11, 12, 13)
+            // Auto-submit for two-digit numbers
             activeInput.value = currentValue;
             keypad.style.display = 'none';
             return;
         }
         
-        // Regular digit button clicked - append to current value
+        // Regular digit button clicked
         if (target.classList.contains('digit-btn') && activeInput) {
             const digit = target.getAttribute('data-value');
-            // Append the new digit to the current value
-            currentValue = (currentValue.toString() + digit).replace(/^0+/, ''); // Remove leading zeros
+            
+            // If it's the first press after opening keypad, replace current value
+            if (isFirstPress) {
+                currentValue = digit;
+                isFirstPress = false;
+                
+                // If digit is 1 or 2, mark for special handling
+                hasStartedWithOneOrTwo = (digit === '1' || digit === '2');
+                
+                // If digit is > 2, auto-submit it
+                if (parseInt(digit) > 2) {
+                    activeInput.value = digit;
+                    keypad.style.display = 'none';
+                    return;
+                }
+            }
+            // Auto-append next digit if started with 1 or 2
+            else if (hasStartedWithOneOrTwo && currentValue.length === 1) {
+                currentValue = currentValue + digit;
+                hasStartedWithOneOrTwo = false; // Reset after forming a two-digit number
+                
+                // Auto-submit after forming a two-digit number from 1 or 2
+                activeInput.value = currentValue;
+                keypad.style.display = 'none';
+                return;
+            }
+            // Normal append case
+            else {
+                currentValue = (currentValue.toString() + digit).replace(/^0+/, '');
+            }
+            
             // If empty (only had zeros), set to the clicked digit
             if (currentValue === '') currentValue = digit;
             updateDisplay();
@@ -5912,7 +5950,6 @@ function createNumericKeypad() {
     });
     
     // Use event delegation for score inputs - more efficient approach
-    // Only check for keypad usage when an input is clicked, not on all inputs at once
     document.addEventListener('click', function(e) {
         // If it's a score input being clicked
         if (e.target.classList && e.target.classList.contains('team-score')) {
@@ -5940,6 +5977,8 @@ function createNumericKeypad() {
             
             // Reset the keypad state
             currentValue = activeInput.value || '';
+            hasStartedWithOneOrTwo = (currentValue === '1' || currentValue === '2');
+            isFirstPress = true; // Reset first press flag when opening keypad
             updateDisplay();
             
             // Show the keypad

@@ -65,6 +65,7 @@
 
 html {
     font-size: 16px;
+    overflow-x: hidden; /* Prevent horizontal scrolling */
     /* Removed smooth scrolling to prevent auto-scroll on page load */
 }
 
@@ -81,6 +82,7 @@ body {
     min-height: 100vh;
     position: absolute;
     top: 75px;
+    overflow-x: hidden; /* Prevent horizontal scrolling */
 }
 
 .container {
@@ -2541,7 +2543,6 @@ button .material-symbols-rounded:only-child {
 }
 
 .common-score-btn {
-    background-color: #85b3ee;
     font-weight: bold;
 }
 
@@ -5668,6 +5669,25 @@ th:last-child {
     transform: translateX(calc(100% - 24px)); /* Default collapsed state */
     transition: transform 0.3s ease;
     will-change: transform;
+    max-width: 90vw; /* Ensure container doesn't exceed viewport width */
+}
+
+.floating-buttons-container-left {
+    position: fixed;
+    left: 0;
+    bottom: 50px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    z-index: 2001;
+    padding: 10px 25px 10px 15px;
+    background-color: rgba(255, 255, 255, 0.85);
+    border-radius: 0 12px 12px 0;
+    box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.15);
+    transform: translateX(calc(-100% + 24px)); /* Default collapsed state */
+    transition: transform 0.3s ease;
+    will-change: transform;
+    max-width: 90vw; /* Ensure container doesn't exceed viewport width */
 }
 
 .floating-buttons-container.expanded {
@@ -5690,6 +5710,7 @@ th:last-child {
     transform: translateX(calc(-100% + 24px)); /* Default collapsed state */
     transition: transform 0.3s ease;
     will-change: transform;
+    max-width: 90vw; /* Ensure container doesn't exceed viewport width */
 }
 
 .floating-buttons-container-left.expanded {
@@ -5757,15 +5778,18 @@ th:last-child {
         bottom: 20px;
         gap: 8px;
         padding: 8px 12px 8px 22px;
+        max-width: 80%; /* Ensure container doesn't exceed screen width */
     }
     
     .floating-buttons-container {
         transform: translateX(calc(100% - 20px)); /* Adjust for smaller tab width on mobile */
+        right: 0; /* Ensure it stays at the edge */
     }
     
     .floating-buttons-container-left {
         padding: 8px 22px 8px 12px;
         transform: translateX(calc(-100% + 20px)); /* Adjust for smaller tab width on mobile */
+        left: 0; /* Ensure it stays at the edge */
     }
     
     .floating-toggle-tab {
