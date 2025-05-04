@@ -1,12 +1,23 @@
-/**
- * Toast notification system
+﻿/**
+ * Improved toast notification system with progress bar timer
+ * This implementation handles both the script.js and index.html toast styles
  */
-function showToast(message, type = 'info', duration = 5000) {
-    const toastContainer = document.getElementById('toastContainer');
+function showToast(message, type = 'info', duration = 4000) {
+    console.group('Toast Notification Debug');
+    console.log(`📣 showToast called with:`, { message, type, duration });
     
-    // Create toast element
-    const toast = document.createElement('div');
-    toast.className = `toast toast-${type}`;
+    // Get or create toast container
+    let toastContainer = document.getElementById('toastContainer');
+    if (!toastContainer) {
+        console.log('🏗️ Toast container not found, creating new one');
+        toastContainer = document.createElement('div');
+        toastContainer.id = 'toastContainer';
+        toastContainer.className = 'toast-container';
+        document.body.appendChild(toastContainer);
+    } else {
+        console.log('✓ Using existing toast container');
+        console.log('Current toasts:', toastContainer.childNodes.length);
+    }
     
     // Determine icon based on type
     let iconName;
@@ -17,42 +28,100 @@ function showToast(message, type = 'info', duration = 5000) {
         case 'error':
             iconName = 'error';
             break;
+        case 'warning':
+            iconName = 'warning';
+            break;
         default:
             iconName = 'info';
     }
+    console.log(`🎨 Using icon: ${iconName} for type: ${type}`);
     
-    // Create toast content
+    // Create toast element
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type}`;
+    
+    // Create toast content with progress bar
     toast.innerHTML = `
         <span class="toast-icon material-symbols-rounded">${iconName}</span>
         <div class="toast-message">${message}</div>
         <button class="toast-close">
             <span class="material-symbols-rounded">close</span>
         </button>
+        <div class="toast-progress-bar"></div>
     `;
+    console.log('🧩 Toast element created with HTML structure');
     
     // Add to container
     toastContainer.appendChild(toast);
+    console.log('➕ Toast added to container');
+    
+    // Start animation
+    setTimeout(() => {
+        console.log('🎬 Starting animation by adding active class');
+        toast.classList.add('active');
+        
+        // Animate progress bar
+        const progressBar = toast.querySelector('.toast-progress-bar');
+        if (progressBar) {
+            console.log(`⏱️ Setting up progress bar with duration: ${duration}ms`);
+            progressBar.style.transition = `width ${duration}ms linear`;
+            progressBar.style.width = '0%';
+        } else {
+            console.warn('⚠️ Progress bar element not found!');
+        }
+    }, 10);
     
     // Add event listener to close button
     const closeButton = toast.querySelector('.toast-close');
-    closeButton.addEventListener('click', () => {
-        toast.style.animation = 'toast-out 0.3s ease forwards';
-        setTimeout(() => {
-            toast.remove();
-        }, 300);
-    });
+    if (closeButton) {
+        console.log('🔘 Adding click listener to close button');
+        closeButton.addEventListener('click', () => {
+            console.log('👆 Close button clicked');
+            dismissToast(toast);
+        });
+    } else {
+        console.warn('⚠️ Close button not found!');
+    }
     
     // Auto-remove after duration
-    setTimeout(() => {
-        if (toast.parentNode) {
-            toast.style.animation = 'toast-out 0.3s ease forwards';
-            setTimeout(() => {
-                if (toast.parentNode) {
-                    toast.remove();
-                }
-            }, 300);
-        }
+    const timeoutId = setTimeout(() => {
+        console.log(`⏰ Auto-dismiss timeout triggered after ${duration}ms`);
+        dismissToast(toast);
     }, duration);
+    
+    // Store timeout ID for possible early dismissal
+    toast.dataset.timeoutId = timeoutId;
+    console.log(`🔢 Timeout ID ${timeoutId} stored on toast element`);
+    
+    // Function to dismiss toast
+    function dismissToast(toastElement) {
+        console.log('🗑️ Dismissing toast');
+        
+        // Clear timeout if it exists
+        const storedTimeoutId = toastElement.dataset.timeoutId;
+        if (storedTimeoutId) {
+            console.log(`🛑 Clearing timeout ID ${storedTimeoutId}`);
+            clearTimeout(parseInt(storedTimeoutId));
+        }
+        
+        // Remove active class to trigger exit animation
+        console.log('🔄 Removing active class to trigger exit animation');
+        toastElement.classList.remove('active');
+        
+        // Remove after animation completes
+        setTimeout(() => {
+            if (toastElement.parentNode) {
+                console.log('❌ Removing toast from DOM');
+                toastElement.remove();
+            } else {
+                console.warn('⚠️ Toast already removed from DOM');
+            }
+        }, 300);
+    }
+    
+    console.log('✅ Toast notification setup complete');
+    console.groupEnd();
+    return toast;
 }
 
 /**
@@ -436,6 +505,8 @@ function addPlayers() {
     const playerInput = document.getElementById('playerInput').value;
     const playerNames = playerInput.split(/[\n,]+/).map(name => name.trim()).filter(Boolean);
 
+    if (playerNames.length === 0) return;
+    
     playerNames.forEach(name => {
         let suffix = 1;
         let uniqueName = name;
@@ -456,6 +527,9 @@ function addPlayers() {
         });
     });
 
+    // Show toast notification about added players
+    showToast(`Added ${playerNames.length} ${playerNames.length === 1 ? 'player' : 'players'} to the roster`, 'success', 3000);
+
     console.log("Players after adding:", players); // Debugging step
     players.forEach(player => {
         if (!player.teammates || typeof player.teammates !== 'object') {
@@ -469,6 +543,9 @@ function addPlayers() {
     updatePlayerList();
     togglePlayerList();
     autoSave();
+    
+    // Explicitly hide the Add Players button after adding players
+    updateAddPlayersButtonState();
 }
 
 function updatePlayerList() {
@@ -526,6 +603,9 @@ function updatePlayerList() {
                 statusIndicator.textContent = sitOut ? 'Sitting Out' : 'Active';
                 statusIndicator.className = `player-status ${sitOut ? 'status-inactive' : 'status-active'}`;
             }
+            
+            // Show toast notification for status change
+            showToast(`Player "${players[playerIndex].name}" ${sitOut ? 'will sit out' : 'is now active'} for next round`, 'info', 2000);
             
             console.log(`Player ${players[playerIndex].name} ${sitOut ? 'will sit out' : 'will play'} next round.`);
             autoSave();
@@ -727,6 +807,9 @@ function editPlayer(index) {
             // Update all references to this player throughout the application
             updatePlayerNameReferences(oldName, newName);
             
+            // Show toast notification for successful edit
+            showToast(`Player "${oldName}" renamed to "${newName}"`, 'success', 3000);
+            
             return true;
         }
         return false;
@@ -747,20 +830,14 @@ function removePlayer(index) {
             }
             
             const player = players[index];
-            // Use another custom confirm for stat retention
-            return showConfirm(
-                "Do you want to keep the player's stats?",
-                "Keep Stats", 
-                "Remove All Data",
-                "info"
-            ).then(keepStats => {
-                if (keepStats) {
-                    player.eligible = false;
-                } else {
-                    players.splice(index, 1);
-                }
-                return true;
-            });
+            const removedName = player.name;
+            
+            // Permanently remove the player from the list
+            players.splice(index, 1);
+            
+            // Show success toast notification
+            showToast(`Player "${removedName}" removed from roster`, 'success', 3000);
+            return true;
         });
     });
 }
@@ -774,9 +851,23 @@ function togglePlayerList() {
     if (playerListContainer.classList.contains('active')) {
         toggleButton.innerHTML = '<span class="material-symbols-rounded">arrow_back</span>';
         toggleButton.setAttribute('aria-label', 'Hide player list');
+        
+        // Ensure button is always visible within viewport when panel is open
+        const buttonWidth = 50; // Width of the toggle button in pixels
+        const safetyMargin = window.innerWidth * 0.05; // 5vh safety margin
+        const maxLeftPosition = window.innerWidth - buttonWidth - safetyMargin;
+        
+        // Get the current left position from CSS (either 450px or 90% + 10px from media query)
+        const floatingPanelWidth = playerListContainer.offsetWidth;
+        let desiredPosition = floatingPanelWidth;
+        
+        // Apply the minimum of desired position or maximum safe position
+        toggleButton.style.left = Math.min(desiredPosition, maxLeftPosition) + 'px';
     } else {
         toggleButton.innerHTML = '<span class="material-symbols-rounded">people</span>';
         toggleButton.setAttribute('aria-label', 'Show player list');
+        // Reset position when panel is closed
+        toggleButton.style.removeProperty('left');
     }
 }
 
@@ -830,19 +921,42 @@ function updatePairEncounter(player1, player2) {
     pairTracker.addPair(player1, player2);
 }
 
+// Helper function to prioritize players with least partner variety
+function prioritizeByPartnerVariety(players) {
+    // Create a map of players to the count of unique partners they've had
+    const uniquePartnerCounts = {};
+    
+    for (const player of players) {
+        // Count unique partners from teammates object
+        const uniquePartners = player.teammates ? Object.keys(player.teammates).length : 0;
+        uniquePartnerCounts[player.name] = uniquePartners;
+        
+        logDebugMessage(`Player ${player.name} has had ${uniquePartners} unique partners`);
+    }
+    
+    // Sort players by their unique partner count (ascending)
+    return [...players].sort((a, b) => {
+        return uniquePartnerCounts[a.name] - uniquePartnerCounts[b.name];
+    });
+}
 
 function createMatchesForRound(eligiblePlayers, maxMatches) {
     logDebugMessage("=== START CREATE MATCHES FOR ROUND ===");
     logDebugMessage(`Creating matches with ${eligiblePlayers.length} eligible players: ${eligiblePlayers.map(p => p.name).join(', ')}`);
     logDebugMessage(`Maximum matches to create: ${maxMatches}`);
     
-    let shuffledPlayers = shuffleArray([...eligiblePlayers]); // Shuffle for variety
+    // Sort players to prioritize those with least partner variety first
+    const prioritizedPlayers = prioritizeByPartnerVariety(eligiblePlayers);
+    logDebugMessage(`Players prioritized by partner variety: ${prioritizedPlayers.map(p => p.name).join(', ')}`);
+    
+    // Then shuffle among those with the same counts for some variety
+    let shuffledPlayers = shuffleArray([...prioritizedPlayers]);
     const matches = [];
     const usedPlayers = new Set(); // Track used players for this round
     const attemptedMatches = new Set(); // Track attempted match keys
     let relaxOpponentLogic = false; // Temporary variable to relax logic if needed
 
-function isValidMatch(team1, team2) {
+function isValidMatch(team1, team2, relaxationLevel = 0) {
     const matchKey = generateMatchKey(team1, team2);
 
     // Debug the state of previousRoundMatches
@@ -860,132 +974,610 @@ function isValidMatch(team1, team2) {
         return false;
     }
 
-    // Helper to get frequent opponents
-    const getFrequentOpponents = (player) => {
-        const versusEntries = Object.entries(player.versus || {});
-        if (versusEntries.length === 0) return [];
-        const maxCount = Math.max(...versusEntries.map(([, count]) => count));
-        return versusEntries
-            .filter(([, count]) => count === maxCount)
-            .map(([opponent]) => opponent);
-    };
+    // Get pair counts for all players involved
+    const team1PairKey = generatePairKey(team1[0], team1[1]);
+    const team2PairKey = generatePairKey(team2[0], team2[1]);
+    const team1PairCount = pairTracker.getPairCount(team1[0], team1[1]);
+    const team2PairCount = pairTracker.getPairCount(team2[0], team2[1]);
 
-    // Helper to get eligible players who are not already used
-    const getAvailableEligiblePlayers = (team1Players) => {
-        return Array.from(eligiblePlayers).filter(player =>
-            !usedPlayers.has(player) && !team1Players.includes(player)
-        );
-    };
+    // STEP 1: Check opponent history using the new sorted approach
+    // Calculate how many times each player has played against the opposing team players
+    const opponentCounts = [];
+    for (const t1Player of team1) {
+        for (const t2Player of team2) {
+            const t1VsT2Count = t1Player.versus?.[t2Player.name] || 0;
+            const t2VsT1Count = t2Player.versus?.[t1Player.name] || 0;
+            // These should be the same, but just in case there's inconsistency
+            const count = Math.max(t1VsT2Count, t2VsT1Count);
+            opponentCounts.push({
+                player1: t1Player.name,
+                player2: t2Player.name,
+                count: count
+            });
+        }
+    }
+    
+    // Get maximum opponent count in this potential match
+    const matchMaxOpponentCount = Math.max(...opponentCounts.map(o => o.count), 0);
+    
+    // Get all eligible players
+    const allEligiblePlayers = Array.from(eligiblePlayers);
+    
+    // Get all possible opponent pairs across all eligible players
+    const allPossibleOpponentPairs = [];
+    for (let i = 0; i < allEligiblePlayers.length; i++) {
+        for (let j = i + 1; j < allEligiblePlayers.length; j++) {
+            const count1 = allEligiblePlayers[i].versus?.[allEligiblePlayers[j].name] || 0;
+            const count2 = allEligiblePlayers[j].versus?.[allEligiblePlayers[i].name] || 0;
+            const count = Math.max(count1, count2);
+            
+            allPossibleOpponentPairs.push({
+                player1: allEligiblePlayers[i],
+                player2: allEligiblePlayers[j],
+                count: count
+            });
+        }
+    }
+    
+    // Group opponent pairs by count (NEW APPROACH)
+    const opponentPairsByCount = {};
+    for (const pair of allPossibleOpponentPairs) {
+        if (!opponentPairsByCount[pair.count]) {
+            opponentPairsByCount[pair.count] = [];
+        }
+        opponentPairsByCount[pair.count].push(pair);
+    }
+    
+    // Get all unique counts and sort them
+    const allCounts = Object.keys(opponentPairsByCount).map(Number).sort((a, b) => a - b);
+    
+    // Find the minimum available opponent count
+    const minOpponentCount = allCounts.length > 0 ? allCounts[0] : 0;
+    
+    // Find the priority level based on relaxation for opponent selection
+    let priorityLevel;
+    if (relaxationLevel === 0) {
+        // Strictly use minimum opponent count
+        priorityLevel = minOpponentCount;
+    } else if (relaxationLevel === 1) {
+        // Can use minimum or one level above if available
+        const nextLevel = allCounts.length > 1 ? allCounts[1] : minOpponentCount;
+        priorityLevel = nextLevel;
+    } else {
+        // At level 2+, can use any opponent count
+        priorityLevel = Math.max(...allCounts, 0);
+    }
+    
+    // Check if the current match's opponent counts exceed the allowed priority level
+    if (matchMaxOpponentCount > priorityLevel) {
+        logDebugMessage(`Match ${matchKey} rejected: Maximum opponent count ${matchMaxOpponentCount} exceeds priority level ${priorityLevel} for relaxation level ${relaxationLevel}`);
+        return false;
+    }
+    
+    // For strict level 0, require using only minimum count opponents
+    if (relaxationLevel === 0 && matchMaxOpponentCount > minOpponentCount) {
+        logDebugMessage(`Match ${matchKey} rejected: Contains opponents with count ${matchMaxOpponentCount} when minimum available is ${minOpponentCount}`);
+        return false;
+    }
 
-    // Check for conflicts with frequent opponents
-    const frequentOpponentsOne = getFrequentOpponents(team1[0]);
-    const frequentOpponentsTwo = getFrequentOpponents(team1[1]);
-    const team2PlayerNames = team2.map(player => player.name);
-
-    const hasConflict = team2PlayerNames.some(name =>
-        frequentOpponentsOne.includes(name) || frequentOpponentsTwo.includes(name)
-    );
-
-    if (hasConflict && !relaxOpponentLogic) {  // <--- Check for `relaxOpponentLogic`
-        let unresolvedConflicts = [];
-        const availablePlayers = getAvailableEligiblePlayers(team1);
-
-        // Calculate availableCounts only once for performance
-        const availableCounts = availablePlayers.map(player =>
-            team1.map(t1Player => player.versus?.[t1Player.name] || 0)
-        );
-
-        const minAvailableCount = Math.min(
-            ...availableCounts.flat(),
-            Infinity // Default to infinity if no players are available
-        );
-
-        // Evaluate conflicts for each player in team2
-        for (const team2Player of team2) {
-            const versusCounts = team1.map(player => team2Player.versus?.[player.name] || 0);
-            const maxVersusCount = Math.max(...versusCounts);
-
-            // If the max versus count exceeds the minimum available count, conflict exists
-            if (maxVersusCount > minAvailableCount) {
-                unresolvedConflicts.push(team2Player);
+    // STEP 2: Check for unused partnerships (this is still important)
+    if (relaxationLevel === 0) {
+        // Check if these are repeat partnerships
+        if (team1PairCount > 0 || team2PairCount > 0) {
+            // Check if ANY unused partnerships exist in the pool
+            const allPairs = getAllPossiblePairs(allEligiblePlayers);
+            const unusedPairsExist = allPairs.some(p => 
+                pairTracker.getPairCount(p.player1, p.player2) === 0
+            );
+            
+            if (unusedPairsExist) {
+                logDebugMessage(`Match ${matchKey} rejected at level 0: Contains repeat pairs while unused pairs exist`);
+                return false;
             }
         }
-
-        if (unresolvedConflicts.length > 0) {
-            logDebugMessage(
-                `Match ${matchKey} rejected: Conflicts exist for unresolved players in Team 2.`
-            );
+    }
+    
+    // Level 1: Allow pairs that have played together but not recently
+    if (relaxationLevel === 1) {
+        if (pairTracker.isPairRecent(team1[0], team1[1]) || pairTracker.isPairRecent(team2[0], team2[1])) {
+            logDebugMessage(`Match ${matchKey} rejected at level 1: Contains recent pairs`);
+            return false;
+        }
+        
+        // Find pairs with lowest usage count
+        const allPairs = getAllPossiblePairs(allEligiblePlayers);
+        const minPairCount = Math.min(...allPairs.map(p => pairTracker.getPairCount(p.player1, p.player2)));
+        
+        // Only allow repeat pairs if we've exhausted all pairs with lower counts
+        if ((team1PairCount > minPairCount + 1) || (team2PairCount > minPairCount + 1)) {
+            logDebugMessage(`Match ${matchKey} rejected at level 1: Better unused or less-used pairs available`);
+            return false;
+        }
+    }
+    // Level 2: Allow any pairs that haven't played together recently
+    else if (relaxationLevel === 2) {
+        if (pairTracker.isPairRecent(team1[0], team1[1]) || pairTracker.isPairRecent(team2[0], team2[1])) {
+            logDebugMessage(`Match ${matchKey} rejected at level 2: Contains recent pairs`);
             return false;
         }
     }
 
-    logDebugMessage(`Match ${matchKey} is valid.`);
-    return true; // Match is valid
+    logDebugMessage(`Match ${matchKey} is valid at relaxation level ${relaxationLevel}`);
+    return true;
+}
+
+// Helper function to get all possible player pairs
+function getAllPossiblePairs(players) {
+    const pairs = [];
+    for (let i = 0; i < players.length; i++) {
+        for (let j = i + 1; j < players.length; j++) {
+            pairs.push({
+                player1: players[i],
+                player2: players[j]
+            });
+        }
+    }
+    return pairs;
 }
 
    function tryFormMatches(players, maxMatches, relaxationLevel = 0, depth = 0) {
     if (matches.length >= maxMatches || players.length < 4) return true; // Base case
 
+    // First, check if any unused partnerships exist
+    let unusedPairsExist = false;
+    if (relaxationLevel === 0) {
+        for (let i = 0; i < players.length; i++) {
+            for (let j = i + 1; j < players.length; j++) {
+                const pairCount = pairTracker.getPairCount(players[i], players[j]);
+                if (pairCount === 0) {
+                    unusedPairsExist = true;
+                    break;
+                }
+            }
+            if (unusedPairsExist) break;
+        }
+        logDebugMessage(`Checking for unused pairs: ${unusedPairsExist ? 'Found' : 'None found'}`);
+    }
+
+    // Generate all possible team pairings
     const currentPairs = generatePairs(players);
     logDebugMessage(`Generated ${currentPairs.length} possible pairs at depth ${depth}`);
     
-    for (let i = 0; i < currentPairs.length; i++) {
-        const pair1 = currentPairs[i];
-        const remainingForOpponents = players.filter(
-            p => p !== pair1.player1 && p !== pair1.player2
-        );
+    // If we're at depth 0, we'll evaluate multiple possible match configurations
+    if (depth === 0) {
+        // Store all valid match configurations to compare them
+        const possibleConfigurations = [];
+        
+        // Generate and evaluate all possible configurations
+        findOptimalMatchConfigurations(players, currentPairs, unusedPairsExist, relaxationLevel, possibleConfigurations, maxMatches);
+        
+        // If we found valid configurations, select the best one
+        if (possibleConfigurations.length > 0) {
+            logDebugMessage(`Found ${possibleConfigurations.length} valid match configurations. Selecting the optimal one.`);
+            
+            // Sort configurations by their "versus balance" score (lower is better)
+            possibleConfigurations.sort((a, b) => a.score - b.score);
+            
+            // Use the best configuration (lowest score = most balanced)
+            const bestConfig = possibleConfigurations[0];
+            logDebugMessage(`Selected best configuration with score ${bestConfig.score}`);
+            
+            // Apply the best configuration
+            bestConfig.matches.forEach(match => {
+                matches.push(match);
+                
+                // Add pairs to tracking
+                addPairToRecentHistory(generatePairKey(match.team1[0], match.team1[1]));
+                addPairToRecentHistory(generatePairKey(match.team2[0], match.team2[1]));
+                
+                // Update attempted matches
+                attemptedMatches.add(generateMatchKey(match.team1, match.team2));
+                
+                // Update used players
+                [...match.team1, ...match.team2].forEach(player => usedPlayers.add(player));
+            });
+            
+            return true;
+        }
+    } else {
+        // At deeper recursion levels, just use the original algorithm
+        for (let i = 0; i < currentPairs.length; i++) {
+            const pair1 = currentPairs[i];
+            
+            // Skip pairs that have played together before if unused pairs exist
+            if (relaxationLevel === 0 && unusedPairsExist && pair1.pairCount > 0) {
+                continue;
+            }
+            
+            const remainingForOpponents = players.filter(
+                p => p !== pair1.player1 && p !== pair1.player2
+            );
 
-        const opponentPairs = generatePairs(remainingForOpponents);
-        for (let j = 0; j < opponentPairs.length; j++) {
-            const pair2 = opponentPairs[j];
-            const team1 = [pair1.player1, pair1.player2];
-            const team2 = [pair2.player1, pair2.player2];
-
-            if (isValidMatch(team1, team2, relaxationLevel)) {
-                const matchKey = generateMatchKey(team1, team2);
-                logDebugMessage(`Valid match found: ${matchKey}`);
-
-                // Form match
-                matches.push({ team1, team2 });
-                attemptedMatches.add(matchKey);
-
-                // Add pairs to recent history
-                addPairToRecentHistory(pair1.pairKey);
-                addPairToRecentHistory(pair2.pairKey);
-
-                const allUsedPlayers = [...team1, ...team2];
-                allUsedPlayers.forEach(player => usedPlayers.add(player));
-
-                // Continue forming matches with remaining players
-                const remainingPlayers = players.filter(
-                    p => !allUsedPlayers.includes(p)
-                );
-
-                if (tryFormMatches(remainingPlayers, maxMatches, relaxationLevel, depth + 1)) {
-                    return true; // Matches successfully formed
+            const opponentPairs = generatePairs(remainingForOpponents);
+            for (let j = 0; j < opponentPairs.length; j++) {
+                const pair2 = opponentPairs[j];
+                
+                // Skip pairs that have played together before if unused pairs exist
+                if (relaxationLevel === 0 && unusedPairsExist && pair2.pairCount > 0) {
+                    continue;
                 }
+                
+                const team1 = [pair1.player1, pair1.player2];
+                const team2 = [pair2.player1, pair2.player2];
 
-                // Backtrack
-                logDebugMessage(`Backtracking from match: ${matchKey}`);
-                matches.pop();
-                attemptedMatches.delete(matchKey);
-                allUsedPlayers.forEach(player => usedPlayers.delete(player));
+                if (isValidMatch(team1, team2, relaxationLevel)) {
+                    const matchKey = generateMatchKey(team1, team2);
+                    logDebugMessage(`Valid match found: ${matchKey} at relaxation level ${relaxationLevel}`);
+
+                    // Form match
+                    matches.push({ team1, team2 });
+                    attemptedMatches.add(matchKey);
+
+                    // Add pairs to recent history
+                    addPairToRecentHistory(pair1.pairKey);
+                    addPairToRecentHistory(pair2.pairKey);
+
+                    const allUsedPlayers = [...team1, ...team2];
+                    allUsedPlayers.forEach(player => usedPlayers.add(player));
+
+                    // Continue forming matches with remaining players
+                    const remainingPlayers = players.filter(
+                        p => !allUsedPlayers.includes(p)
+                    );
+
+                    if (tryFormMatches(remainingPlayers, maxMatches, relaxationLevel, depth + 1)) {
+                        return true; // Matches successfully formed
+                    }
+
+                    // Backtrack
+                    logDebugMessage(`Backtracking from match: ${matchKey}`);
+                    matches.pop();
+                    attemptedMatches.delete(matchKey);
+                    allUsedPlayers.forEach(player => usedPlayers.delete(player));
+                    removePairFromRecentHistory(pair1.pairKey);
+                    removePairFromRecentHistory(pair2.pairKey);
+                }
             }
         }
     }
 
-    // If no valid matches can be formed, try increasing relaxation level
-    if (depth === 0 && relaxationLevel < 2) {
-        logDebugMessage(
-            `Relaxing constraints to level ${relaxationLevel + 1} and retrying match formation.`
-        );
-        return tryFormMatches(players, maxMatches, relaxationLevel + 1, depth);
-    }
-
+    // If no valid matches can be formed at current level, try next level
     if (depth === 0) {
-        logDebugMessage(`Failed to form matches even at max relaxation level.`);
+        if (relaxationLevel === 0) {
+            logDebugMessage(`No valid matches found at level 0, trying level 1 (allow non-recent repeats)`);
+            return tryFormMatches(players, maxMatches, 1, depth);
+        } else if (relaxationLevel === 1) {
+            logDebugMessage(`No valid matches found at level 1, trying level 2 (ignore opponent conflicts)`);
+            return tryFormMatches(players, maxMatches, 2, depth);
+        } else {
+            logDebugMessage(`Failed to form matches even at max relaxation level ${relaxationLevel}`);
+        }
     }
+    
     return false; // Unable to form matches with current constraints
+}
+
+// New helper function to find optimal match configurations
+function findOptimalMatchConfigurations(players, currentPairs, unusedPairsExist, relaxationLevel, possibleConfigurations, maxMatches) {
+    // If there are fewer than 4 players or we've reached our max matches, this is a valid configuration
+    if (players.length < 4 || possibleConfigurations.length >= 15) { // Increased from 10 to 15
+        return;
+    }
+    
+    // We'll generate multiple possible configurations by trying different starting pairs
+    // We don't need to try all possible pairs, just a reasonable number of variations
+    // If we're using unused pairs, we'll only consider those
+    const pairsToTry = relaxationLevel === 0 && unusedPairsExist
+        ? currentPairs.filter(pair => pair.pairCount === 0)
+        : currentPairs;
+    
+    // Sort pairs to prioritize those containing players with the least partner variety first
+    const sortedPairs = [...pairsToTry].sort((a, b) => {
+        // Get unique partner counts for each player
+        const a1Partners = a.player1.teammates ? Object.keys(a.player1.teammates).length : 0;
+        const a2Partners = a.player2.teammates ? Object.keys(a.player2.teammates).length : 0;
+        const b1Partners = b.player1.teammates ? Object.keys(b.player1.teammates).length : 0;
+        const b2Partners = b.player2.teammates ? Object.keys(b.player2.teammates).length : 0;
+        
+        // Sort by the minimum partner count in each pair (prioritize pairs with players who have fewer partners)
+        const aMinPartners = Math.min(a1Partners, a2Partners);
+        const bMinPartners = Math.min(b1Partners, b2Partners);
+        
+        // If minimum counts are equal, sort by the sum of partner counts
+        if (aMinPartners === bMinPartners) {
+            return (a1Partners + a2Partners) - (b1Partners + b2Partners);
+        }
+        
+        return aMinPartners - bMinPartners;
+    });
+    
+    logDebugMessage(`Sorted pairs to prioritize players with least partner variety first`);
+    
+    // Use the sorted pairs instead of taking the first 6 from the original array
+    for (let i = 0; i < Math.min(sortedPairs.length, 6); i++) {
+        const pair1 = sortedPairs[i];
+        
+        const remainingForOpponents = players.filter(
+            p => p !== pair1.player1 && p !== pair1.player2
+        );
+        
+        const opponentPairs = generatePairs(remainingForOpponents);
+        
+        // Sort the opponent pairs by partner variety too
+        const sortedOpponentPairs = [...opponentPairs].sort((a, b) => {
+            // Get unique partner counts for each player
+            const a1Partners = a.player1.teammates ? Object.keys(a.player1.teammates).length : 0;
+            const a2Partners = a.player2.teammates ? Object.keys(a.player2.teammates).length : 0;
+            const b1Partners = b.player1.teammates ? Object.keys(b.player1.teammates).length : 0;
+            const b2Partners = b.player2.teammates ? Object.keys(b.player2.teammates).length : 0;
+            
+            // Sort by the minimum partner count in each pair
+            const aMinPartners = Math.min(a1Partners, a2Partners);
+            const bMinPartners = Math.min(b1Partners, b2Partners);
+            
+            // If minimum counts are equal, sort by the sum of partner counts
+            if (aMinPartners === bMinPartners) {
+                return (a1Partners + a2Partners) - (b1Partners + b2Partners);
+            }
+            
+            return aMinPartners - bMinPartners;
+        });
+        
+        // Try different opponent pairings for the current team
+        for (let j = 0; j < Math.min(sortedOpponentPairs.length, 6); j++) {
+            const pair2 = sortedOpponentPairs[j];
+            
+            // Skip pair2 if needed based on pair usage
+            if (relaxationLevel === 0 && unusedPairsExist && pair2.pairCount > 0) {
+                continue;
+            }
+            
+            const team1 = [pair1.player1, pair1.player2];
+            const team2 = [pair2.player1, pair2.player2];
+            
+            if (isValidMatch(team1, team2, relaxationLevel)) {
+                // This is a valid first match, now recursively build the rest
+                const potentialConfig = {
+                    matches: [{ team1, team2 }],
+                    usedPlayers: new Set([...team1, ...team2]),
+                    score: 0 // Will calculate this later
+                };
+                
+                // Continue with remaining players to build full config
+                const remainingPlayers = players.filter(p => !potentialConfig.usedPlayers.has(p));
+                
+                // Try to form additional matches with remaining players
+                if (remainingPlayers.length >= 4) {
+                    const moreMatches = [];
+                    const canFormRestOfMatches = buildRestOfConfig(
+                        remainingPlayers, 
+                        relaxationLevel,
+                        unusedPairsExist,
+                        moreMatches
+                    );
+                    
+                    if (canFormRestOfMatches) {
+                        // Add these matches to our configuration
+                        potentialConfig.matches.push(...moreMatches);
+                        
+                        // Calculate the "versus balance" score for this configuration
+                        potentialConfig.score = calculateVersusBalanceScore(potentialConfig.matches, players);
+                        
+                        // Add this configuration to our list
+                        possibleConfigurations.push(potentialConfig);
+                        
+                        logDebugMessage(`Found valid configuration with ${potentialConfig.matches.length} matches and score ${potentialConfig.score}`);
+                        
+                        // If we have enough configurations, stop here to avoid too much computation
+                        if (possibleConfigurations.length >= 15) {
+                            return;
+                        }
+                    }
+                } else if (potentialConfig.matches.length >= maxMatches || remainingPlayers.length < 4) {
+                    // This is a valid configuration with no more matches possible
+                    potentialConfig.score = calculateVersusBalanceScore(potentialConfig.matches, players);
+                    possibleConfigurations.push(potentialConfig);
+                    
+                    logDebugMessage(`Found valid configuration with ${potentialConfig.matches.length} matches and score ${potentialConfig.score}`);
+                }
+            }
+        }
+    }
+}
+
+// Helper to build the rest of a configuration
+function buildRestOfConfig(players, relaxationLevel, unusedPairsExist, resultMatches) {
+    if (players.length < 4) return true; // Successfully formed all possible matches
+    
+    const pairs = generatePairs(players);
+    
+    // Sort pairs to prioritize those containing players with the least partner variety first
+    const sortedPairs = [...pairs].sort((a, b) => {
+        // Get unique partner counts for each player
+        const a1Partners = a.player1.teammates ? Object.keys(a.player1.teammates).length : 0;
+        const a2Partners = a.player2.teammates ? Object.keys(a.player2.teammates).length : 0;
+        const b1Partners = b.player1.teammates ? Object.keys(b.player1.teammates).length : 0;
+        const b2Partners = b.player2.teammates ? Object.keys(b.player2.teammates).length : 0;
+        
+        // Sort by the minimum partner count in each pair (prioritize pairs with players who have fewer partners)
+        const aMinPartners = Math.min(a1Partners, a2Partners);
+        const bMinPartners = Math.min(b1Partners, b2Partners);
+        
+        // If minimum counts are equal, sort by the sum of partner counts
+        if (aMinPartners === bMinPartners) {
+            return (a1Partners + a2Partners) - (b1Partners + b2Partners);
+        }
+        
+        return aMinPartners - bMinPartners;
+    });
+    
+    for (let i = 0; i < sortedPairs.length; i++) {
+        const pair1 = sortedPairs[i];
+        
+        // Skip pairs based on usage if necessary
+        if (relaxationLevel === 0 && unusedPairsExist && pair1.pairCount > 0) {
+            continue;
+        }
+        
+        const remainingForOpponents = players.filter(
+            p => p !== pair1.player1 && p !== pair1.player2
+        );
+        
+        const opponentPairs = generatePairs(remainingForOpponents);
+        
+        // Sort opponent pairs by partner variety too
+        const sortedOpponentPairs = [...opponentPairs].sort((a, b) => {
+            // Get unique partner counts for each player
+            const a1Partners = a.player1.teammates ? Object.keys(a.player1.teammates).length : 0;
+            const a2Partners = a.player2.teammates ? Object.keys(a.player2.teammates).length : 0;
+            const b1Partners = b.player1.teammates ? Object.keys(b.player1.teammates).length : 0;
+            const b2Partners = b.player2.teammates ? Object.keys(b.player2.teammates).length : 0;
+            
+            // Sort by the minimum partner count in each pair
+            const aMinPartners = Math.min(a1Partners, a2Partners);
+            const bMinPartners = Math.min(b1Partners, b2Partners);
+            
+            // If minimum counts are equal, sort by the sum of partner counts
+            if (aMinPartners === bMinPartners) {
+                return (a1Partners + a2Partners) - (b1Partners + b2Partners);
+            }
+            
+            return aMinPartners - bMinPartners;
+        });
+        
+        for (let j = 0; j < sortedOpponentPairs.length; j++) {
+            const pair2 = sortedOpponentPairs[j];
+            
+            // Skip pairs based on usage if necessary
+            if (relaxationLevel === 0 && unusedPairsExist && pair2.pairCount > 0) {
+                continue;
+            }
+            
+            const team1 = [pair1.player1, pair1.player2];
+            const team2 = [pair2.player1, pair2.player2];
+            
+            if (isValidMatch(team1, team2, relaxationLevel)) {
+                // Add this match to our results
+                resultMatches.push({ team1, team2 });
+                
+                // Continue with remaining players
+                const usedPlayers = [...team1, ...team2];
+                const remainingPlayers = players.filter(p => !usedPlayers.includes(p));
+                
+                // Try to form additional matches
+                if (buildRestOfConfig(remainingPlayers, relaxationLevel, unusedPairsExist, resultMatches)) {
+                    return true; // Success
+                }
+                
+                // Backtrack
+                resultMatches.pop();
+            }
+        }
+    }
+    
+    return players.length < 4; // Success only if we've used all players that can form a match
+}
+
+// Calculate a score representing how balanced the "versus" relationships are
+// Lower score = better balance
+function calculateVersusBalanceScore(matches, allPlayers) {
+    // Create a versus matrix simulation
+    const versusMatrix = {};
+    
+    // Initialize the matrix with current versus counts
+    for (const player of allPlayers) {
+        versusMatrix[player.name] = {};
+        
+        for (const otherPlayer of allPlayers) {
+            if (player.name !== otherPlayer.name) {
+                // Start with current versus count
+                const currentCount = player.versus?.[otherPlayer.name] || 0;
+                versusMatrix[player.name][otherPlayer.name] = currentCount;
+            }
+        }
+    }
+    
+    // Create a set to track unique pair keys in this configuration
+    const configPairs = new Set();
+    
+    // Add the new matches to our simulation
+    for (const match of matches) {
+        // Track team pairs
+        const team1Key = generatePairKey(match.team1[0], match.team1[1]);
+        const team2Key = generatePairKey(match.team2[0], match.team2[1]);
+        configPairs.add(team1Key);
+        configPairs.add(team2Key);
+        
+        // Update versus relationships
+        for (const team1Player of match.team1) {
+            for (const team2Player of match.team2) {
+                versusMatrix[team1Player.name][team2Player.name] = (versusMatrix[team1Player.name][team2Player.name] || 0) + 1;
+                versusMatrix[team2Player.name][team1Player.name] = (versusMatrix[team2Player.name][team1Player.name] || 0) + 1;
+            }
+        }
+    }
+    
+    // Calculate our balance metrics
+    let maxDiff = 0;  // Maximum difference between any two versus counts
+    let variance = 0; // Variance in versus counts
+    let maxCount = 0; // Maximum versus count between any two players
+    
+    // Get all unique versus counts
+    const allCounts = [];
+    
+    for (const playerName in versusMatrix) {
+        for (const opponentName in versusMatrix[playerName]) {
+            const count = versusMatrix[playerName][opponentName];
+            allCounts.push(count);
+            
+            if (count > maxCount) {
+                maxCount = count;
+            }
+        }
+    }
+    
+    // Calculate the standard deviation/variance of the counts
+    const sum = allCounts.reduce((a, b) => a + b, 0);
+    const mean = sum / allCounts.length;
+    variance = allCounts.reduce((s, c) => s + Math.pow(c - mean, 2), 0) / allCounts.length;
+    
+    // Calculate max difference between counts
+    for (let i = 0; i < allCounts.length; i++) {
+        for (let j = i + 1; j < allCounts.length; j++) {
+            const diff = Math.abs(allCounts[i] - allCounts[j]);
+            if (diff > maxDiff) {
+                maxDiff = diff;
+            }
+        }
+    }
+    
+    // Count how many repeat pairs we have in this configuration
+    const repeatPairPenalty = calculateRepeatPairPenalty(configPairs, allPlayers);
+    
+    // Combine the metrics into a single score
+    // We weight the max count most heavily, then max difference, then variance, plus penalty for repeat pairs
+    return maxCount * 100 + maxDiff * 10 + variance + repeatPairPenalty * 1000; // Heavy penalty for repeat pairs
+}
+
+// Helper function to calculate a penalty for repeat pairs
+function calculateRepeatPairPenalty(configPairs, allPlayers) {
+    let repeatPairCount = 0;
+    
+    // For each pair in the configuration, check if they've played together before
+    for (const pairKey of configPairs) {
+        const [name1, name2] = pairKey.split('-');
+        const player1 = allPlayers.find(p => p.name === name1);
+        const player2 = allPlayers.find(p => p.name === name2);
+        
+        if (player1 && player2) {
+            // Check if these players have been teammates before
+            if (player1.teammates && player1.teammates[player2.name]) {
+                repeatPairCount++;
+            }
+        }
+    }
+    
+    return repeatPairCount;
 }
 
 
@@ -1004,7 +1596,7 @@ function isValidMatch(team1, team2) {
         }
     }
 
-    // Step 2: Check if all possible pairs have been used at least once
+    // Step 2: Check if ALL possible pairs have been used at least once
     const allPairsUsed = Array.from(allPossiblePairKeys).every(pairKey => {
         const names = pairKey.split('-');
         const player1 = players.find(p => p.name === names[0]);
@@ -1023,59 +1615,107 @@ function isValidMatch(team1, team2) {
             const pairCount = pairTracker.getPairCount(player1, player2);
             const isRecentPair = pairTracker.isPairRecent(player1, player2);
             
+            // Calculate average opponent count for each player in the pair against all others
+            const player1OpponentCounts = [];
+            const player2OpponentCounts = [];
+            
+            // Get all opponents for player1
+            for (const otherPlayer of players) {
+                if (otherPlayer !== player1 && otherPlayer !== player2) {
+                    const count = player1.versus?.[otherPlayer.name] || 0;
+                    player1OpponentCounts.push(count);
+                }
+            }
+            
+            // Get all opponents for player2
+            for (const otherPlayer of players) {
+                if (otherPlayer !== player1 && otherPlayer !== player2) {
+                    const count = player2.versus?.[otherPlayer.name] || 0;
+                    player2OpponentCounts.push(count);
+                }
+            }
+            
+            // Get opponent count between the players in this potential pair
+            const pairOpponentCount = player1.versus?.[player2.name] || 0;
+            
             potentialPairs.push({
                 player1,
                 player2,
                 pairKey,
                 pairCount,
-                isRecentPair
+                isRecentPair,
+                pairOpponentCount
             });
         }
     }
     
-    // Step 3: First, add pairs that meet the ideal criteria
+    // Step 3: Prioritize unused pairs FIRST, before any other consideration
+    const unusedPairs = potentialPairs.filter(pair => pair.pairCount === 0);
+    
+    // If we have any unused pairs, ONLY use those
+    if (unusedPairs.length > 0) {
+        logDebugMessage(`Found ${unusedPairs.length} pairs at relaxation level 0 (never paired before)`);
+        // Sort them by their opponent count (preferring lowest first)
+        const sortedUnusedPairs = unusedPairs.sort((a, b) => a.pairOpponentCount - b.pairOpponentCount);
+        pairs.push(...sortedUnusedPairs);
+        return pairs; // Only return never-paired combinations
+    }
+    
+    // Group potential pairs by their opponent count
+    const pairsByOpponentCount = {};
     for (const pair of potentialPairs) {
-        if ((allPairsUsed && !pair.isRecentPair) || pair.pairCount === 0) {
-            pairs.push({
-                player1: pair.player1,
-                player2: pair.player2,
-                pairKey: pair.pairKey,
-                pairCount: pair.pairCount
-            });
+        if (!pairsByOpponentCount[pair.pairOpponentCount]) {
+            pairsByOpponentCount[pair.pairOpponentCount] = [];
+        }
+        pairsByOpponentCount[pair.pairOpponentCount].push(pair);
+    }
+    
+    // Get sorted counts of opponent pairs (from lowest to highest)
+    const sortedOpponentCounts = Object.keys(pairsByOpponentCount)
+                                   .map(Number)
+                                   .sort((a, b) => a - b);
+                                   
+    logDebugMessage(`Found opponent count groups: ${sortedOpponentCounts.join(', ')}`);
+    
+    // We'll collect pairs in order of their opponent count
+    const orderedPairs = [];
+    
+    // First collect all pairs that aren't recent
+    for (const count of sortedOpponentCounts) {
+        const pairsWithThisCount = pairsByOpponentCount[count];
+        // Filter for not recent pairs and sort by pairCount (least paired)
+        const notRecentPairs = pairsWithThisCount
+            .filter(pair => !pair.isRecentPair)
+            .sort((a, b) => a.pairCount - b.pairCount);
+            
+        if (notRecentPairs.length > 0) {
+            logDebugMessage(`Found ${notRecentPairs.length} non-recent pairs with opponent count ${count}`);
+            orderedPairs.push(...notRecentPairs);
         }
     }
     
-    // Step 4: If no pairs meet the ideal criteria but we need to form matches, 
-    // include all pairs but sort them by recency and count
-    if (pairs.length === 0 && potentialPairs.length > 0) {
-        logDebugMessage("No ideal pairs found, falling back to all possible pairs sorted by preference");
-        
-        // Sort potential pairs by preference: 
-        // 1. Not in recent history (most important)
-        // 2. Fewest occurrences overall
-        potentialPairs.sort((a, b) => {
-            // First prioritize pairs not in recent history
-            if (a.isRecentPair !== b.isRecentPair) {
-                return a.isRecentPair ? 1 : -1;
-            }
-            // Then sort by pair count
-            return a.pairCount - b.pairCount;
-        });
-        
-        // Take the best available pairs
-        for (const pair of potentialPairs) {
-            pairs.push({
-                player1: pair.player1,
-                player2: pair.player2,
-                pairKey: pair.pairKey,
-                pairCount: pair.pairCount
-            });
+    // If we have any valid pairs that aren't recent, use them
+    if (orderedPairs.length > 0) {
+        logDebugMessage(`Using ${orderedPairs.length} pairs sorted by opponent count`);
+        pairs.push(...orderedPairs);
+        return pairs;
+    }
+    
+    // Fall back: if all pairs are recent, just use the ones with lowest opponent count
+    // and lowest pairCount
+    for (const count of sortedOpponentCounts) {
+        const pairsWithThisCount = pairsByOpponentCount[count]
+            .sort((a, b) => a.pairCount - b.pairCount);
+            
+        if (pairsWithThisCount.length > 0) {
+            logDebugMessage(`Fallback: Using ${pairsWithThisCount.length} pairs with opponent count ${count}`);
+            pairs.push(...pairsWithThisCount);
+            break; // Just take the lowest count group
         }
     }
 
-    logDebugMessage(`Generated ${pairs.length} valid pairs`);
-    // Step 5: Sort pairs by fewest pairings and add some randomness for equal counts
-    return pairs.sort((a, b) => a.pairCount - b.pairCount || Math.random() - 0.5);
+    logDebugMessage(`Generated ${pairs.length} valid pairs using sorted opponent counts`);
+    return pairs;
 }
 
 
@@ -1163,6 +1803,31 @@ function addPairToRecentHistory(pairKey) {
     pairTracker.addPair(player1, player2);
 }
 
+// Function to remove a pair from recent history
+function removePairFromRecentHistory(pairKey) {
+    // Handle null/invalid pair keys
+    if (!pairKey) {
+        logDebugMessage(`Cannot remove invalid pair key from recent history`);
+        return false;
+    }
+    
+    const names = pairKey.split('-');
+    if (names.length !== 2) {
+        logDebugMessage(`Invalid pair key format: ${pairKey}`);
+        return false;
+    }
+    
+    const player1 = players.find(p => p.name === names[0]);
+    const player2 = players.find(p => p.name === names[1]);
+    
+    if (!player1 || !player2) {
+        logDebugMessage(`Could not find players for pair key: ${pairKey}`);
+        return false;
+    }
+    
+    return pairTracker.removePair(player1, player2);
+}
+
 
 
 
@@ -1184,151 +1849,323 @@ function shuffleArray(array) {
 function appendMatchDisplay(matches, sitOutPlayers) {
     // Safety check to prevent errors with undefined or empty matches
     if (!matches || !Array.isArray(matches) || matches.length === 0) {
-        console.error("No matches provided to display");
+        console.error("No matches to display");
+        
+        // Try to create an empty round container with a message
+        const matchDisplay = document.getElementById('matchDisplay');
+        currentRound++; // Still increment the round counter
+        
+        // Create a container for this round
+        const roundContainer = document.createElement('div');
+        roundContainer.classList.add('round-container');
+        roundContainer.setAttribute('data-round', currentRound);
+        
+        // Create a header for the round
+        const roundHeader = document.createElement('h3');
+        roundHeader.textContent = `Round ${currentRound}`;
+        roundContainer.appendChild(roundHeader);
+        
+        // Add a message
+        const noMatchesMessage = document.createElement('div');
+        noMatchesMessage.classList.add('no-matches-message');
+        noMatchesMessage.textContent = "Could not generate any valid matches. Consider adding more players or resetting match history.";
+        roundContainer.appendChild(noMatchesMessage);
+        
+        // Still add "Add Match" button
+        const addMatchButton = document.createElement('button');
+        addMatchButton.textContent = 'Add Match';
+        addMatchButton.classList.add('add-match-btn');
+        addMatchButton.addEventListener('click', () => {
+            addMatch(roundContainer, sitOutPlayers);
+        });
+        roundContainer.appendChild(addMatchButton);
+        
+        // Add the round container to the display
+        matchDisplay.appendChild(roundContainer);
+        
+        // Show a toast notification
+        showToast("No valid matches could be created. Consider adding more players or resetting the pairing history.", "warning", 5000);
+        
         return;
     }
-    
-    // Increment the round number before creating the round display
-    currentRound++;
-    
-    // Get the match display container
+
     const matchDisplay = document.getElementById('matchDisplay');
-    
+    currentRound++; // Increment the round counter
+
     // Create a container for this round
-    const roundNum = currentRound;
     const roundContainer = document.createElement('div');
     roundContainer.classList.add('round-container');
-    roundContainer.setAttribute('data-round', roundNum);
-    
-    // Create round header with controls
-    const roundHeader = document.createElement('div');
-    roundHeader.classList.add('round-header');
-    
-    // Round title and edit button
-    const headerContent = document.createElement('div');
-    headerContent.classList.add('round-header-content');
-    
-    const roundTitle = document.createElement('h3');
-    roundTitle.textContent = `Round ${roundNum}`;
-    headerContent.appendChild(roundTitle);
-    
-    // Edit round button
-    const editRoundBtn = document.createElement('button');
-    editRoundBtn.classList.add('edit-round-btn');
-    editRoundBtn.textContent = 'Edit Round';
-    editRoundBtn.addEventListener('click', () => toggleEditRound(roundContainer, editRoundBtn));
-    headerContent.appendChild(editRoundBtn);
-    
-    // Add "Add Match" button in the header content
+    roundContainer.setAttribute('data-round', currentRound);
+
+    // Create a header for the round
+    const roundHeader = document.createElement('h3');
+    roundHeader.textContent = `Round ${currentRound}`;
+    roundContainer.appendChild(roundHeader);
+
+    // Add Edit Round button
+    const editRoundButton = document.createElement('button');
+    editRoundButton.textContent = 'Edit Round';
+    editRoundButton.classList.add('edit-round-btn');
+    editRoundButton.addEventListener('click', () => {
+        toggleEditRound(roundContainer, editRoundButton);
+    });
+    roundContainer.appendChild(editRoundButton);
+
+    // Add "Add Match" button
     const addMatchButton = document.createElement('button');
     addMatchButton.textContent = 'Add Match';
     addMatchButton.classList.add('add-match-btn');
     addMatchButton.addEventListener('click', () => {
-        addMatch(roundContainer, sitOutPlayers); // Pass the sit-out players list
+        addMatch(roundContainer, sitOutPlayers);
     });
-    headerContent.appendChild(addMatchButton);
-    
-    roundHeader.appendChild(headerContent);
-    roundContainer.appendChild(roundHeader);
-    
-    // Display players sitting out this round
+    roundContainer.appendChild(addMatchButton);
+
+    // Check if this round has scores already (for restored rounds)
+    const hasScoresSubmitted = matches.some(match => 
+        (typeof match.team1Score !== 'undefined' && match.team1Score !== null) || 
+        (typeof match.team2Score !== 'undefined' && match.team2Score !== null)
+    );
+
+    // Hide the Add Match button if scores have been submitted
+    if (hasScoresSubmitted) {
+        addMatchButton.style.display = 'none';
+    }
+
+    // Display sitOutPlayers
     updateSitOutDisplayForRound(roundContainer, sitOutPlayers);
-    
-    // Create match divs for each match
+
+    // Add the round container to display before adding matches
+    matchDisplay.appendChild(roundContainer);
+
+    // Loop through matches and create UI for each
     matches.forEach((match, index) => {
+        // Validate match structure
+        if (!match.team1 || !match.team2 || !Array.isArray(match.team1) || !Array.isArray(match.team2) ||
+            match.team1.length !== 2 || match.team2.length !== 2) {
+            console.error("Invalid match structure:", match);
+            return;
+        }
+        
         const matchDiv = document.createElement('div');
         matchDiv.classList.add('match');
         matchDiv.setAttribute('data-match', index);
-
-        matchDiv.innerHTML = `
-            <p>Match ${index + 1} <button class="skip-match-btn" data-match="${index}">Skip Match</button></p>
-            <div class="team" data-team="1">
-                <p>Team 1: ${match.team1.map(p => `<span class="team1-player">${p.name}</span>`).join(' & ')}</p>
-                <label>Score: <input type="text" inputmode="numeric" pattern="[0-9]*" min="0" class="team-score" data-team="1" data-match="${index}" readonly></label>
-            </div>
-            <div class="team" data-team="2">
-                <p>Team 2: ${match.team2.map(p => `<span class="team2-player">${p.name}</span>`).join(' & ')}</p>
-                <label>Score: <input type="text" inputmode="numeric" pattern="[0-9]*" min="0" class="team-score" data-team="2" data-match="${index}" readonly></label>
-            </div>
-        `;
         
-        // Add skip button event listener
-        const skipButton = matchDiv.querySelector('.skip-match-btn');
-        skipButton.addEventListener('click', function() {
-            // Use custom confirm for match skipping
-            showConfirm(
-                "Are you sure you want to skip this match? This action cannot be undone.",
-                "Skip Match",
-                "Cancel", 
-                "warning"
-            ).then(confirmation => {
-                if (!confirmation) return;
-                
-                matchDiv.style.display = 'none';
-                matchDiv.setAttribute('data-skipped', 'true');
-                
-                // Get the players from the match
-                const team1Players = match.team1;
-                const team2Players = match.team2;
-                
-                // Mark players as ineligible and sitting out
-                [...team1Players, ...team2Players].forEach(player => {
-                    player.eligible = false;
-                    player.satOutLastRound = true;
-                    if (!sitOutPlayers.includes(player)) {
+        // Add match title with match-title class
+        const matchTitle = document.createElement('p');
+        matchTitle.innerHTML = `<span class="match-title">Match ${index + 1}</span>`;
+        matchDiv.appendChild(matchTitle);
+
+        // Add team 1
+        const team1Div = document.createElement('div');
+        team1Div.classList.add('team');
+        team1Div.setAttribute('data-team', '1');
+
+        // Add team 1 players
+        const team1Players = document.createElement('p');
+
+        const team1Key = generatePairKey(match.team1[0], match.team1[1]);
+        
+        // Add to tracking
+        if (team1Key) pairTracker.globalPairs.add(team1Key);
+        addPairToRecentHistory(team1Key);
+        
+        // Team 1 inner HTML
+        team1Players.innerHTML = `Team 1: ${match.team1.map(player => 
+            `<span class="team1-player">${player.name}</span>`
+        ).join(' & ')}`;
+        
+        team1Div.appendChild(team1Players);
+
+        // Add scores for team 1
+        const team1Score = document.createElement('label');
+        team1Score.textContent = 'Score: ';
+        
+        // If scores exist (for restored rounds), use them
+        let team1ScoreValue = '';
+        let team2ScoreValue = '';
+        
+        if (hasScoresSubmitted && match.team1Score !== undefined) {
+            team1ScoreValue = match.team1Score;
+        }
+        
+        if (hasScoresSubmitted && match.team2Score !== undefined) {
+            team2ScoreValue = match.team2Score;
+        }
+        
+        // For restored rounds with scores, display score as read-only
+        if (hasScoresSubmitted && (match.team1Score !== undefined || match.team2Score !== undefined)) {
+            const team1ScoreDisplay = document.createElement('p');
+            team1ScoreDisplay.className = 'score-display';
+            team1ScoreDisplay.textContent = `Score: ${team1ScoreValue}`;
+            team1Div.appendChild(team1ScoreDisplay);
+        } else {
+            // Regular input for new rounds or rounds without scores
+            const team1ScoreInput = document.createElement('input');
+            team1ScoreInput.type = 'text';
+            team1ScoreInput.inputMode = 'numeric';
+            team1ScoreInput.pattern = '[0-9]*';
+            team1ScoreInput.className = 'team-score';
+            team1ScoreInput.setAttribute('data-team', '1');
+            team1ScoreInput.value = team1ScoreValue;
+            team1Score.appendChild(team1ScoreInput);
+            team1Div.appendChild(team1Score);
+        }
+        
+        matchDiv.appendChild(team1Div);
+
+        // Add team 2
+        const team2Div = document.createElement('div');
+        team2Div.classList.add('team');
+        team2Div.setAttribute('data-team', '2');
+
+        // Add team 2 players
+        const team2Players = document.createElement('p');
+        
+        const team2Key = generatePairKey(match.team2[0], match.team2[1]);
+        
+        // Add to tracking
+        if (team2Key) pairTracker.globalPairs.add(team2Key);
+        addPairToRecentHistory(team2Key);
+        
+        // Team 2 inner HTML
+        team2Players.innerHTML = `Team 2: ${match.team2.map(player => 
+            `<span class="team2-player">${player.name}</span>`
+        ).join(' & ')}`;
+        
+        team2Div.appendChild(team2Players);
+
+        // Add scores for team 2
+        if (hasScoresSubmitted && (match.team1Score !== undefined || match.team2Score !== undefined)) {
+            const team2ScoreDisplay = document.createElement('p');
+            team2ScoreDisplay.className = 'score-display';
+            team2ScoreDisplay.textContent = `Score: ${team2ScoreValue}`;
+            team2Div.appendChild(team2ScoreDisplay);
+        } else {
+            const team2Score = document.createElement('label');
+            team2Score.textContent = 'Score: ';
+            
+            const team2ScoreInput = document.createElement('input');
+            team2ScoreInput.type = 'text';
+            team2ScoreInput.inputMode = 'numeric';
+            team2ScoreInput.pattern = '[0-9]*';
+            team2ScoreInput.className = 'team-score';
+            team2ScoreInput.setAttribute('data-team', '2');
+            team2ScoreInput.value = team2ScoreValue;
+            team2Score.appendChild(team2ScoreInput);
+            team2Div.appendChild(team2Score);
+        }
+        
+        matchDiv.appendChild(team2Div);
+
+        // Add the match key to track this match combo
+        const matchKey = generateMatchKey(match.team1, match.team2);
+        if (matchKey) {
+            matchHistory.add(matchKey);
+            updateMatchPlayCounter(matchKey);
+            // For previous matches we also need to track to avoid immediate repeats
+            previousRoundMatches.add(matchKey);
+        }
+
+        // Add skip match button for rounds that don't have scores yet
+        if (!hasScoresSubmitted) {
+            const skipButton = document.createElement('button');
+            skipButton.textContent = 'Skip Match';
+            skipButton.classList.add('skip-match-btn');
+            skipButton.addEventListener('click', function() {
+                showConfirm(
+                    'ARE YOU SURE YOU WANT TO SKIP THIS MATCH? PLAYERS WILL BE ELIGIBLE FOR OTHER MATCHES THIS ROUND.',
+                    'SKIP',
+                    'Cancel',
+                    'warning'
+                ).then(confirmation => {
+                    if (!confirmation) return;
+
+                    // Mark match as skipped
+                    skipButton.parentNode.parentNode.setAttribute('data-skipped', 'true');
+                    skipButton.parentNode.parentNode.classList.add('skipped-match');
+                    
+                    // Hide the match div
+                    skipButton.parentNode.parentNode.style.display = 'none';
+
+                    // Get all players involved in this match
+                    const skipPlayers = [...match.team1, ...match.team2];
+                    
+                    // Update player eligibility status - mark them as ineligible and sitting out
+                    skipPlayers.forEach(player => {
+                        player.eligible = false;
+                        player.satOutLastRound = true;
+                        
+                        // Remove player if already in sitOutPlayers to prevent duplicates
+                        const existingIndex = sitOutPlayers.findIndex(p => p.name === player.name);
+                        if (existingIndex >= 0) {
+                            sitOutPlayers.splice(existingIndex, 1);
+                        }
+                        
+                        // Add player to sitOutPlayers
                         sitOutPlayers.push(player);
+                        logDebugMessage(`Player ${player.name} marked ineligible and sitting out after match skip`);
+                    });
+                    
+                    // Remove from match tracking
+                    const matchKey = generateMatchKey(match.team1, match.team2);
+                    if (matchHistory.has(matchKey)) {
+                        matchHistory.delete(matchKey);
+                        logDebugMessage(`Removed match ${matchKey} from match history.`);
                     }
-                });
-                
-                // Remove from match tracking
-                const matchKey = generateMatchKey(team1Players, team2Players);
-                if (matchHistory && matchHistory.has(matchKey)) {
-                    matchHistory.delete(matchKey);
-                }
-                
-                // Handle pair tracking
-                const team1Key = generatePairKey(team1Players[0], team1Players[1]);
-                const team2Key = generatePairKey(team2Players[0], team2Players[1]);
-                
-                if (pairTracker && pairTracker.previousRoundPairs) {
+                    
+                    // Remove from previousRoundMatches to allow this match in future rounds
+                    if (previousRoundMatches.has(matchKey)) {
+                        previousRoundMatches.delete(matchKey);
+                        logDebugMessage(`Removed match ${matchKey} from previous round matches.`);
+                    }
+                    
+                    // Remove from recent history
+                    removePairFromRecentHistory(team1Key);
+                    removePairFromRecentHistory(team2Key);
+                    
+                    // Also directly remove from previousRoundPairs in pairTracker
                     if (pairTracker.previousRoundPairs.has(team1Key)) {
                         pairTracker.previousRoundPairs.delete(team1Key);
+                        logDebugMessage(`Directly removed Team 1 pair ${team1Key} from previous round pairs.`);
                     }
+                    
                     if (pairTracker.previousRoundPairs.has(team2Key)) {
                         pairTracker.previousRoundPairs.delete(team2Key);
+                        logDebugMessage(`Directly removed Team 2 pair ${team2Key} from previous round pairs.`);
                     }
-                }
-                
-                // Remove from recent history
-                removePairFromRecentHistory(team1Key);
-                removePairFromRecentHistory(team2Key);
-                
-                // Update the display
-                updateSitOutDisplayForRound(roundContainer, sitOutPlayers);
-                
-                // Check if all matches are skipped to update button text
-                const allSkipped = Array.from(roundContainer.querySelectorAll('.match')).every(m => 
-                    m.getAttribute('data-skipped') === 'true');
-                
-                const submitBtn = roundContainer.querySelector('.submit-scores-btn');
-                if (submitBtn && allSkipped) {
-                    submitBtn.textContent = 'Next Round';
-                }
-                
-                // Save changes
-                autoSave();
+                    
+                    // Update the display
+                    updateSitOutDisplayForRound(roundContainer, sitOutPlayers);
+                    
+                    // Check if all matches are skipped to update button text
+                    const allSkipped = Array.from(roundContainer.querySelectorAll('.match')).every(m => 
+                        m.getAttribute('data-skipped') === 'true');
+                    
+                    const submitBtn = roundContainer.querySelector('.submit-scores-btn');
+                    if (submitBtn && allSkipped) {
+                        submitBtn.textContent = 'Next Round';
+                    }
+                    
+                    // Save changes
+                    autoSave();
+                });
             });
-        });
+            
+            // Add the skip button to the match title instead of to the matchDiv directly
+            matchTitle.appendChild(skipButton);
+        }
 
         roundContainer.appendChild(matchDiv);
     });
 
-    // Add "Submit Scores" button
-    const addSubmitScoresButton = document.createElement('button');
-    addSubmitScoresButton.textContent = 'Submit Scores';
-    addSubmitScoresButton.classList.add('submit-scores-btn');
-    addSubmitScoresButton.addEventListener('click', () => { submitScores(); });
-    roundContainer.appendChild(addSubmitScoresButton);
+    // Only add "Submit Scores" button if the round doesn't have scores submitted yet
+    if (!hasScoresSubmitted) {
+        const addSubmitScoresButton = document.createElement('button');
+        addSubmitScoresButton.textContent = 'Submit Scores';
+        addSubmitScoresButton.classList.add('submit-scores-btn');
+        addSubmitScoresButton.addEventListener('click', () => submitScores());
+        roundContainer.appendChild(addSubmitScoresButton);
+    }
 
     matchDisplay.appendChild(roundContainer);
     logDebugMessage(`Round ${currentRound} displayed successfully.`);
@@ -1350,8 +2187,8 @@ function appendMatchDisplay(matches, sitOutPlayers) {
             return;
         }
         
-        // Check if the round is in edit mode
-        const isInEditMode = roundContainer.querySelector('.player-selector') !== null;
+        // Check if the round is in edit mode - either by selector or by class
+        const isInEditMode = roundContainer.querySelector('.player-selector') !== null || roundContainer.classList.contains('edit-mode');
         if (isInEditMode) {
             // If in edit mode, first save the edits to convert selectors to proper player spans
             const editRoundButton = roundContainer.querySelector('.edit-round-btn');
@@ -1363,6 +2200,10 @@ function appendMatchDisplay(matches, sitOutPlayers) {
                 setTimeout(() => {
                     submitScores(); // Call submitScores again once edit mode is saved
                 }, 300);
+                return;
+            } else {
+                // If we're in edit mode but can't automatically save, prevent submission
+                showToast("Please save or cancel your edits before submitting scores.", "warning");
                 return;
             }
         }
@@ -1553,7 +2394,10 @@ function appendMatchDisplay(matches, sitOutPlayers) {
             
             // Remove skip button if present
             const skipButton = matchDiv.querySelector('.skip-match-btn');
-            if (skipButton) skipButton.remove();
+            if (skipButton) {
+                // The skip button is now in the match title
+                skipButton.remove();
+            }
         }
         
         // Check if we processed any matches
@@ -1594,6 +2438,16 @@ function appendMatchDisplay(matches, sitOutPlayers) {
         }
         
         showToast("Scores submitted! Starting the next round...", "success");
+        
+        // Update button text
+        updateStartTournamentButtonText();
+        
+        // Always hide bottom continue button after submitting scores
+        const bottomContinueContainer = document.getElementById('bottomContinueContainer');
+        if (bottomContinueContainer) {
+            bottomContinueContainer.style.display = 'none';
+        }
+        
         generateNextRound();
         autoSave();
     }
@@ -1609,6 +2463,9 @@ function generateNextRound() {
     generatePairsAndMatches();
     
     autoSave();
+    
+    // Update button text
+    updateStartTournamentButtonText();
     
     // Add a slight delay to ensure the new round is fully rendered before scrolling
     setTimeout(() => {
@@ -1652,30 +2509,98 @@ function generatePairsAndMatches() {
 
     if (eligiblePlayers.length < 4) {
         logDebugMessage("Not enough players to form even a single match.");
+        showToast("Need at least 4 eligible players to create a match", "error");
         return;
     }
 
     const sitOutPlayers = determineSitOuts();
     const playingPlayers = eligiblePlayers.filter(player => !sitOutPlayers.includes(player));
     const usableCourts = Math.floor(playingPlayers.length / 4); // Determine actual court usage
-
-    const teams = createMatchesForRound(playingPlayers, Math.min(usableCourts, maxMatches));
-    if (teams.length === 0) {
-        logDebugMessage("No matches generated. Resetting history and retrying.");
-        resetPairAndMatchHistory();
-        const retryTeams = createMatchesForRound(playingPlayers, Math.min(usableCourts, maxMatches));
-        appendMatchDisplay(retryTeams, sitOutPlayers);
-    } else {
-        appendMatchDisplay(teams, sitOutPlayers);
+    
+    if (usableCourts === 0) {
+        logDebugMessage("Not enough players available after determining sit-outs");
+        showToast("Not enough eligible players after determining sit-outs", "error");
+        return;
     }
+
+    // First attempt at creating matches
+    let teams = createMatchesForRound(playingPlayers, Math.min(usableCourts, maxMatches));
+    
+    // If no matches were generated on first try, reset history and try again with more relaxed constraints
+    if (teams.length === 0) {
+        logDebugMessage("No matches generated on first attempt. Resetting history and retrying.");
+        
+        // Clear previous round matches to enable match formation
+        previousRoundMatches.clear();
+        
+        // Reset pair history to allow more flexibility
+        resetPairAndMatchHistory();
+        
+        // Try again with the same eligible players
+        teams = createMatchesForRound(playingPlayers, Math.min(usableCourts, maxMatches));
+        
+        // If still no matches, try with even more aggressive reset
+        if (teams.length === 0) {
+            logDebugMessage("Still no matches generated. Using emergency reset and retry.");
+            
+            // Reset extended history to allow any pairing
+            pairTracker.resetAll();
+            
+            // One last attempt
+            teams = createMatchesForRound(playingPlayers, Math.min(usableCourts, maxMatches));
+        }
+    }
+    
+    // Even if teams is still empty, appendMatchDisplay will handle this case
+    appendMatchDisplay(teams, sitOutPlayers);
     autoSave();
 }
 
 
 function playRound() {
-    currentRound = 0; // Set to 0 since appendMatchDisplay will increment it to 1
-    // Initialize pair tracking for the first round
+    // Check if there are any unsubmitted rounds
+    const lastRoundContainer = document.querySelector('.round-container:last-child');
+    
+    if (lastRoundContainer) {
+        const hasSubmitButton = lastRoundContainer.querySelector('.submit-scores-btn');
+        
+        if (hasSubmitButton) {
+            // If there's a submit button, we need to handle this round first
+            showToast("Please submit scores for the current round before starting a new one.", "warning");
+            // Scroll to the unsubmitted round
+            lastRoundContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            return;
+        }
+        
+        // If there's no submit button, it means all rounds are completed
+        // We should generate a new round
+    }
+
+    // Begin a new round
+    // Reset currentRound if this is a start of a tournament
+    if (currentRound === 0 || isFirstRound) {
+        isFirstRound = false;
+    } else {
+        // This is a continuation of an existing tournament
+        // We don't reset currentRound here as appendMatchDisplay will increment it
+    }
+    
+    // Initialize pair tracking for the new round
     pairTracker.startNewRound();
+    
+    // Reset previous round pairs to ensure matches can be formed
+    // This is important when we've loaded existing data
+    resetPreviousRoundPairs();
+    
+    // Clear previous round matches - crucial for enabling new match generation
+    previousRoundMatches.clear();
+    
+    // Hide bottom continue button when creating a new round
+    const bottomContinueContainer = document.getElementById('bottomContinueContainer');
+    if (bottomContinueContainer) {
+        bottomContinueContainer.style.display = 'none';
+    }
+    
     generatePairsAndMatches();
     autoSave();
     
@@ -1686,44 +2611,160 @@ function playRound() {
 }
 
 function updateVersus(player, opponent) {
-    if (!player.versus) {
-        player.versus = {}; // Initialize versus object if undefined
+    // Ensure the player and opponent are valid objects
+    if (!player || !opponent || typeof player !== 'object' || typeof opponent !== 'object') {
+        console.error("Invalid player or opponent in updateVersus:", { player, opponent });
+        return;
     }
+    
+    // Ensure player name exists
+    if (!player.name || !opponent.name) {
+        console.error("Player or opponent missing name in updateVersus:", { 
+            playerName: player.name, 
+            opponentName: opponent.name 
+        });
+        return;
+    }
+    
+    // Initialize versus object if undefined
+    if (!player.versus) {
+        player.versus = {}; 
+    }
+    
     const name = opponent.name;
     player.versus[name] = (player.versus[name] || 0) + 1; // Increment count or initialize
+    
+    // Log for debugging
+    logDebugMessage(`Updated versus relationship: ${player.name} vs ${opponent.name} (count: ${player.versus[name]})`);
 }
 
 
 // Update teammates count without resetting and move the most recent addition to the end
 function updateTeammates(player, teammate) {
-    if (!player.teammates) {
-        player.teammates = {}; // Initialize teammates object if undefined
+    // Ensure the player and teammate are valid objects
+    if (!player || !teammate || typeof player !== 'object' || typeof teammate !== 'object') {
+        console.error("Invalid player or teammate in updateTeammates:", { player, teammate });
+        return;
     }
+    
+    // Ensure player name exists
+    if (!player.name || !teammate.name) {
+        console.error("Player or teammate missing name in updateTeammates:", { 
+            playerName: player.name, 
+            teammateName: teammate.name 
+        });
+        return;
+    }
+    
+    // Initialize teammates object if undefined
+    if (!player.teammates) {
+        player.teammates = {}; 
+    }
+    
     const name = teammate.name;
     player.teammates[name] = (player.teammates[name] || 0) + 1; // Increment count or initialize
+    
+    // Log for debugging
+    logDebugMessage(`Updated teammate relationship: ${player.name} with ${teammate.name} (count: ${player.teammates[name]})`);
 }
 
 
 function showPodium() {
+    console.log("showPodium function called");
+    
     displayCurrentDate();
     
     const podiumDisplay = document.getElementById('podiumDisplay');
-    podiumDisplay.classList.add('active'); // Show podium display
+    console.log("podiumDisplay element found:", !!podiumDisplay);
     
-    // Set default active sort button
-    setDefaultActiveSortButton();
+    if (podiumDisplay) {
+        // Make sure display style is set first before adding active class
+        podiumDisplay.style.display = 'flex'; // Use flex for better layout
+        podiumDisplay.style.visibility = 'visible';
+        podiumDisplay.style.opacity = '1';
+        podiumDisplay.style.zIndex = '2000'; // Ensure it's above other content
+        
+        // Then add active class
+        podiumDisplay.classList.add('active');
+        console.log("Added 'active' class to podiumDisplay");
+        
+        // Ensure the table element exists
+        const playerStatsTable = document.getElementById('playerStatsTable');
+        if (!playerStatsTable) {
+            console.error("playerStatsTable element not found");
+            
+            // Create the table if it doesn't exist
+            const tableWrapper = document.createElement('div');
+            tableWrapper.className = 'table-wrapper';
+            
+            const table = document.createElement('table');
+            table.id = 'playerStatsTable';
+            
+            tableWrapper.appendChild(table);
+            podiumDisplay.appendChild(tableWrapper);
+            
+            console.log("Created missing playerStatsTable element");
+        } else {
+            // Reset and ensure proper table styles even if table exists
 
-    // Initially sort and display by Victory Points
-    const sortedPlayers = sortByVictoryPoints(players);
-    displayPodium(sortedPlayers);
-    displayPlayerStatsTable(sortedPlayers);
+            
+            // Also ensure the wrapper has proper styles
+            const tableWrapper = playerStatsTable.closest('.table-wrapper');
+           
+        }
+        
+        // Set default active sort button
+        setDefaultActiveSortButton();
+    
+        // Sort and display by Victory Points - with error handling
+        try {
+            // Create a defensive copy of players array
+            const playersCopy = Array.isArray(players) ? [...players] : [];
+            
+            
+            // Ensure we have a valid array to sort
+            if (playersCopy.length === 0) {
+                console.warn("No players found to display on podium");
+            }
+            
+            // Sort the players safely
+            const sortedPlayers = sortByVictoryPoints(playersCopy);
+            
+            // Display the podium and stats table
+            displayPodium(sortedPlayers);
+            displayPlayerStatsTable(sortedPlayers);
+            
+            // Ensure that any photo-capture-mode class is removed
+            podiumDisplay.classList.remove('photo-capture-mode');
+        } catch (error) {
+            console.error("Error displaying podium:", error);
+        }
+    } else {
+        console.error("podiumDisplay element not found");
+    }
+    
+    console.log("Podium display should now be visible");
 }
 
 // Display the top 3 players on the podium
 function displayPodium(sortedPlayers) {
-    document.getElementById('gold').textContent = sortedPlayers[0]?.name || '';
-    document.getElementById('silver').textContent = sortedPlayers[1]?.name || '';
-    document.getElementById('bronze').textContent = sortedPlayers[2]?.name || '';
+    // Add safety checks for all elements
+    const goldElement = document.getElementById('gold');
+    const silverElement = document.getElementById('silver');
+    const bronzeElement = document.getElementById('bronze');
+    
+    // Only set content if elements exist
+    if (goldElement) {
+        goldElement.textContent = sortedPlayers[0]?.name || '';
+    }
+    if (silverElement) {
+        silverElement.textContent = sortedPlayers[1]?.name || '';
+    }
+    if (bronzeElement) {
+        bronzeElement.textContent = sortedPlayers[2]?.name || '';
+    }
+    
+    console.log(`Podium displayed with ${sortedPlayers.length} players. Gold: ${sortedPlayers[0]?.name || 'N/A'}`);
 }
 
 function displayPlayerStatsTable(sortedPlayers) {
@@ -1938,28 +2979,52 @@ const sortConfigs = {
 
 // Unified function to sort players by any method
 function sortPlayers(players, sortMethod) {
-    const config = sortConfigs[sortMethod];
-    if (!config) return players.slice();
+    // Safety check for players array
+    if (!Array.isArray(players)) {
+        console.error("sortPlayers received non-array input:", players);
+        return [];
+    }
     
-    return players.slice().sort((a, b) => {
-        // Primary sort
-        const primaryValueA = a[config.primaryStat] || 0;
-        const primaryValueB = b[config.primaryStat] || 0;
-        if (primaryValueB !== primaryValueA) {
-            return primaryValueB - primaryValueA;
-        }
-        
-        // Tiebreakers
-        for (const tiebreaker of config.tiebreakers) {
-            const tieValueA = a[tiebreaker] || 0;
-            const tieValueB = b[tiebreaker] || 0;
-            if (tieValueB !== tieValueA) {
-                return tieValueB - tieValueA;
+    // Make a defensive copy of the array
+    const playersCopy = [...players];
+    
+    // Get sort configuration
+    const config = sortConfigs[sortMethod];
+    if (!config) {
+        console.warn(`sortPlayers: Unknown sort method '${sortMethod}', using default sort.`);
+        return playersCopy;
+    }
+    
+    try {
+        return playersCopy.sort((a, b) => {
+            // Safety checks for player objects
+            if (!a || !b || typeof a !== 'object' || typeof b !== 'object') {
+                console.warn("sortPlayers encountered invalid player objects", {a, b});
+                return 0; // Keep relative order unchanged
             }
-        }
-        
-        return 0;
-    });
+            
+            // Primary sort
+            const primaryValueA = a[config.primaryStat] || 0;
+            const primaryValueB = b[config.primaryStat] || 0;
+            if (primaryValueB !== primaryValueA) {
+                return primaryValueB - primaryValueA;
+            }
+            
+            // Tiebreakers
+            for (const tiebreaker of config.tiebreakers) {
+                const tieValueA = a[tiebreaker] || 0;
+                const tieValueB = b[tiebreaker] || 0;
+                if (tieValueB !== tieValueA) {
+                    return tieValueB - tieValueA;
+                }
+            }
+            
+            return 0;
+        });
+    } catch (error) {
+        console.error("Error during player sorting:", error);
+        return playersCopy; // Return unsorted copy in case of error
+    }
 }
 
 // Generic sort function that takes a primary sort property and custom value getter function
@@ -2133,7 +3198,19 @@ function sortPlayersByProperty(players, primaryProperty, getValueFn = null) {
 
 // Preserve backward compatibility with existing code
 function sortByVictoryPoints(players) {
-    return sortPlayers(players, 'victoryPoints');
+    // Make sure we're working with a valid array
+    if (!Array.isArray(players)) {
+        console.error('sortByVictoryPoints received invalid input:', players);
+        return [];
+    }
+    
+    try {
+        return sortPlayers(players, 'victoryPoints');
+    } catch (error) {
+        console.error('Error in sortByVictoryPoints:', error);
+        // Return a copy of the original array as fallback
+        return [...players];
+    }
 }
 
 function sortByPicklePoints(players) {
@@ -2312,7 +3389,7 @@ function shuffleByGamesPlayed(players) {
 
 
 function exportData() {
-    // Create a complete state object like we do for autosave
+    // Use the exact same code from autoSave to create the state object
     const state = {
         players: players.map(player => ({
             ...player, // Spread to ensure all properties, including manualSitOut and eligible, are saved
@@ -2328,8 +3405,11 @@ function exportData() {
         // Match tracking
         matchHistory: Array.from(matchHistory),
         matchPlayCounter,
+        // Previous round matches to prevent consecutive repeat matches
+        previousRoundMatches: Array.from(previousRoundMatches),
     };
 
+    // Save to file instead of localStorage
     const data = JSON.stringify(state);
     const blob = new Blob([data], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
@@ -2342,6 +3422,16 @@ function exportData() {
     
     a.click();
     URL.revokeObjectURL(url); // Clean up to avoid memory leaks
+    
+    // Log export information
+    console.log("Tournament data exported. Player statuses:");
+    players.forEach(player => {
+        const statusValue = player.manualSitOut ? "Sitting Out" : "Active";
+        console.log(`Player: ${player.name}, Eligible: ${player.eligible}, Manual Sit-Out: ${player.manualSitOut}, Sat Out Last Round: ${player.satOutLastRound}, Status: ${statusValue}`);
+    });
+    
+    // Add success toast
+    showToast('Tournament data exported successfully', 'success', 3000);
 }
 
 function importData() {
@@ -2349,135 +3439,178 @@ function importData() {
     const file = fileInput.files[0];
     
     if (file) {
-    const reader = new FileReader();
+        const reader = new FileReader();
 
         reader.onload = function(e) {
             try {
-                const importedData = JSON.parse(e.target.result);
+                console.log("===== IMPORT DATA BEGIN =====", new Date().toISOString());
+                console.time('Import data duration');
                 
-                // Validate data structure
-                if (!importedData.players || !importedData.matches) {
-                    throw new Error("Invalid data format: missing players or matches.");
-                }
-                
-                // Clear existing state
-                players = []; // Clear players array
-                matches = []; // Clear matches array
-                
-                // Import players with their properties
-                importedData.players.forEach(playerData => {
-                    // Create a new player with the imported data
-                    const player = {
-                        name: playerData.name,
-                        eligible: playerData.eligible !== undefined ? playerData.eligible : true,
-                        manualSitOut: playerData.manualSitOut !== undefined ? playerData.manualSitOut : false,
-                        gamesPlayed: playerData.gamesPlayed || 0,
-                        roundsSatOut: playerData.roundsSatOut || 0,
-                        victoryPoints: playerData.victoryPoints || 0,
-                        picklePoints: playerData.picklePoints || 0,
-                        pickleDifferential: playerData.pickleDifferential || 0,
-                        satOutLastRound: playerData.satOutLastRound || false
-                    };
-                    
-                    // Ensure teammates and versus objects exist
-                    player.teammates = playerData.teammates || {};
-                    player.versus = playerData.versus || {};
-                    
-                    players.push(player);
-                });
-                
-                // Import matches
-                importedData.matches.forEach(matchData => {
-                    // Recreate match objects with references to actual player objects
-                    const team1 = matchData.team1.map(playerData => {
-                        return players.find(p => p.name === playerData.name) || playerData;
-                    });
-                    
-                    const team2 = matchData.team2.map(playerData => {
-                        return players.find(p => p.name === playerData.name) || playerData;
-                    });
-                    
-                    matches.push({
-                        round: matchData.round,
-                        team1,
-                        team2,
-                        team1Score: matchData.team1Score,
-                        team2Score: matchData.team2Score
-                    });
-                });
-                
-                // Import round number and first round flag
-                currentRound = importedData.currentRound || 0;
-                isFirstRound = importedData.isFirstRound !== undefined ? importedData.isFirstRound : true;
+                // Use the exact same restoration logic as restoreState but with file data
+                const fileData = e.target.result;
+                if (fileData) {
+                    try {
+                        const parsedState = JSON.parse(fileData);
+                        console.log(`Found imported data with ${parsedState.matches ? parsedState.matches.length : 0} matches`);
+                        
+                        // Restore players
+                        players.length = 0;
+                        players.push(...(parsedState.players || []).map(player => ({
+                            ...player, // Ensure all properties are restored
+                        })));
+                        console.log(`Restored ${players.length} players`);
 
-                // Reset and import pair history data
-                pairTracker.resetAll();
-                
-                // Import pair tracking data
-                if (importedData.pairCounts) {
-                    pairTracker.pairCounts = importedData.pairCounts;
-                }
-                
-                if (importedData.previousRoundPairs) {
-                    pairTracker.previousRoundPairs = new Set(importedData.previousRoundPairs);
-                }
-                
-                if (importedData.recentRounds) {
-                    // Convert arrays back to Sets
-                    pairTracker.recentRounds = importedData.recentRounds.map(roundArray => 
-                        new Set(roundArray)
-                    );
-                }
-                
-                if (importedData.globalPairs) {
-                    pairTracker.globalPairs = new Set(importedData.globalPairs);
-                }
-                
-                // Import match history data
-                if (importedData.matchHistory) {
-                    matchHistory = new Set(importedData.matchHistory);
-                }
-                
-                // Import match play counter if it exists
-                if (importedData.matchPlayCounter) {
-                    Object.assign(matchPlayCounter, importedData.matchPlayCounter);
+                        // Restore other data
+                        matches.length = 0;
+                        matches.push(...(parsedState.matches || []));
+                        console.log(`Restored ${matches.length} matches`);
+                        
+                        // Get the highest round number from matches to set currentRound correctly
+                        currentRound = parsedState.currentRound || 0;
+                        if (matches.length > 0) {
+                            const maxRoundInMatches = Math.max(...matches.map(m => m.round || 0));
+                            // Set currentRound to at least the highest round number in matches
+                            currentRound = Math.max(currentRound, maxRoundInMatches);
+                        }
+                        console.log(`Current round set to: ${currentRound}`);
+                        
+                        isFirstRound = parsedState.isFirstRound !== undefined ? parsedState.isFirstRound : true;
+
+                        // Reset and restore pair tracker data
+                        pairTracker.resetAll();
+                        
+                        // Restore pair tracking data
+                        if (parsedState.pairCounts) {
+                            // Reset and assign fresh object
+                            pairTracker.pairCounts = {};
+                            Object.assign(pairTracker.pairCounts, parsedState.pairCounts);
+                        }
+                        
+                        if (parsedState.previousRoundPairs) {
+                            pairTracker.previousRoundPairs = new Set(parsedState.previousRoundPairs);
+                        }
+                        
+                        if (parsedState.recentRounds) {
+                            pairTracker.recentRounds = parsedState.recentRounds.map(roundArray => 
+                                new Set(roundArray)
+                            );
+                        }
+                        
+                        if (parsedState.globalPairs) {
+                            pairTracker.globalPairs = new Set(parsedState.globalPairs);
+                        }
+                        
+                        // Support for legacy format
+                        if (parsedState.extendedPairHistory && !parsedState.pairCounts) {
+                            pairTracker.pairCounts = {};
+                            Object.assign(pairTracker.pairCounts, parsedState.extendedPairHistory);
+                        }
+                        
+                        if (parsedState.globalPairHistory && !parsedState.globalPairs) {
+                            pairTracker.globalPairs = new Set(parsedState.globalPairHistory);
+                        }
+                        
+                        if (parsedState.recentPairHistory && !parsedState.recentRounds) {
+                            pairTracker.recentRounds = parsedState.recentPairHistory.map(roundArray => 
+                                new Set(roundArray)
+                            );
+                        }
+                        
+                        // Restore previous round matches
+                        previousRoundMatches.clear();
+                        if (parsedState.previousRoundMatches) {
+                            parsedState.previousRoundMatches.forEach(match => previousRoundMatches.add(match));
+                            logDebugMessage(`Restored ${previousRoundMatches.size} previous round matches`);
+                        }
+                        
+                        // Ensure the pair tracking has a current round initialized
+                        if (pairTracker.recentRounds.length === 0) {
+                            pairTracker.startNewRound();
+                            logDebugMessage("Initialized round tracking after restore");
+                        }
+
+                        // Restore match history and counter
+                        matchHistory.clear();
+                        (parsedState.matchHistory || []).forEach(item => matchHistory.add(item));
+
+                        Object.keys(matchPlayCounter).forEach(key => delete matchPlayCounter[key]);
+                        Object.assign(matchPlayCounter, parsedState.matchPlayCounter || {});
+
+                        console.log("Players after adding:", players);
+                        
+                        // Ensure player data is valid
+                        players.forEach(player => {
+                            if (!player.teammates || typeof player.teammates !== 'object') {
+                                console.error(`Invalid teammates for player: ${player.name}`);
+                                player.teammates = {}; // Fix if invalid
+                            }
+                            if (!player.versus || typeof player.versus !== 'object') {
+                                console.error(`Invalid versus for player: ${player.name}`);
+                                player.versus = {}; // Fix if invalid
+                            }
+                            // Ensure numeric values are actually numbers
+                            player.gamesPlayed = Number(player.gamesPlayed) || 0;
+                            player.victoryPoints = Number(player.victoryPoints) || 0;
+                            player.picklePoints = Number(player.picklePoints) || 0;
+                            player.pickleDifferential = Number(player.pickleDifferential) || 0;
+                        });
+
+                        // Update the player list in the UI
+                        updatePlayerList();
+                        
+                        // Update bottom continue button visibility
+                        updateBottomContinueButton();
+                        
+                        // Update the button text based on restored state
+                        updateStartTournamentButtonText();
+                        
+                        // Check if matches have been played and show podium
+                        if (matches && matches.length > 0) {
+                            showPodium();
+                        }
+                        
+                        // Save to localStorage
+                        autoSave();
+                        
+                        // Log success message
+                        logDebugMessage("File data imported successfully");
+                        showToast("Tournament data imported successfully", "success");
+                    } catch (error) {
+                        console.error("Error restoring state from file:", error);
+                        showToast("There was an error importing your data. The file may be corrupted.", "error", 6000);
+                        localStorage.removeItem('hasReloaded');
+                        return;
+                    }
+                } else {
+                    console.error("No data found in the imported file");
+                    showToast("The imported file contains no valid data", "error", 4000);
+                    localStorage.removeItem('hasReloaded');
+                    return;
                 }
 
-                // Support for legacy format
-                if (importedData.extendedPairHistory && !importedData.pairCounts) {
-                    pairTracker.pairCounts = importedData.extendedPairHistory;
-                }
+                console.timeEnd('Import data duration');
+                console.log("===== IMPORT DATA END =====");
                 
-                if (importedData.globalPairHistory && !importedData.globalPairs) {
-                    pairTracker.globalPairs = new Set(importedData.globalPairHistory);
-                }
+                // Reload the page to ensure proper display
+                console.log("Setting hasReloaded flag to true and reloading for proper match display");
+                localStorage.setItem('hasReloaded', 'true');
+                setTimeout(() => {
+                    window.location.reload();
+                }, 500);
                 
-                if (importedData.recentPairHistory && !importedData.recentRounds) {
-                    pairTracker.recentRounds = importedData.recentPairHistory.map(roundArray => 
-                        new Set(roundArray)
-                    );
-                }
-                
-                // Update UI
-                updatePlayerList();
-                
-                // If matches have been played, show the podium
-                if (matches.length > 0) {
-                    showPodium();
-                }
-                
-                alert("Data imported successfully!");
-                
-                // Reload the page to refresh the UI
-                window.location.reload();
-                
-        } catch (error) {
-            console.error("Error importing data:", error);
-                alert(`Error importing data: ${error.message}`);
-        }
-    };
+            } catch (error) {
+                console.error("Error importing data:", error);
+                showToast(`Error importing data: ${error.message}`, "error", 5000);
+                // Ensure hasReloaded flag is cleared on error
+                localStorage.removeItem('hasReloaded');
+            }
+        };
 
-    reader.readAsText(file);
+        reader.readAsText(file);
+    } else {
+        showToast("Please select a file to import", "error", 3000);
+        // Ensure hasReloaded flag is cleared if no file
+        localStorage.removeItem('hasReloaded');
     }
 }
 
@@ -2502,7 +3635,144 @@ document.getElementById('closeMatchHistoryBtn').addEventListener('click', () => 
     matchHistoryDisplay.classList.remove('active');
 });
 
-// Function to Show Match History
+// Extract the match history table building code into a separate function
+function buildMatchHistoryTable(matchHistoryContent) {
+    console.log("Building match history table");
+    
+    // Create a scrollable wrapper for the table
+    const tableWrapper = document.createElement('div');
+    tableWrapper.className = 'match-history-table-wrapper';
+    
+    // Create a table to display match history
+    const table = document.createElement('table');
+    table.innerHTML = `
+        <thead>
+            <tr>
+                <th>
+                    <span class="header-text">Round</span>
+                    <span class="header-icon" title="Round"><span class="material-symbols-rounded">filter_1</span></span>
+                </th>
+                <th>
+                    <span class="header-text">Match</span>
+                    <span class="header-icon" title="Match"><span class="material-symbols-rounded">sports_tennis</span></span>
+                </th>
+                <th>
+                    <span class="header-text">Team 1</span>
+                    <span class="header-icon" title="Team 1"><span class="material-symbols-rounded">group</span><span class="team-number">1</span></span>
+                </th>
+                <th>
+                    <span class="header-text">Team 2</span>
+                    <span class="header-icon" title="Team 2"><span class="material-symbols-rounded">group</span><span class="team-number">2</span></span>
+                </th>
+                <th>
+                    <span class="header-text">Score</span>
+                    <span class="header-icon" title="Score"><span class="material-symbols-rounded">scoreboard</span></span>
+                </th>
+                <th class="action-column">
+                    <span class="header-text">Actions</span>
+                    <span class="header-icon" title="Actions"><span class="material-symbols-rounded">edit</span></span>
+                </th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    `;
+    const tableBody = table.querySelector('tbody');
+
+    // Group matches by round and track match occurrences
+    const matchColors = {}; // To store a unique color for each repeated match
+    const matchKeyMap = {}; // To count occurrences of each match key
+
+    // First, sort matches by round, then by original index
+    // Create a copy of matches array with their original indices
+    const sortedMatches = matches.map((match, index) => ({
+        match,
+        originalIndex: index
+    })).sort((a, b) => {
+        // Sort by round first (ascending)
+        if (a.match.round !== b.match.round) {
+            return a.match.round - b.match.round;
+        }
+        // If rounds are the same, sort by original index
+        return a.originalIndex - b.originalIndex;
+    });
+
+    // Count match occurrences and prepare color mapping
+    sortedMatches.forEach(({ match }) => {
+        const matchKey = generateMatchKey(match.team1, match.team2);
+
+        // Count occurrences of each match
+        if (!matchKeyMap[matchKey]) {
+            matchKeyMap[matchKey] = { count: 0, color: null };
+        }
+        matchKeyMap[matchKey].count++;
+
+        // Assign a color if it's a repeated match
+        if (matchKeyMap[matchKey].count > 1 && !matchKeyMap[matchKey].color) {
+            matchKeyMap[matchKey].color = generateUniqueColor(Object.keys(matchColors).length);
+            matchColors[matchKey] = matchKeyMap[matchKey].color;
+        }
+    });
+
+    // Display matches in sorted order but keep original index reference for edit functionality
+    sortedMatches.forEach(({ match, originalIndex }, displayIndex) => {
+        const matchKey = generateMatchKey(match.team1, match.team2);
+        const row = document.createElement('tr');
+        row.setAttribute('data-match-index', originalIndex); // Keep original index for edit functionality
+
+        // Apply the assigned color for repeated matches
+        if (matchColors[matchKey]) {
+            row.style.backgroundColor = matchColors[matchKey];
+        }
+        
+        // Format team players with better structure for responsive layout
+        const formatTeamPlayers = (team) => {
+            return team.map(player => 
+                `<span class="team-player-badge">${player.name}</span>`
+            ).join('');
+        };
+        
+        // Display the actual round number - DO NOT adjust it
+        row.innerHTML = `
+            <td>${match.round}</td>
+            <td>${displayIndex + 1}</td>
+            <td class="team-cell ${match.team1Score > match.team2Score ? 'history-winner-team' : (match.team1Score === match.team2Score && match.team1Score > 0 ? 'history-tie-team' : '')}">
+                <div class="team-players team1-players">
+                    ${match.team1.map(player => 
+                        `<span class="team1-badge">${player.name}</span>`).join('')}
+                </div>
+            </td>
+            <td class="team-cell ${match.team2Score > match.team1Score ? 'history-winner-team' : (match.team1Score === match.team2Score && match.team2Score > 0 ? 'history-tie-team' : '')}">
+                <div class="team-players team2-players">
+                    ${match.team2.map(player => 
+                        `<span class="team2-badge">${player.name}</span>`).join('')}
+                </div>
+            </td>
+            <td><strong>${match.team1Score || 0} - ${match.team2Score || 0}</strong></td>
+            <td class="action-cell"><button class="edit-match-btn" data-match-index="${originalIndex}">
+                <span class="material-symbols-rounded">edit</span>
+            </button></td>
+        `;
+        tableBody.appendChild(row);
+    });
+
+    // Add the table to the wrapper and the wrapper to the content
+    tableWrapper.appendChild(table);
+    matchHistoryContent.appendChild(tableWrapper);
+
+    // Add event listeners to edit buttons
+    const editButtons = table.querySelectorAll('.edit-match-btn');
+    editButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const matchIndex = parseInt(this.getAttribute('data-match-index'));
+            editMatch(matchIndex);
+        });
+    });
+    
+    console.log(`Built match history table with ${sortedMatches.length} matches`);
+    return table;
+}
+
+// Update the showMatchHistory function to use the new function
 function showMatchHistory() {
     console.log("showMatchHistory function called");
     const matchHistoryDisplay = document.getElementById('matchHistoryDisplay');
@@ -2514,8 +3784,11 @@ function showMatchHistory() {
         return;
     }
 
+    console.log(`Match History initial state - active: ${matchHistoryDisplay.classList.contains('active')}, visibility: ${matchHistoryDisplay.style.visibility}, display: ${matchHistoryDisplay.style.display}`);
+
     // Clear previous history
     matchHistoryContent.innerHTML = '';
+    console.log("Cleared previous match history content");
 
     // Add direct style manipulation in addition to class
     matchHistoryDisplay.style.visibility = 'visible';
@@ -2524,138 +3797,21 @@ function showMatchHistory() {
     
     // Add active class for CSS transitions
     matchHistoryDisplay.classList.add('active');
+    console.log(`Match History after activation - active: ${matchHistoryDisplay.classList.contains('active')}, visibility: ${matchHistoryDisplay.style.visibility}, display: ${matchHistoryDisplay.style.display}`);
+    
+    // Add the date display - use the same function as podium display
+    const dateElement = document.createElement('div');
+    dateElement.id = 'dateDisplay';
+    matchHistoryContent.appendChild(dateElement);
+    
+    // Update the date display specifically for this element
+    displayCurrentDate(dateElement);
 
     if (matches.length === 0) {
-        matchHistoryContent.innerHTML = '<div class="empty-state">No matches have been played yet.</div>';
+        matchHistoryContent.innerHTML += '<div class="empty-state">No matches have been played yet.</div>';
     } else {
-        // Create a scrollable wrapper for the table
-        const tableWrapper = document.createElement('div');
-        tableWrapper.className = 'match-history-table-wrapper';
-        
-        // Create a table to display match history
-        const table = document.createElement('table');
-        table.innerHTML = `
-            <thead>
-                <tr>
-                    <th>
-                        <span class="header-text">Round</span>
-                        <span class="header-icon" title="Round"><span class="material-symbols-rounded">filter_1</span></span>
-                    </th>
-                    <th>
-                        <span class="header-text">Match</span>
-                        <span class="header-icon" title="Match"><span class="material-symbols-rounded">sports_tennis</span></span>
-                    </th>
-                    <th>
-                        <span class="header-text">Team 1</span>
-                        <span class="header-icon" title="Team 1"><span class="material-symbols-rounded">group</span> 1</span>
-                    </th>
-                    <th>
-                        <span class="header-text">Team 2</span>
-                        <span class="header-icon" title="Team 2"><span class="material-symbols-rounded">group</span> 2</span>
-                    </th>
-                    <th>
-                        <span class="header-text">Score</span>
-                        <span class="header-icon" title="Score"><span class="material-symbols-rounded">scoreboard</span></span>
-                    </th>
-                    <th>
-                        <span class="header-text">Winner</span>
-                        <span class="header-icon" title="Winner"><span class="material-symbols-rounded">emoji_events</span></span>
-                    </th>
-                    <th>
-                        <span class="header-text">Actions</span>
-                        <span class="header-icon" title="Actions"><span class="material-symbols-rounded">edit</span></span>
-                    </th>
-                </tr>
-            </thead>
-            <tbody></tbody>
-        `;
-        const tableBody = table.querySelector('tbody');
-
-        // Group matches by round and track match occurrences
-        const matchColors = {}; // To store a unique color for each repeated match
-        const matchKeyMap = {}; // To count occurrences of each match key
-
-        // First, sort matches by round, then by original index
-        // Create a copy of matches array with their original indices
-        const sortedMatches = matches.map((match, index) => ({
-            match,
-            originalIndex: index
-        })).sort((a, b) => {
-            // Sort by round first (ascending)
-            if (a.match.round !== b.match.round) {
-                return a.match.round - b.match.round;
-            }
-            // If rounds are the same, sort by original index
-            return a.originalIndex - b.originalIndex;
-        });
-
-        // Count match occurrences and prepare color mapping
-        sortedMatches.forEach(({ match }) => {
-            const matchKey = generateMatchKey(match.team1, match.team2);
-
-            // Count occurrences of each match
-            if (!matchKeyMap[matchKey]) {
-                matchKeyMap[matchKey] = { count: 0, color: null };
-            }
-            matchKeyMap[matchKey].count++;
-
-            // Assign a color if it's a repeated match
-            if (matchKeyMap[matchKey].count > 1 && !matchKeyMap[matchKey].color) {
-                matchKeyMap[matchKey].color = generateUniqueColor(Object.keys(matchColors).length);
-                matchColors[matchKey] = matchKeyMap[matchKey].color;
-            }
-        });
-
-        // Display matches in sorted order but keep original index reference for edit functionality
-        sortedMatches.forEach(({ match, originalIndex }, displayIndex) => {
-            const matchKey = generateMatchKey(match.team1, match.team2);
-            const row = document.createElement('tr');
-            row.setAttribute('data-match-index', originalIndex); // Keep original index for edit functionality
-
-            // Apply the assigned color for repeated matches
-            if (matchColors[matchKey]) {
-                row.style.backgroundColor = matchColors[matchKey];
-            }
-
-            // Determine winner
-            let winner = "Tie";
-            if (match.team1Score > match.team2Score) {
-                winner = match.team1.map(player => player.name).join(' & ');
-            } else if (match.team2Score > match.team1Score) {
-                winner = match.team2.map(player => player.name).join(' & ');
-            }
-            
-            // Display the actual round number - DO NOT adjust it
-            row.innerHTML = `
-                <td>${match.round}</td>
-                <td>${displayIndex + 1}</td>
-                <td class="team-cell">${match.team1.map(player => 
-                    `<span class="team1-badge">${player.name}</span>`).join(' & ')}
-                </td>
-                <td class="team-cell">${match.team2.map(player => 
-                    `<span class="team2-badge">${player.name}</span>`).join(' & ')}
-                </td>
-                <td><strong>${match.team1Score || 0} - ${match.team2Score || 0}</strong></td>
-                <td>${winner}</td>
-                <td><button class="edit-match-btn" data-match-index="${originalIndex}">
-                    <span class="material-symbols-rounded">edit</span>
-                </button></td>
-            `;
-            tableBody.appendChild(row);
-        });
-
-        // Add the table to the wrapper and the wrapper to the content
-        tableWrapper.appendChild(table);
-        matchHistoryContent.appendChild(tableWrapper);
-
-        // Add event listeners to edit buttons
-        const editButtons = table.querySelectorAll('.edit-match-btn');
-        editButtons.forEach(button => {
-            button.addEventListener('click', function() {
-                const matchIndex = parseInt(this.getAttribute('data-match-index'));
-                editMatch(matchIndex);
-            });
-        });
+        // Use the buildMatchHistoryTable function
+        buildMatchHistoryTable(matchHistoryContent);
     }
 }
 
@@ -2674,68 +3830,25 @@ function generateUniqueColor(index) {
     return colors[index % colors.length];
 }
 
-document.getElementById('saveAsPictureBtn').addEventListener('click', () => {
-    const podiumDiv = document.getElementById('podiumDisplay');
+function displayCurrentDate(specificDateElement = null) {
+    // Format the date as desired, e.g., "November 20, 2024"
+    const currentDate = new Date();
+    const formattedDate = currentDate.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+    });
     
-    // Use the new improved capture function from our inline script
-    if (typeof captureElementAsImage === 'function') {
-        captureElementAsImage(podiumDiv, 'leaderboard');
+    if (specificDateElement) {
+        // Update only the specific element
+        specificDateElement.textContent = `${formattedDate}`;
     } else {
-        // Fallback to old method if the function doesn't exist
-        const originalStyle = podiumDiv.style.cssText; // Save the original styles
-
-        // Temporarily expand the div to include all scrollable content
-        podiumDiv.style.overflow = 'visible';
-        podiumDiv.style.height = 'auto';
-        podiumDiv.style.maxHeight = 'none';
-
-        // Allow table content to render fully by ensuring all rows are visible
-        const tables = podiumDiv.querySelectorAll('table');
-        tables.forEach(table => {
-            table.style.overflow = 'visible';
-            table.style.height = 'auto';
-            table.style.maxHeight = 'none';
-        });
-
-        html2canvas(podiumDiv, {
-            scrollX: 0,
-            scrollY: 0,
-            windowWidth: podiumDiv.scrollWidth,
-            windowHeight: podiumDiv.scrollHeight,
-            scale: 2 // Higher resolution
-        }).then((canvas) => {
-            // Revert the original styles after rendering
-            podiumDiv.style.cssText = originalStyle;
-
-            tables.forEach(table => {
-                table.style.overflow = '';
-                table.style.height = '';
-                table.style.maxHeight = '';
-            });
-
-            const link = document.createElement('a');
-            link.href = canvas.toDataURL('image/png');
-            const currentDate = new Date().toISOString().slice(0, 10); // Get current date
-            link.download = `leaderboard-${currentDate}.png`;
-            link.click();
+        // Update all dateDisplay elements
+        const dateDivs = document.querySelectorAll('#dateDisplay');
+        dateDivs.forEach(dateDiv => {
+            dateDiv.textContent = `${formattedDate}`;
         });
     }
-});
-
-
-function displayCurrentDate() {
-        const dateDiv = document.getElementById('dateDisplay');
-        const currentDate = new Date();
-        
-        // Format the date as desired, e.g., "November 20, 2024"
-        const formattedDate = currentDate.toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric'
-        });
-        
-        // Insert the formatted date into the div
-        dateDiv.textContent = `${formattedDate}`;
 }
 
 
@@ -2774,143 +3887,279 @@ function autoSave() {
     });
 }
 
+// Add a flag at the top of the file to prevent infinite reloads
+let hasReloaded = localStorage.getItem('hasReloaded') === 'true';
 
+// Add a state restoration guard flag at the top
+let stateRestorationInProgress = false;
 
 function restoreState() {
-    // Save the current scroll position to restore after loading
-    const scrollPosition = window.scrollY || document.documentElement.scrollTop;
-
-    const savedState = JSON.parse(localStorage.getItem('pickleballCompetitionState'));
-    if (savedState) {
-        try {
-            // Restore players
-            players.length = 0;
-            players.push(...(savedState.players || []).map(player => ({
-                ...player, // Ensure all properties, including manualSitOut and eligible, are restored
-            })));
-
-            // Restore other data
-            matches.length = 0;
-            matches.push(...(savedState.matches || []));
-            
-            // Get the highest round number from matches to set currentRound correctly
-            currentRound = savedState.currentRound || 0;
-            if (matches.length > 0) {
-                const maxRoundInMatches = Math.max(...matches.map(m => m.round || 0));
-                // Set currentRound to at least the highest round number in matches
-                currentRound = Math.max(currentRound, maxRoundInMatches);
-            }
-            
-            isFirstRound = savedState.isFirstRound !== undefined ? savedState.isFirstRound : true;
-
-            // Reset and restore pair tracker data
-            pairTracker.resetAll();
-            
-            // Restore pair tracking data from new format
-            if (savedState.pairCounts) {
-                pairTracker.pairCounts = savedState.pairCounts;
-            }
-            
-            if (savedState.previousRoundPairs) {
-                pairTracker.previousRoundPairs = new Set(savedState.previousRoundPairs);
-            }
-            
-            if (savedState.recentRounds) {
-                pairTracker.recentRounds = savedState.recentRounds.map(roundArray => 
-                    new Set(roundArray)
-                );
-            }
-            
-            if (savedState.globalPairs) {
-                pairTracker.globalPairs = new Set(savedState.globalPairs);
-            }
-            
-            // Support for legacy format
-            if (savedState.extendedPairHistory && !savedState.pairCounts) {
-                pairTracker.pairCounts = savedState.extendedPairHistory;
-            }
-            
-            if (savedState.globalPairHistory && !savedState.globalPairs) {
-                pairTracker.globalPairs = new Set(savedState.globalPairHistory);
-            }
-            
-            if (savedState.recentPairHistory && !savedState.recentRounds) {
-                pairTracker.recentRounds = savedState.recentPairHistory.map(roundArray => 
-                    new Set(roundArray)
-                );
-            }
-            
-            // Restore previous round matches to prevent consecutive repeat matches
-            previousRoundMatches.clear();
-            if (savedState.previousRoundMatches) {
-                savedState.previousRoundMatches.forEach(match => previousRoundMatches.add(match));
-                logDebugMessage(`Restored ${previousRoundMatches.size} previous round matches`);
-            }
-            
-            // Ensure the pair tracking has a current round initialized
-            if (pairTracker.recentRounds.length === 0) {
-                pairTracker.startNewRound();
-                logDebugMessage("Initialized round tracking after restore");
-            }
-
-            // Restore match history and counter
-            matchHistory.clear();
-            (savedState.matchHistory || []).forEach(item => matchHistory.add(item));
-
-            Object.keys(matchPlayCounter).forEach(key => delete matchPlayCounter[key]);
-            Object.assign(matchPlayCounter, savedState.matchPlayCounter || {});
-
-            console.log("Players after adding:", players); // Debugging step
-            
-            // Ensure player data is valid
-            players.forEach(player => {
-                if (!player.teammates || typeof player.teammates !== 'object') {
-                    console.error(`Invalid teammates for player: ${player.name}`);
-                    player.teammates = {}; // Fix if invalid
-                }
-                if (!player.versus || typeof player.versus !== 'object') {
-                    console.error(`Invalid versus for player: ${player.name}`);
-                    player.versus = {}; // Fix if invalid
-                }
-                // Ensure numeric values are actually numbers
-                player.gamesPlayed = Number(player.gamesPlayed) || 0;
-                player.victoryPoints = Number(player.victoryPoints) || 0;
-                player.picklePoints = Number(player.picklePoints) || 0;
-                player.pickleDifferential = Number(player.pickleDifferential) || 0;
-            });
-            
-            // Update the player list in the UI
-            updatePlayerList();
-            
-            // Check and regenerate the match display if there are matches
-            if (matches && matches.length > 0) {
-                // Update player stats table
-                const sortedPlayers = sortByVictoryPoints(players);
-                displayPodium(sortedPlayers);
-                displayPlayerStatsTable(sortedPlayers);
-            }
-
-            console.log("Competition state restored. Player statuses and selectors:");
-            players.forEach(player => {
-                const statusValue = player.manualSitOut ? "Sitting Out" : "Active";
-                console.log(`Player: ${player.name}, Eligible: ${player.eligible}, Manual Sit-Out: ${player.manualSitOut}, Sat Out Last Round: ${player.satOutLastRound}, Status: ${statusValue}`);
-            });
-
-            console.log("Competition state restored successfully.");
-        } catch (error) {
-            console.error("Error restoring state:", error);
-            alert("There was an error restoring your previous session. Some data may be missing or corrupted.");
-        }
-    } else {
-        console.log("No saved state found.");
+    // Prevent multiple simultaneous calls
+    if (stateRestorationInProgress) {
+        console.log("State restoration already in progress, skipping duplicate call");
+        return;
     }
+    
+    stateRestorationInProgress = true;
+    
+    try {
+        console.timeEnd('From DOM load to restoreState');
+        console.timeEnd('From keypad init to restore state');
+        console.time('State restoration duration');
+        console.log("===== RESTORE STATE BEGIN =====", new Date().toISOString());
+        
+        // Save the current scroll position to restore after loading
+        const scrollPosition = window.scrollY || document.documentElement.scrollTop;
 
-    // Restore the original scroll position to prevent unwanted scrolling
-    setTimeout(() => {
-        window.scrollTo(0, 0);
-    }, 0);
+        const savedState = localStorage.getItem('pickleballCompetitionState');
+        if (savedState) {
+            try {
+                const parsedState = JSON.parse(savedState);
+                console.log(`Found saved state with ${parsedState.matches ? parsedState.matches.length : 0} matches`);
+                
+                // Show the bottom continue button only on initial load with existing data
+                const bottomContinueContainer = document.getElementById('bottomContinueContainer');
+                if (bottomContinueContainer && parsedState.matches && parsedState.matches.length > 0) {
+                    bottomContinueContainer.style.display = 'block';
+                    
+                    // Add a one-time event listener to hide the button after it's used
+                    const bottomContinueBtn = document.getElementById('bottomContinueBtn');
+                    if (bottomContinueBtn) {
+                        const hideButtonAfterUse = () => {
+                            bottomContinueContainer.style.display = 'none';
+                            bottomContinueBtn.removeEventListener('click', hideButtonAfterUse);
+                        };
+                        bottomContinueBtn.addEventListener('click', hideButtonAfterUse);
+                    }
+                }
+                
+                // Restore players
+                players.length = 0;
+                players.push(...(parsedState.players || []).map(player => ({
+                    ...player, // Ensure all properties, including manualSitOut and eligible, are restored
+                })));
+                console.log(`Restored ${players.length} players`);
+
+                // Restore other data
+                matches.length = 0;
+                matches.push(...(parsedState.matches || []));
+                console.log(`Restored ${matches.length} matches`);
+                
+                // Get the highest round number from matches to set currentRound correctly
+                currentRound = parsedState.currentRound || 0;
+                if (matches.length > 0) {
+                    const maxRoundInMatches = Math.max(...matches.map(m => m.round || 0));
+                    // Set currentRound to at least the highest round number in matches
+                    currentRound = Math.max(currentRound, maxRoundInMatches);
+                }
+                console.log(`Current round set to: ${currentRound}`);
+                
+                isFirstRound = parsedState.isFirstRound !== undefined ? parsedState.isFirstRound : true;
+
+                // Reset and restore pair tracker data
+                pairTracker.resetAll();
+                
+                // Restore pair tracking data from new format
+                if (parsedState.pairCounts) {
+                    Object.assign(pairTracker.pairCounts, parsedState.pairCounts);
+                }
+                
+                if (parsedState.previousRoundPairs) {
+                    pairTracker.previousRoundPairs = new Set(parsedState.previousRoundPairs);
+                }
+                
+                if (parsedState.recentRounds) {
+                    pairTracker.recentRounds = parsedState.recentRounds.map(roundArray => 
+                        new Set(roundArray)
+                    );
+                }
+                
+                if (parsedState.globalPairs) {
+                    pairTracker.globalPairs = new Set(parsedState.globalPairs);
+                }
+                
+                // Support for legacy format
+                if (parsedState.extendedPairHistory && !parsedState.pairCounts) {
+                    Object.assign(pairTracker.pairCounts, parsedState.extendedPairHistory);
+                }
+                
+                if (parsedState.globalPairHistory && !parsedState.globalPairs) {
+                    pairTracker.globalPairs = new Set(parsedState.globalPairHistory);
+                }
+                
+                if (parsedState.recentPairHistory && !parsedState.recentRounds) {
+                    pairTracker.recentRounds = parsedState.recentPairHistory.map(roundArray => 
+                        new Set(roundArray)
+                    );
+                }
+                
+                // Restore previous round matches to prevent consecutive repeat matches
+                previousRoundMatches.clear();
+                if (parsedState.previousRoundMatches) {
+                    parsedState.previousRoundMatches.forEach(match => previousRoundMatches.add(match));
+                    logDebugMessage(`Restored ${previousRoundMatches.size} previous round matches`);
+                }
+                
+                // Ensure the pair tracking has a current round initialized
+                if (pairTracker.recentRounds.length === 0) {
+                    pairTracker.startNewRound();
+                    logDebugMessage("Initialized round tracking after restore");
+                }
+
+                // Restore match history and counter
+                matchHistory.clear();
+                (parsedState.matchHistory || []).forEach(item => matchHistory.add(item));
+
+                Object.keys(matchPlayCounter).forEach(key => delete matchPlayCounter[key]);
+                Object.assign(matchPlayCounter, parsedState.matchPlayCounter || {});
+
+                console.log("Players after adding:", players);
+                
+                // Ensure player data is valid
+                players.forEach(player => {
+                    if (!player.teammates || typeof player.teammates !== 'object') {
+                        console.error(`Invalid teammates for player: ${player.name}`);
+                        player.teammates = {}; // Fix if invalid
+                    }
+                    if (!player.versus || typeof player.versus !== 'object') {
+                        console.error(`Invalid versus for player: ${player.name}`);
+                        player.versus = {}; // Fix if invalid
+                    }
+                    // Ensure numeric values are actually numbers
+                    player.gamesPlayed = Number(player.gamesPlayed) || 0;
+                    player.victoryPoints = Number(player.victoryPoints) || 0;
+                    player.picklePoints = Number(player.picklePoints) || 0;
+                    player.pickleDifferential = Number(player.pickleDifferential) || 0;
+                });
+                
+                // Update the player list in the UI
+                updatePlayerList();
+                
+                // Check and regenerate the match display if there are matches
+                if (matches && matches.length > 0) {
+                    console.log(`Processing ${matches.length} matches for display`);
+                    
+                    // Group matches by round for debugging
+                    const matchesByRound = {};
+                    matches.forEach(match => {
+                        if (!match.round) {
+                            console.error("Match missing round number:", match);
+                            return;
+                        }
+                        const round = match.round;
+                        if (!matchesByRound[round]) {
+                            matchesByRound[round] = [];
+                        }
+                        matchesByRound[round].push(match);
+                    });
+                    
+                    const rounds = Object.keys(matchesByRound).sort((a, b) => parseInt(a) - parseInt(b));
+                    console.log(`Found matches in rounds: ${rounds.join(', ')}`);
+                    
+                    // Update player stats table
+                    const sortedPlayers = sortByVictoryPoints(players);
+                    displayPodium(sortedPlayers);
+                    displayPlayerStatsTable(sortedPlayers);
+                    
+                    // Let's try using appendMatchDisplay
+                    for (const round in matchesByRound) {
+                        console.log(`Found data for round ${round} with ${matchesByRound[round].length} matches`);
+                    }
+                    
+                    // Always rebuild the match display - no reload needed
+                    const matchDisplay = document.getElementById('matchDisplay');
+                    console.log(`matchDisplay element exists: ${!!matchDisplay}`);
+                    if (matchDisplay) {
+                        console.log(`matchDisplay HTML content length: ${matchDisplay.innerHTML.length}`);
+                        console.log(`matchDisplay children count: ${matchDisplay.children.length}`);
+                        
+                        // Clear the match display
+                        matchDisplay.innerHTML = '';
+                        
+                        // Rebuild all rounds and matches
+                        for (let i = 1; i <= Math.max(...rounds.map(r => parseInt(r))); i++) {
+                            if (matchesByRound[i]) {
+                                // Since appendMatchDisplay increments currentRound, set it to the previous round
+                                currentRound = i - 1;
+                                
+                                // Get sit-out players for this round
+                                const sitOutPlayersForRound = [];
+                                players.forEach(player => {
+                                    // Logic to determine who sat out in this round
+                                    const playedInRound = matchesByRound[i].some(match => 
+                                        match.team1.some(p => p.name === player.name) || 
+                                        match.team2.some(p => p.name === player.name)
+                                    );
+                                    if (!playedInRound) {
+                                        sitOutPlayersForRound.push(player);
+                                    }
+                                });
+                                
+                                // Ensure match objects have their scores before appending
+                                const matchesWithScores = matchesByRound[i].map(match => {
+                                    // Ensure original match object is not modified
+                                    return {
+                                        ...match,
+                                        team1Score: match.team1Score,
+                                        team2Score: match.team2Score
+                                    };
+                                });
+                                
+                                // Rebuild this round with proper score data
+                                console.log(`Rebuilding round ${i} display with ${matchesWithScores.length} matches`);
+                                appendMatchDisplay(matchesWithScores, sitOutPlayersForRound);
+                            }
+                        }
+                        console.log(`Rebuilt display with ${matchDisplay.children.length} rounds`);
+                    }
+                }
+
+                console.log("Competition state restored. Player statuses and selectors:");
+                players.forEach(player => {
+                    const statusValue = player.manualSitOut ? "Sitting Out" : "Active";
+                    console.log(`Player: ${player.name}, Eligible: ${player.eligible}, Manual Sit-Out: ${player.manualSitOut}, Sat Out Last Round: ${player.satOutLastRound}, Status: ${statusValue}`);
+                });
+
+                console.log("Competition state restored successfully.");
+            } catch (error) {
+                console.error("Error restoring state:", error);
+                showToast("There was an error restoring your previous session. Some data may be missing or corrupted.", "error", 6000);
+            }
+        } else {
+            console.log("No saved state found.");
+        }
+
+        // Restore the original scroll position to prevent unwanted scrolling
+        setTimeout(() => {
+            window.scrollTo(0, 0);
+            console.log("Scrolled back to top");
+        }, 100);
+        
+        // After all state is restored
+        
+        // Update UI elements
+        updatePlayerList();
+        
+        // Update the button text based on restored state
+        updateStartTournamentButtonText();
+        
+        // Update bottom continue button visibility
+        updateBottomContinueButton();
+        
+        // Log success message
+        logDebugMessage("State restored successfully");
+        showToast("Tournament data loaded", "success");
+        console.timeEnd('State restoration duration');
+        console.log("===== RESTORE STATE END =====");
+    } catch (error) {
+        console.error("Unexpected error in restoreState:", error);
+    } finally {
+        // Always release the lock when done
+        setTimeout(() => {
+            stateRestorationInProgress = false;
+        }, 500); // Keep the lock for a short time after completion
+    }
 }
-
 
 function clearState() {
     // Use our custom confirm with specific text and type
@@ -2986,6 +4235,9 @@ function clearState() {
             muteAllSounds
         });
         
+        // Update the start tournament button text before reload
+        updateStartTournamentButtonText();
+        
         showToast("All competition data has been cleared. Settings preserved.", "success");
         location.reload();
     });
@@ -3039,13 +4291,13 @@ function addMatch(roundContainer, sitOutPlayers) {
     logDebugMessage(`Active matches: ${activeMatches}, Max matches: ${maxMatches}`);
 
     if (activeMatches >= maxMatches) {
-        alert("No more matches can be added; all courts are in use.");
+        showToast("No more matches can be added; all courts are in use.", "warning", 4000);
         logDebugMessage("Cannot add match: all courts in use");
         return;
     }
 
     if (eligiblePlayers.length < 4) {
-        alert("Not enough players to form another match.");
+        showToast("Not enough players to form another match.", "warning", 4000);
         logDebugMessage(`Cannot add match: only ${eligiblePlayers.length} eligible players`);
         return;
     }
@@ -3083,7 +4335,7 @@ function addMatch(roundContainer, sitOutPlayers) {
     const newMatches = createMatchesForRound(eligiblePlayers, 1); // Create only one match
 
     if (newMatches.length === 0) {
-        alert("Unable to form a valid match. Please adjust player settings or reset history.");
+        showToast("Unable to form a valid match. Please adjust player settings or reset history.", "error", 5000);
         logDebugMessage("Failed to create valid match with eligible players");
         return;
     }
@@ -3126,14 +4378,14 @@ function addMatch(roundContainer, sitOutPlayers) {
         matchDiv.setAttribute('data-match', activeMatches);
 
         matchDiv.innerHTML = `
-            <p>Match ${activeMatches + 1} <button class="skip-match-btn" data-match="${activeMatches}">Skip Match</button></p>
+            <p><span class="match-title">Match ${activeMatches + 1}</span> <button class="skip-match-btn" data-match="${activeMatches}">Skip Match</button></p>
             <div class="team" data-team="1">
                 <p>Team 1: ${match.team1.map(p => `<span class="team1-player">${p.name}</span>`).join(' & ')}</p>
-                <label>Score: <input type="text" inputmode="numeric" pattern="[0-9]*" min="0" class="team-score" data-team="1" data-match="${activeMatches}" readonly></label>
+                <label>Score: <input type="text" inputmode="${window.settings.useCustomKeypad ? 'none' : 'numeric'}" pattern="[0-9]*" min="0" class="team-score" data-team="1" data-match="${activeMatches}" ${window.settings.useCustomKeypad ? 'readonly' : ''}></label>
             </div>
             <div class="team" data-team="2">
                 <p>Team 2: ${match.team2.map(p => `<span class="team2-player">${p.name}</span>`).join(' & ')}</p>
-                <label>Score: <input type="text" inputmode="numeric" pattern="[0-9]*" min="0" class="team-score" data-team="2" data-match="${activeMatches}" readonly></label>
+                <label>Score: <input type="text" inputmode="${window.settings.useCustomKeypad ? 'none' : 'numeric'}" pattern="[0-9]*" min="0" class="team-score" data-team="2" data-match="${activeMatches}" ${window.settings.useCustomKeypad ? 'readonly' : ''}></label>
             </div>
         `;
 
@@ -3161,13 +4413,25 @@ function addMatch(roundContainer, sitOutPlayers) {
             // Proceed to skip the match
             matchDiv.style.display = 'none';
             matchDiv.setAttribute('data-skipped', 'true');
+            matchDiv.classList.add('skipped-match');
 
-            [...match.team1, ...match.team2].forEach(player => {
+            // Get all players involved in this match
+            const skipPlayers = [...match.team1, ...match.team2];
+            
+            // Update player eligibility status - mark them as ineligible and sitting out
+            skipPlayers.forEach(player => {
                 player.eligible = false;
                 player.satOutLastRound = true;
-                if (!sitOutPlayers.includes(player)) {
-                    sitOutPlayers.push(player);
+                
+                // Remove player if already in sitOutPlayers to prevent duplicates
+                const existingIndex = sitOutPlayers.findIndex(p => p.name === player.name);
+                if (existingIndex >= 0) {
+                    sitOutPlayers.splice(existingIndex, 1);
                 }
+                
+                // Add player to sitOutPlayers
+                sitOutPlayers.push(player);
+                logDebugMessage(`Player ${player.name} marked ineligible and sitting out after match skip`);
             });
 
             // Remove from match relationships and tracking
@@ -3267,27 +4531,76 @@ function updateSitOutDisplayForRound(roundContainer, sitOutPlayers) {
         logDebugMessage(`Created new sit-out display div`);
     }
 
+    // Ensure sitOutPlayers array is accurate by checking skipped matches
+    let actualSitOutPlayers = [...(sitOutPlayers || [])];
+    
+    // Collect all players from skipped matches
+    const skippedMatches = roundContainer.querySelectorAll('.match[data-skipped="true"]');
+    skippedMatches.forEach(matchDiv => {
+        // Get all players from this skipped match
+        const team1Players = Array.from(matchDiv.querySelectorAll('.team1-player')).map(el => {
+            const playerName = el.textContent.trim();
+            return players.find(p => p.name === playerName);
+        }).filter(Boolean);
+        
+        const team2Players = Array.from(matchDiv.querySelectorAll('.team2-player')).map(el => {
+            const playerName = el.textContent.trim();
+            return players.find(p => p.name === playerName);
+        }).filter(Boolean);
+        
+        // Add these players to sitOutPlayers if not already there
+        [...team1Players, ...team2Players].forEach(player => {
+            if (player && !actualSitOutPlayers.some(p => p.name === player.name)) {
+                actualSitOutPlayers.push(player);
+                logDebugMessage(`Added player ${player.name} from skipped match to sit-out list`);
+            }
+        });
+    });
+    
+    // Get players in active matches
+    const activeMatchPlayers = new Set();
+    roundContainer.querySelectorAll('.match:not([data-skipped="true"])').forEach(matchDiv => {
+        matchDiv.querySelectorAll('.team1-player, .team2-player').forEach(playerSpan => {
+            activeMatchPlayers.add(playerSpan.textContent.trim());
+        });
+    });
+    
+    // Remove any players who are actually in active matches from the sit-out list
+    actualSitOutPlayers = actualSitOutPlayers.filter(player => {
+        if (activeMatchPlayers.has(player.name)) {
+            logDebugMessage(`Removing player ${player.name} from sit-out list because they are in an active match`);
+            return false;
+        }
+        return true;
+    });
+
     // Update player statuses
     players.forEach(player => {
-        const isSittingOut = sitOutPlayers && sitOutPlayers.some(p => p.name === player.name);
+        const isSittingOut = actualSitOutPlayers.some(p => p.name === player.name);
         if (player.satOutLastRound !== isSittingOut) {
             logDebugMessage(`Updating player ${player.name}: satOutLastRound ${player.satOutLastRound} → ${isSittingOut}`);
         }
-        player.satOutLastRound = isSittingOut; // Mark players in sitOutPlayers as sat out
+        player.satOutLastRound = isSittingOut; // Mark players in actualSitOutPlayers as sat out
     });
 
     // Display updated sit-out players
-    if (!sitOutPlayers || sitOutPlayers.length === 0) {
+    if (actualSitOutPlayers.length === 0) {
         sitOutDiv.innerHTML = '<strong>🎉 Everyone is playing! 🎉</strong>';
         sitOutDiv.classList.add('all-playing');
         logDebugMessage(`Set display: Everyone is playing`);
     } else {
-        const sitOutPlayerNames = sitOutPlayers.map(player => 
+        const sitOutPlayerNames = actualSitOutPlayers.map(player => 
             `<span class="sitting-player">${player.name}</span>`
         ).join(' ');
         sitOutDiv.innerHTML = `<strong>Sitting out:</strong> ${sitOutPlayerNames}`;
         sitOutDiv.classList.remove('all-playing');
-        logDebugMessage(`Set display: Players sitting out - ${sitOutPlayers.map(p => p.name).join(', ')}`);
+        logDebugMessage(`Set display: Players sitting out - ${actualSitOutPlayers.map(p => p.name).join(', ')}`);
+    }
+    
+    // Update the sitOutPlayers reference to match our corrected list
+    if (sitOutPlayers) {
+        sitOutPlayers.length = 0;
+        actualSitOutPlayers.forEach(player => sitOutPlayers.push(player));
     }
     
     logDebugMessage(`=== END UPDATE SIT-OUT DISPLAY ===`);
@@ -3295,63 +4608,71 @@ function updateSitOutDisplayForRound(roundContainer, sitOutPlayers) {
 
 function toggleEditRound(roundContainer, editRoundButton) {
     const isEditing = editRoundButton.textContent === 'Edit Round';
-    const matches = roundContainer.querySelectorAll('.match');
-
-    if (isEditing) {
-        // Save the current state
-        const originalState = Array.from(matches).map(matchDiv => ({
-            team1: Array.from(matchDiv.querySelectorAll('.team1-player')).map(el => el.textContent.trim()),
-            team2: Array.from(matchDiv.querySelectorAll('.team2-player')).map(el => el.textContent.trim()),
-            team1Score: matchDiv.querySelector('.team-score[data-team="1"]').value,
-            team2Score: matchDiv.querySelector('.team-score[data-team="2"]').value
-        }));
-        roundContainer.dataset.originalState = JSON.stringify(originalState);
-
-        // Enter Edit Mode
-        editRoundButton.textContent = 'Save Changes';
-
-        // Add Cancel Button
-        const cancelButton = document.createElement('button');
-        cancelButton.textContent = 'Cancel';
-        cancelButton.classList.add('cancel-round-btn');
-        cancelButton.addEventListener('click', () => cancelRoundEdits(roundContainer, editRoundButton, cancelButton));
-        editRoundButton.after(cancelButton);
-
-        // Enable editing for teams and scores
-        matches.forEach((matchDiv, index) => {
-            const team1Players = Array.from(matchDiv.querySelectorAll('.team1-player')).map(el => el.textContent.trim());
-            const team2Players = Array.from(matchDiv.querySelectorAll('.team2-player')).map(el => el.textContent.trim());
-
-            const team1Inputs = team1Players.map(playerName => `
-                <select class="player-selector" data-match="${index}" data-team="1">
-                    ${players.map(player => `
-                        <option value="${player.name}" ${player.name === playerName ? 'selected' : ''}>
-                            ${player.name}
-                        </option>`).join('')}
-                </select>
-            `).join('');
-
-            const team2Inputs = team2Players.map(playerName => `
-                <select class="player-selector" data-match="${index}" data-team="2">
-                    ${players.map(player => `
-                        <option value="${player.name}" ${player.name === playerName ? 'selected' : ''}>
-                            ${player.name}
-                        </option>`).join('')}
-                </select>
-            `).join('');
-
-            // Replace team displays with editable inputs
-            matchDiv.querySelector('[data-team="1"] p').innerHTML = `Team 1: ${team1Inputs}`;
-            matchDiv.querySelector('[data-team="2"] p').innerHTML = `Team 2: ${team2Inputs}`;
-
-            // Enable score inputs
-            matchDiv.querySelectorAll('.team-score').forEach(input => (input.disabled = false));
-        });
-    } else {
+    
+    // If we're already editing, save the changes
+    if (!isEditing) {
         saveRoundEdits(roundContainer, editRoundButton);
+        roundContainer.classList.remove('edit-mode');
+        return;
     }
     
-    // Attach numeric keypad to new or re-enabled input fields
+    // Mark the round container as being in edit mode
+    roundContainer.classList.add('edit-mode');
+    
+    // Save the current state
+    const originalState = Array.from(roundContainer.querySelectorAll('.match')).map(matchDiv => ({
+        team1: Array.from(matchDiv.querySelectorAll('.team1-player')).map(el => el.textContent.trim()),
+        team2: Array.from(matchDiv.querySelectorAll('.team2-player')).map(el => el.textContent.trim()),
+        team1Score: matchDiv.querySelector('.team-score[data-team="1"]').value,
+        team2Score: matchDiv.querySelector('.team-score[data-team="2"]').value
+    }));
+    roundContainer.dataset.originalState = JSON.stringify(originalState);
+
+    // Enter Edit Mode
+    editRoundButton.textContent = 'Save Changes';
+
+    // Add Cancel Button
+    const cancelButton = document.createElement('button');
+    cancelButton.textContent = 'Cancel';
+    cancelButton.classList.add('cancel-round-btn');
+    cancelButton.addEventListener('click', () => cancelRoundEdits(roundContainer, editRoundButton, cancelButton));
+    editRoundButton.after(cancelButton);
+
+    // Enable editing for teams and scores
+    roundContainer.querySelectorAll('.match').forEach((matchDiv, index) => {
+        const team1Players = Array.from(matchDiv.querySelectorAll('.team1-player')).map(el => el.textContent.trim());
+        const team2Players = Array.from(matchDiv.querySelectorAll('.team2-player')).map(el => el.textContent.trim());
+
+        const team1Inputs = team1Players.map(playerName => `
+            <select class="player-selector" data-match="${index}" data-team="1">
+                ${players.map(player => `
+                    <option value="${player.name}" ${player.name === playerName ? 'selected' : ''}>
+                        ${player.name}
+                    </option>`).join('')}
+            </select>
+        `).join('');
+
+        const team2Inputs = team2Players.map(playerName => `
+            <select class="player-selector" data-match="${index}" data-team="2">
+                ${players.map(player => `
+                    <option value="${player.name}" ${player.name === playerName ? 'selected' : ''}>
+                        ${player.name}
+                    </option>`).join('')}
+            </select>
+        `).join('');
+
+        // Replace team displays with editable inputs
+        matchDiv.querySelector('[data-team="1"] p').innerHTML = `Team 1: ${team1Inputs}`;
+        matchDiv.querySelector('[data-team="2"] p').innerHTML = `Team 2: ${team2Inputs}`;
+
+        // Enable score inputs
+        matchDiv.querySelectorAll('.team-score').forEach(input => (input.disabled = false));
+    });
+
+    // Show a toast to inform the user
+    showToast("You're now in Edit Mode. Save changes when done or Cancel to revert.", "info");
+
+    // Attach numeric keypad to new or re-enabled input fields if available
     if (window.attachKeypadToInputs) {
         window.attachKeypadToInputs();
     }
@@ -3390,7 +4711,10 @@ function cancelRoundEdits(roundContainer, editRoundButton, cancelButton) {
     // Use reRenderRound to update the display
     reRenderRound(roundContainer);
 
-    alert('Edits canceled. Round reverted to the original state.');
+    showToast('Edits canceled. Round reverted to the original state.', "info", 4000);
+    
+    // Reset the round container state
+    roundContainer.classList.remove('edit-mode');
 }
 
 
@@ -3447,11 +4771,17 @@ function saveRoundEdits(roundContainer, editRoundButton) {
         const matchDiv = matches[matchIndex];
         
         const newTeam1 = Array.from(matchDiv.querySelectorAll('.player-selector[data-team="1"]'))
-            .map(selector => players.find(p => p.name === selector.value))
+            .map(selector => {
+                const playerName = selector.value;
+                return players.find(p => p.name === playerName);
+            })
             .filter(Boolean); // Filter out any undefined players
 
         const newTeam2 = Array.from(matchDiv.querySelectorAll('.player-selector[data-team="2"]'))
-            .map(selector => players.find(p => p.name === selector.value))
+            .map(selector => {
+                const playerName = selector.value;
+                return players.find(p => p.name === playerName);
+            })
             .filter(Boolean); // Filter out any undefined players
 
         if (newTeam1.length !== 2 || newTeam2.length !== 2) {
@@ -3465,6 +4795,7 @@ function saveRoundEdits(roundContainer, editRoundButton) {
         
         // Check each player in this match for duplicates
         for (const player of allPlayersInMatch) {
+            // Use player.name as the key for cross-browser compatibility
             if (allPlayersInRound.has(player.name)) {
                 const existingMatch = allPlayersInRound.get(player.name);
                 showToast(`Error: Player "${player.name}" appears in both Match ${existingMatch + 1} and Match ${matchIndex + 1}.`, "error");
@@ -3523,13 +4854,19 @@ function saveRoundEdits(roundContainer, editRoundButton) {
     // Now apply the new match data to each match div
     Array.from(matches).forEach((matchDiv, index) => {
         const newTeam1 = Array.from(matchDiv.querySelectorAll('.player-selector[data-team="1"]'))
-            .map(selector => players.find(p => p.name === selector.value))
-            .filter(Boolean);
+            .map(selector => {
+                const playerName = selector.value;
+                return players.find(p => p.name === playerName);
+            })
+            .filter(Boolean); // Filter out any undefined players
 
         const newTeam2 = Array.from(matchDiv.querySelectorAll('.player-selector[data-team="2"]'))
-            .map(selector => players.find(p => p.name === selector.value))
-            .filter(Boolean);
-        
+            .map(selector => {
+                const playerName = selector.value;
+                return players.find(p => p.name === playerName);
+            })
+            .filter(Boolean); // Filter out any undefined players
+
         if (newTeam1.length !== 2 || newTeam2.length !== 2) {
             console.warn(`Skipping match ${index + 1} due to invalid team composition`);
             return;
@@ -3601,6 +4938,10 @@ function saveRoundEdits(roundContainer, editRoundButton) {
     logPairHistory();
     
     showToast('Round edits saved!', 'success');
+    
+    // Reset the round container editing state
+    roundContainer.classList.remove('edit-mode');
+    editRoundButton.textContent = 'Edit Round';
 }
 
 
@@ -3678,7 +5019,7 @@ function reorderMatchNumbers(roundContainer) {
                 const oldClickHandler = skipButton.onclick;
                 
                 // Update the HTML
-                matchTitle.innerHTML = `Match ${matchNumber} <button class="skip-match-btn" data-match="${index}">Skip Match</button>`;
+                matchTitle.innerHTML = `<span class="match-title">Match ${matchNumber}</span> <button class="skip-match-btn" data-match="${index}">Skip Match</button>`;
                 
                 // Get the new skip button and attach the saved event handler
                 const newSkipButton = matchTitle.querySelector('.skip-match-btn');
@@ -3723,7 +5064,7 @@ function reorderMatchNumbers(roundContainer) {
                     });
                 }
             } else {
-                matchTitle.textContent = `Match ${matchNumber}`;
+                matchTitle.innerHTML = `<span class="match-title">Match ${matchNumber}</span>`;
             }
         }
 
@@ -3738,50 +5079,8 @@ function reorderMatchNumbers(roundContainer) {
 }
 
 
-window.onload = restoreState;
 
-// Add this near the beginning of the file with the other event listeners
-document.addEventListener('DOMContentLoaded', function() {
-    // Ensure page is at the top on initial load
-    window.scrollTo(0, 0);
-    
-    // Add event listeners for buttons with new IDs
-    document.getElementById('showPodiumBtn').addEventListener('click', showPodium);
-    document.getElementById('floatingLeaderboardBtn').addEventListener('click', showPodium);
-    document.getElementById('scrollToCurrentRound').addEventListener('click', scrollToCurrentRound);
-    document.getElementById('clearBtn').addEventListener('click', clearState);
-    // Commenting out duplicate event listener - already defined in HTML
-    // document.getElementById('captureAllBtn').addEventListener('click', captureAllContent);
-    
-    // Set up scroll event handling
-    window.addEventListener('scroll', handleScroll);
-    
-    initNumericKeypad();
-    
-    // Load custom sort config if available
-    loadCustomSortConfig();
-    
-    // Add custom sort button to the sorting buttons
-    const sortingButtons = document.querySelector('.sorting-buttons');
-    const customSortBtn = document.createElement('button');
-    customSortBtn.id = 'sortCustom';
-    customSortBtn.innerHTML = '<span class="material-symbols-rounded">tune</span> Custom Sort';
-    sortingButtons.appendChild(customSortBtn);
-    
-    // Add event listener for custom sort button
-    document.getElementById('sortCustom').addEventListener('click', () => {
-        clearActiveSortingButtons();
-        document.getElementById('sortCustom').classList.add('active');
-        
-        currentSortingMethod = 'custom';
-        const sortedPlayers = sortByCustomConfig(players);
-        displayPodium(sortedPlayers);
-        displayPlayerStatsTable(sortedPlayers);
-        
-        // Show custom sort configuration modal
-        showCustomSortModal();
-    });
-});
+// DOMContentLoaded event listeners have been consolidated in index.html
 
 // Function to handle scroll events
 function handleScroll() {
@@ -3858,27 +5157,27 @@ function captureAllContent() {
         // Capture the leaderboard
         captureElementAsImage(podiumDiv, 'leaderboard');
         
-        // Show match history
-        const matchHistoryDisplay = document.getElementById('matchHistoryDisplay');
-        if (!matchHistoryDisplay.classList.contains('active')) {
-            showMatchHistory();
-        }
-        
-        // Capture match history after a slight delay
-        setTimeout(() => {
-            captureElementAsImage(matchHistoryDisplay, 'match-history');
-            
-            // Optional: close both views after capture is complete
-            setTimeout(() => {
-                closePodium();
-                document.getElementById('closeMatchHistoryBtn').click();
-                alert('Leaderboard and Match History have been saved as images.');
-            }, 500);
-        }, 500);
+       
     }, 500);
 }
 
-// Function to edit a match from the match history
+/**
+ * Closes the currently open dialog
+ */
+function closeDialog() {
+    // Find any open dialogs and remove them
+    const dialogs = document.querySelectorAll('.edit-match-dialog');
+    dialogs.forEach(dialog => {
+        dialog.remove();
+    });
+    
+    // Hide the keypad if it's visible
+    const keypad = document.getElementById('numericKeypad');
+    if (keypad) {
+        keypad.style.display = 'none';
+    }
+}
+
 function editMatch(matchIndex) {
     const match = matches[matchIndex];
     if (!match) {
@@ -3929,7 +5228,7 @@ function editMatch(matchIndex) {
                     ${playerOptions}
                 </select>
                 <label>Score: 
-                    <input type="text" inputmode="numeric" class="team-score" id="team1-score" min="0" value="${match.team1Score || 0}" placeholder="Click to enter score">
+                    <input type="text" inputmode="${window.settings.useCustomKeypad ? 'none' : 'numeric'}" class="team-score" id="team1-score" min="0" value="${match.team1Score || 0}" placeholder="Click to enter score">
                 </label>
             </div>
             <div class="team-edit-section">
@@ -3941,7 +5240,7 @@ function editMatch(matchIndex) {
                     ${playerOptions}
                 </select>
                 <label>Score: 
-                    <input type="text" inputmode="numeric" class="team-score" id="team2-score" min="0" value="${match.team2Score || 0}" placeholder="Click to enter score">
+                    <input type="text" inputmode="${window.settings.useCustomKeypad ? 'none' : 'numeric'}" class="team-score" id="team2-score" min="0" value="${match.team2Score || 0}" placeholder="Click to enter score">
                 </label>
             </div>
             <div class="button-row">
@@ -3961,20 +5260,25 @@ function editMatch(matchIndex) {
         document.getElementById('team2-player1').value = match.team2[0]?.name || '';
         document.getElementById('team2-player2').value = match.team2[1]?.name || '';
         
-        // Attach numeric keypad to score inputs
+        // Get score inputs in the edit dialog
         const scoreInputs = dialog.querySelectorAll('input.team-score');
+        
+        // Check if custom keypad is enabled
+        const useCustomKeypad = localStorage.getItem('useCustomKeypad') !== 'false';
+        
+        // Apply appropriate readonly setting based on the toggle
         scoreInputs.forEach(input => {
-            // Make input readonly to prevent mobile keyboard
-            input.setAttribute('readonly', 'readonly');
+            if (useCustomKeypad) {
+                // Make input readonly to prevent mobile keyboard when custom keypad is enabled
+                input.setAttribute('readonly', 'readonly');
+            } else {
+                // Allow direct input when custom keypad is disabled
+                input.removeAttribute('readonly');
+            }
             
             // Make sure the custom keypad is initialized if it doesn't exist
             if (!document.getElementById('numericKeypad')) {
                 createNumericKeypad();
-            }
-            
-            // Use the window.attachKeypadToInputs function if available
-            if (typeof window.attachKeypadToInputs === 'function') {
-                window.attachKeypadToInputs();
             }
         });
     }, 0);
@@ -3997,20 +5301,21 @@ function editMatch(matchIndex) {
 
         // Validate players are valid and unique
         if (!team1Player1 || !team1Player2 || !team2Player1 || !team2Player2) {
-            alert('Please select valid players for all positions');
+            showToast('Please select valid players for all positions', 'error', 4000);
             return;
         }
 
-        // Only check for duplicates within the same team
+        // Check for duplicate players within the same team
         if (team1Player1 === team1Player2 || team2Player1 === team2Player2) {
-            alert('Players cannot be on the same team with themselves');
+            showToast('Players cannot be on the same team with themselves', 'error', 4000);
             return;
         }
 
-        // Check if a player appears in both teams
-        const allPlayers = new Set([team1Player1.name, team1Player2.name, team2Player1.name, team2Player2.name]);
-        if (allPlayers.size !== 4) {
-            alert('Each player can only appear once in a match');
+        // Check for duplicate players across teams
+        const allPlayers = [team1Player1, team1Player2, team2Player1, team2Player2];
+        const uniquePlayers = [...new Set(allPlayers)];
+        if (uniquePlayers.length !== 4) {
+            showToast('Each player can only appear once in a match', 'error', 4000);
             return;
         }
 
@@ -4057,18 +5362,18 @@ function editMatch(matchIndex) {
             // 3. Save changes to local storage
             autoSave();
             
-            // 4. Force a complete re-render of all match rounds to ensure synchronization
-            forceUpdateAllRounds();
-            
             console.log("Match updated successfully:", match);
-            alert('Match updated successfully!');
+            showToast('Match updated successfully!', 'success', 3000);
+            
+            // Close the edit dialog
+            closeDialog();
         } catch (error) {
             console.error("Error updating match:", error);
             
             // Revert to original match data
             Object.assign(match, originalMatch);
             
-            alert('An error occurred while updating the match. Changes were not saved.');
+            showToast('An error occurred while updating the match. Changes were not saved.', 'error', 5000);
         }
     });
 
@@ -4091,115 +5396,53 @@ function editMatch(matchIndex) {
 function updateMainDisplayFromMatchEdit(match) {
     console.log(`Updating main display for match in round ${match.round}, originalIndex: ${match.originalIndex}`);
     
-    // Instead of trying to find and update specific matches which might fail,
-    // let's use the forceUpdateAllRounds function to ensure all displays are updated
-    forceUpdateAllRounds();
-    
-    // Additionally ensure that all specific score displays are updated
-    // This targets any standalone score displays that might not be caught by forceUpdateAllRounds
-    document.querySelectorAll('.score-display, .score-text, .team-score').forEach(element => {
-        const matchId = element.getAttribute('data-match');
-        const teamId = element.getAttribute('data-team');
-        const roundNum = element.closest('.round-container')?.getAttribute('data-round');
-        
-        // Try to match by match ID if available
-        if (matchId && teamId) {
-            const matchIndex = parseInt(matchId);
-            
-            // If this element references the match we're updating
-            if (match.originalIndex === matchIndex || 
-                (roundNum && parseInt(roundNum) === match.round && matchIndex === match.originalIndex % 10)) {
-                
-                // Update the score display
-                if (teamId === '1') {
-                    if (element.tagName === 'INPUT') {
-                        element.value = match.team1Score;
-                    } else {
-                        element.textContent = `Score: ${match.team1Score}`;
-                    }
-                } else if (teamId === '2') {
-                    if (element.tagName === 'INPUT') {
-                        element.value = match.team2Score;
-                    } else {
-                        element.textContent = `Score: ${match.team2Score}`;
-                    }
-                }
+    try {
+        // Log player stats before updates for debugging
+        logDebugMessage("Player stats before display update:");
+        players.forEach(player => {
+            logDebugMessage(`${player.name}: Games=${player.gamesPlayed}, VP=${player.victoryPoints}, PP=${player.picklePoints}, PD=${player.pickleDifferential}`);
+            if (player.teammates) {
+                logDebugMessage(`  Teammates: ${JSON.stringify(player.teammates)}`);
             }
-        }
-    });
-    
-    // Update winner highlighting in all rounds
-    document.querySelectorAll('.round-container').forEach(container => {
-        const roundNum = parseInt(container.getAttribute('data-round'));
+            if (player.versus) {
+                logDebugMessage(`  Versus: ${JSON.stringify(player.versus)}`);
+            }
+        });
         
-        // Only process the container for the round containing our edited match
-        if (roundNum === match.round) {
-            // Find matches that might be our edited match
-            container.querySelectorAll('.match').forEach(matchDiv => {
-                const matchIndex = parseInt(matchDiv.getAttribute('data-match'));
-                
-                // Check if this could be our match by index or by team overlap
-                    const team1Names = Array.from(matchDiv.querySelectorAll('.team1-player'))
-                        .map(el => el.textContent.trim());
-                    const team2Names = Array.from(matchDiv.querySelectorAll('.team2-player'))
-                        .map(el => el.textContent.trim());
-                    
-                    const editedTeam1Names = match.team1.map(p => p.name);
-                    const editedTeam2Names = match.team2.map(p => p.name);
-                    
-                // Check for team overlap
-                const hasTeam1Overlap = team1Names.some(name => editedTeam1Names.includes(name));
-                const hasTeam2Overlap = team2Names.some(name => editedTeam2Names.includes(name));
-                
-                if (matchIndex === match.originalIndex || (hasTeam1Overlap && hasTeam2Overlap)) {
-                    // This is likely our match - update the winner highlighting
-                    const team1Container = matchDiv.querySelector(`.team[data-team="1"]`);
-                    const team2Container = matchDiv.querySelector(`.team[data-team="2"]`);
-                    
-                    if (team1Container && team2Container) {
-                        // Update score displays if they're in a different format
-                        const scoreEl1 = team1Container.querySelector('.score-display');
-                        const scoreEl2 = team2Container.querySelector('.score-display');
-                        
-                        if (scoreEl1) scoreEl1.textContent = `Score: ${match.team1Score}`;
-                        if (scoreEl2) scoreEl2.textContent = `Score: ${match.team2Score}`;
-                        
-                        // Remove all winner/tie classes
-                        team1Container.classList.remove('winner-team', 'tie-team');
-                        team2Container.classList.remove('winner-team', 'tie-team');
-                        
-                        // Add classes based on new scores
-                        if (match.team1Score > match.team2Score) {
-                            team1Container.classList.add('winner-team');
-                        } else if (match.team2Score > match.team1Score) {
-                            team2Container.classList.add('winner-team');
-                        } else {
-                            team1Container.classList.add('tie-team');
-                            team2Container.classList.add('tie-team');
-                        }
-                    }
-                }
-            });
+        // Use the forceUpdateAllRounds function to ensure all displays are updated
+        forceUpdateAllRounds();
+        
+        // Update leaderboard with latest player stats
+        const activeSort = document.querySelector('.sorting-buttons button.active');
+        let sortFunction = sortByVictoryPoints; // Default sort
+        
+        // Determine which sort function to use based on active button
+        if (activeSort) {
+            if (activeSort.id === 'sortPicklePoints') sortFunction = sortByPicklePoints;
+            else if (activeSort.id === 'sortWinPercentage') sortFunction = sortByWinPercentage;
+            else if (activeSort.id === 'sortPicklePointAvg') sortFunction = sortByPicklePointAvg;
+            else if (activeSort.id === 'sortPickleDifferential') sortFunction = sortByPickleDifferential;
+            else if (activeSort.id === 'sortCustom') sortFunction = sortByCustomConfig;
         }
-    });
-    
-    // Update leaderboard with latest player stats
-    const activeSort = document.querySelector('.sorting-buttons button.active');
-    let sortFunction = sortByVictoryPoints; // Default sort
-    
-    // Determine which sort function to use based on active button
-    if (activeSort) {
-        if (activeSort.id === 'sortPicklePoints') sortFunction = sortByPicklePoints;
-        else if (activeSort.id === 'sortWinPercentage') sortFunction = sortByWinPercentage;
-        else if (activeSort.id === 'sortPicklePointAvg') sortFunction = sortByPicklePointAvg;
-        else if (activeSort.id === 'sortPickleDifferential') sortFunction = sortByPickleDifferential;
-        else if (activeSort.id === 'sortCustom') sortFunction = sortByCustomConfig;
+        
+        // Update the podium and player stats table with the latest data
+        const sortedPlayers = sortFunction(players);
+        displayPodium(sortedPlayers);
+        displayPlayerStatsTable(sortedPlayers);
+        
+        // Rebuild the match history display to reflect the edited match
+        const matchHistoryContainer = document.getElementById('matchHistoryContent');
+        if (matchHistoryContainer && matchHistoryContainer.style.display !== 'none') {
+            showMatchHistory(); // Refresh the match history display
+        }
+        
+        // Log confirmation of successful update
+        logDebugMessage("Match display successfully updated");
+        
+    } catch (error) {
+        console.error("Error updating main display:", error);
+        logDebugMessage(`Error updating display: ${error.message}`);
     }
-    
-    // Update the podium and player stats table with the latest data
-    const sortedPlayers = sortFunction(players);
-    displayPodium(sortedPlayers);
-    displayPlayerStatsTable(sortedPlayers);
 }
 
 // Helper function to roll back a match's stats from player records
@@ -4219,7 +5462,7 @@ function rollbackMatchStats(match) {
             player.victoryPoints -= 1;
         }
         
-        // Remove teammate relationships
+        // Remove teammate relationships from team1 players
         match.team1.filter(teammate => teammate !== player)
             .forEach(teammate => {
                 if (player.teammates && player.teammates[teammate.name]) {
@@ -4228,14 +5471,31 @@ function rollbackMatchStats(match) {
                         delete player.teammates[teammate.name];
                     }
                 }
+                
+                // Also remove the reverse relationship
+                if (teammate.teammates && teammate.teammates[player.name]) {
+                    teammate.teammates[player.name] -= 1;
+                    if (teammate.teammates[player.name] <= 0) {
+                        delete teammate.teammates[player.name];
+                    }
+                }
             });
         
-        // Remove versus relationships
+        // Remove versus relationships from team1 vs team2
         match.team2.forEach(opponent => {
+            // Remove relationship from player to opponent
             if (player.versus && player.versus[opponent.name]) {
                 player.versus[opponent.name] -= 1;
                 if (player.versus[opponent.name] <= 0) {
                     delete player.versus[opponent.name];
+                }
+            }
+            
+            // Also remove the reverse relationship
+            if (opponent.versus && opponent.versus[player.name]) {
+                opponent.versus[player.name] -= 1;
+                if (opponent.versus[player.name] <= 0) {
+                    delete opponent.versus[player.name];
                 }
             }
         });
@@ -4254,7 +5514,7 @@ function rollbackMatchStats(match) {
             player.victoryPoints -= 1;
         }
         
-        // Remove teammate relationships
+        // Remove teammate relationships from team2 players
         match.team2.filter(teammate => teammate !== player)
             .forEach(teammate => {
                 if (player.teammates && player.teammates[teammate.name]) {
@@ -4263,17 +5523,11 @@ function rollbackMatchStats(match) {
                         delete player.teammates[teammate.name];
                     }
                 }
+                
+                // The reverse relationship is already handled in the team1 loop
             });
         
-        // Remove versus relationships
-        match.team1.forEach(opponent => {
-            if (player.versus && player.versus[opponent.name]) {
-                player.versus[opponent.name] -= 1;
-                if (player.versus[opponent.name] <= 0) {
-                    delete player.versus[opponent.name];
-                }
-            }
-        });
+        // Versus relationships are already handled in the team1 loop
     });
     
     // When rolling back match stats, also remove pairs from history tracking
@@ -4307,11 +5561,19 @@ function rollbackMatchStats(match) {
 function applyMatchStats(match) {
     // Update team 1 players
     match.team1.forEach(player => {
+        // Ensure player stats fields are initialized
+        player.gamesPlayed = player.gamesPlayed || 0;
+        player.picklePoints = player.picklePoints || 0;
+        player.pickleDifferential = player.pickleDifferential || 0;
+        player.victoryPoints = player.victoryPoints || 0;
+        player.teammates = player.teammates || {};
+        player.versus = player.versus || {};
+        
         player.gamesPlayed += 1;
         player.picklePoints += match.team1Score;
         
         // Adjust pickle differential
-        player.pickleDifferential = (player.pickleDifferential || 0) + (match.team1Score - match.team2Score);
+        player.pickleDifferential += (match.team1Score - match.team2Score);
         
         // Adjust victory points
         if (match.team1Score > match.team2Score) {
@@ -4328,11 +5590,19 @@ function applyMatchStats(match) {
     
     // Update team 2 players
     match.team2.forEach(player => {
+        // Ensure player stats fields are initialized
+        player.gamesPlayed = player.gamesPlayed || 0;
+        player.picklePoints = player.picklePoints || 0;
+        player.pickleDifferential = player.pickleDifferential || 0;
+        player.victoryPoints = player.victoryPoints || 0;
+        player.teammates = player.teammates || {};
+        player.versus = player.versus || {};
+        
         player.gamesPlayed += 1;
         player.picklePoints += match.team2Score;
         
         // Adjust pickle differential
-        player.pickleDifferential = (player.pickleDifferential || 0) + (match.team2Score - match.team1Score);
+        player.pickleDifferential += (match.team2Score - match.team1Score);
         
         // Adjust victory points
         if (match.team2Score > match.team1Score) {
@@ -4369,507 +5639,150 @@ function applyMatchStats(match) {
 
 // Helper function to update a match display element
 function updateMatchDisplay(matchDiv, match) {
-    // Update team 1 display
-    const team1Element = matchDiv.querySelector('[data-team="1"] p');
-    if (team1Element) {
-        team1Element.innerHTML = `Team 1: ${match.team1.map(p => 
-            `<span class="team1-player">${p.name}</span>`).join(' & ')}`;
-    }
-    
-    // Update team 2 display
-    const team2Element = matchDiv.querySelector('[data-team="2"] p');
-    if (team2Element) {
-        team2Element.innerHTML = `Team 2: ${match.team2.map(p => 
-            `<span class="team2-player">${p.name}</span>`).join(' & ')}`;
-    }
-    
-    // Update scores - make sure we're updating the value property
-    const team1ScoreInput = matchDiv.querySelector('.team-score[data-team="1"]');
-    const team2ScoreInput = matchDiv.querySelector('.team-score[data-team="2"]');
-    
-    if (team1ScoreInput) {
-        team1ScoreInput.value = match.team1Score;
-    }
-    
-    if (team2ScoreInput) {
-        team2ScoreInput.value = match.team2Score;
-    }
-    
-    // Update score displays
-    const team1ScoreDisplay = matchDiv.querySelector('.score-display[data-team="1"]');
-    if (team1ScoreDisplay) {
-        team1ScoreDisplay.textContent = `Score: ${match.team1Score}`;
-    }
-    
-    const team2ScoreDisplay = matchDiv.querySelector('.score-display[data-team="2"]');
-    if (team2ScoreDisplay) {
-        team2ScoreDisplay.textContent = `Score: ${match.team2Score}`;
-    }
-    
-    // Update any other score elements
-    const scoreElements = matchDiv.querySelectorAll('.score, .score-value');
-    scoreElements.forEach(element => {
-        const team = element.getAttribute('data-team');
-        if (team === '1') {
-            element.textContent = match.team1Score;
-        } else if (team === '2') {
-            element.textContent = match.team2Score;
+    // Update match title if needed
+    const matchTitle = matchDiv.querySelector('p:first-child');
+    if (matchTitle) {
+        const matchNumber = parseInt(matchDiv.getAttribute('data-match')) + 1;
+        // Keep the existing structure but ensure it has the match-title span
+        if (!matchTitle.querySelector('.match-title')) {
+            // Check if there's a skip button
+            const skipButton = matchTitle.querySelector('.skip-match-btn');
+            if (skipButton) {
+                const skipButtonHTML = skipButton.outerHTML;
+                matchTitle.innerHTML = `<span class="match-title">Match ${matchNumber}</span> ${skipButtonHTML}`;
+            } else {
+                matchTitle.innerHTML = `<span class="match-title">Match ${matchNumber}</span>`;
+            }
         }
-    });
-    
-    // Update combined score displays if any (like "10 - 11")
-    const combinedScoreElement = matchDiv.querySelector('.combined-score');
-    if (combinedScoreElement) {
-        combinedScoreElement.textContent = `${match.team1Score} - ${match.team2Score}`;
     }
     
-    // Update winner highlighting
-    const team1Container = matchDiv.querySelector(`.team[data-team="1"]`);
-    const team2Container = matchDiv.querySelector(`.team[data-team="2"]`);
+    // Update team displays
+    const team1Container = matchDiv.querySelector('.team[data-team="1"]');
+    const team2Container = matchDiv.querySelector('.team[data-team="2"]');
     
     if (team1Container && team2Container) {
-        // Remove all winner/tie classes
+        // Update player names
+        team1Container.querySelector('p').innerHTML = 
+            `Team 1: ${match.team1.map(player => `<span class="team1-player">${player.name}</span>`).join(' & ')}`;
+        team2Container.querySelector('p').innerHTML = 
+            `Team 2: ${match.team2.map(player => `<span class="team2-player">${player.name}</span>`).join(' & ')}`;
+        
+        // Update scores
+        const team1ScoreInput = team1Container.querySelector('input.team-score');
+        const team2ScoreInput = team2Container.querySelector('input.team-score');
+        const team1ScoreDisplay = team1Container.querySelector('.score-display');
+        const team2ScoreDisplay = team2Container.querySelector('.score-display');
+        
+        // Update input values if present
+        if (team1ScoreInput) team1ScoreInput.value = match.team1Score;
+        if (team2ScoreInput) team2ScoreInput.value = match.team2Score;
+        
+        // Update score display if present
+        if (team1ScoreDisplay) team1ScoreDisplay.textContent = `Score: ${match.team1Score}`;
+        if (team2ScoreDisplay) team2ScoreDisplay.textContent = `Score: ${match.team2Score}`;
+        
+        // Update winner highlighting
         team1Container.classList.remove('winner-team', 'tie-team');
         team2Container.classList.remove('winner-team', 'tie-team');
         
-        // Add classes based on new scores
         if (match.team1Score > match.team2Score) {
             team1Container.classList.add('winner-team');
         } else if (match.team2Score > match.team1Score) {
             team2Container.classList.add('winner-team');
-        } else {
+        } else if (match.team1Score === match.team2Score && (match.team1Score > 0 || match.team2Score > 0)) {
             team1Container.classList.add('tie-team');
             team2Container.classList.add('tie-team');
         }
     }
-    
-    console.log(`Updated match display for Round ${match.round}: Score Team 1: ${match.team1Score}, Team 2: ${match.team2Score}`);
 }
 
-// Document Ready Event
-document.addEventListener('DOMContentLoaded', function() {
-    console.log("Document loaded.");
+// Helper function to force update all round displays
+function forceUpdateAllRounds() {
+    console.log("Forcing update of all round displays");
     
-    // Create Debug Area
-    createDebugArea();
+    // Get all round containers
+    const roundContainers = document.querySelectorAll('.round-container');
     
-    // Attempt to restore saved state
-    restoreState();
-    
-    // Set the default active sort button
-    setDefaultActiveSortButton();
-    
-    // Display current date
-    displayCurrentDate();
-    
-    // Update player count to ensure consistency
-    document.getElementById('playerCount').textContent = `Player Count: ${players.length}`;
-    
-    // Update leaderboard if players exist
-    if (players.length > 0) {
-        const sortedPlayers = sortByVictoryPoints(players);
-        displayPodium(sortedPlayers);
-        displayPlayerStatsTable(sortedPlayers);
-    }
-    
-    // Regenerate match display for all rounds
-    if (matches.length > 0) {
-        console.log("Restoring matches display for", matches.length, "matches");
+    // For each round container, re-render all matches
+    roundContainers.forEach((container) => {
+        const roundNumber = parseInt(container.getAttribute('data-round'));
         
-        // Find all unique round numbers
-        const roundNumbers = [...new Set(matches.map(match => match.round))];
-        console.log("Found rounds:", roundNumbers);
+        // Find all matches for this round
+        const roundMatches = matches.filter(match => match.round === roundNumber);
         
-        // Clear existing match display
-        document.getElementById('matchDisplay').innerHTML = '';
-        
-        // Create containers for each round
-        roundNumbers.forEach(roundNum => {
-            // Create the round container
-            const roundContainer = document.createElement('div');
-            roundContainer.classList.add('round-container', roundNum % 2 === 0 ? 'even-round' : 'odd-round');
-            roundContainer.setAttribute('data-round', roundNum);
+        // If we have matches for this round, update all match displays
+        if (roundMatches.length > 0) {
+            const matchDivs = container.querySelectorAll('.match');
             
-            const roundHeader = document.createElement('h3');
-            roundHeader.textContent = `Round ${roundNum}`;
-            roundContainer.appendChild(roundHeader);
-            
-            // Find matches for this round
-            const roundMatches = matches.filter(match => match.round === roundNum);
-            
-            // Group matches by unique teams (to handle the case of multiple matches with same teams)
-            const matchGroups = {};
-            roundMatches.forEach(match => {
-                const key = generateMatchKey(match.team1, match.team2);
-                if (!matchGroups[key]) {
-                    matchGroups[key] = [];
+            // Match up the round matches with the match divs as best we can
+            matchDivs.forEach((matchDiv, i) => {
+                // Skip matches that have been marked as skipped
+                if (matchDiv.getAttribute('data-skipped') === 'true') {
+                    return;
                 }
-                matchGroups[key].push(match);
-            });
-            
-            // Add each match to the round container
-            Object.values(matchGroups).forEach((matchGroup, groupIndex) => {
-                matchGroup.forEach((match, matchIndex) => {
-                    const matchDiv = document.createElement('div');
-                    matchDiv.classList.add('match');
-                    matchDiv.setAttribute('data-match', groupIndex);
-                    
-                    // Determine if this match has been scored already
-                    const isScored = typeof match.team1Score === 'number' && typeof match.team2Score === 'number';
-                    
-                    matchDiv.innerHTML = `
-                        <p>Match ${groupIndex + 1} ${!isScored ? `<button class="skip-match-btn" data-match="${groupIndex}">Skip Match</button>` : ''}</p>
-                        <div class="team" data-team="1">
-                            <p>Team 1: ${match.team1.map(p => `<span class="team1-player">${p.name}</span>`).join(' & ')}</p>
-                            ${isScored 
-                                ? `<p class="score-display">Score: ${match.team1Score}</p>` 
-                                : `<label>Score: <input type="text" inputmode="numeric" pattern="[0-9]*" min="0" class="team-score" data-team="1" data-match="${groupIndex}"></label>`
-                            }
-                        </div>
-                        <div class="team" data-team="2">
-                            <p>Team 2: ${match.team2.map(p => `<span class="team2-player">${p.name}</span>`).join(' & ')}</p>
-                            ${isScored 
-                                ? `<p class="score-display">Score: ${match.team2Score}</p>` 
-                                : `<label>Score: <input type="text" inputmode="numeric" pattern="[0-9]*" min="0" class="team-score" data-team="2" data-match="${groupIndex}"></label>`
-                            }
-                        </div>
-                    `;
-                    
-                    // Add winner highlight for scored matches
-                    if (isScored) {
-                        if (match.team1Score > match.team2Score) {
-                            setTimeout(() => {
-                                matchDiv.querySelector('.team[data-team="1"]').classList.add('winner-team');
-                            }, 0);
-                        } else if (match.team2Score > match.team1Score) {
-                            setTimeout(() => {
-                                matchDiv.querySelector('.team[data-team="2"]').classList.add('winner-team');
-                            }, 0);
-                        } else {
-                            // It's a tie
-                            setTimeout(() => {
-                                matchDiv.querySelector('.team[data-team="1"]').classList.add('tie-team');
-                                matchDiv.querySelector('.team[data-team="2"]').classList.add('tie-team');
-                            }, 0);
-                        }
-                    }
-                    
-                    roundContainer.appendChild(matchDiv);
-                    
-                    // Add skip button functionality for unscored matches
-                    if (!isScored) {
-                        const skipButton = matchDiv.querySelector('.skip-match-btn');
-                        if (skipButton) {
-                            skipButton.addEventListener('click', function() {
-                                const confirmation = confirm("Are you sure you want to skip this match? This action cannot be undone.");
-                                if (!confirmation) {
-                                    console.log("Match skip canceled.");
-                                    return; // Exit if the user cancels
-                                }
-
-                                // Get team players from the matchDiv
-                                const team1Players = Array.from(matchDiv.querySelectorAll('.team1-player')).map(el =>
-                                    players.find(player => player.name === el.textContent.trim())
-                                );
-                                const team2Players = Array.from(matchDiv.querySelectorAll('.team2-player')).map(el =>
-                                    players.find(player => player.name === el.textContent.trim())
-                                );
-
-                                if (!team1Players || !team2Players) {
-                                    console.error("Unable to retrieve team players for skipping the match.");
-                                    return;
-                                }
-                                // Proceed to skip the match
-                                matchDiv.style.display = 'none';
-                                matchDiv.setAttribute('data-skipped', 'true');
-
-                                // Create a temporary match object to roll back any relationships that might have been set
-                                const roundNum = parseInt(roundContainer.getAttribute('data-round')) || currentRound;
-                                const tempMatch = {
-                                    round: roundNum,
-                                    team1: team1Players,
-                                    team2: team2Players,
-                                    team1Score: 0,
-                                    team2Score: 0
-                                };
-                                
-                                // If teammates and versus relationships were already established, roll them back
-                                team1Players.forEach(player => {
-                                    // Remove teammate relationships
-                                    team1Players.filter(teammate => teammate !== player).forEach(teammate => {
-                                        if (player.teammates && player.teammates[teammate.name]) {
-                                            player.teammates[teammate.name] -= 1;
-                                            if (player.teammates[teammate.name] <= 0) {
-                                                delete player.teammates[teammate.name];
-                                            }
-                                        }
-                                    });
-                                    
-                                    // Remove versus relationships
-                                    team2Players.forEach(opponent => {
-                                        if (player.versus && player.versus[opponent.name]) {
-                                            player.versus[opponent.name] -= 1;
-                                            if (player.versus[opponent.name] <= 0) {
-                                                delete player.versus[opponent.name];
-                                            }
-                                        }
-                                    });
-                                });
-                                
-                                // Do the same for team 2
-                                team2Players.forEach(player => {
-                                    // Remove teammate relationships
-                                    team2Players.filter(teammate => teammate !== player).forEach(teammate => {
-                                        if (player.teammates && player.teammates[teammate.name]) {
-                                            player.teammates[teammate.name] -= 1;
-                                            if (player.teammates[teammate.name] <= 0) {
-                                                delete player.teammates[teammate.name];
-                                            }
-                                        }
-                                    });
-                                    
-                                    // Remove versus relationships
-                                    team1Players.forEach(opponent => {
-                                        if (player.versus && player.versus[opponent.name]) {
-                                            player.versus[opponent.name] -= 1;
-                                            if (player.versus[opponent.name] <= 0) {
-                                                delete player.versus[opponent.name];
-                                            }
-                                        }
-                                    });
-                                });
-
-                                // Remove from match relationships and tracking
-                                const matchKey = generateMatchKey(team1Players, team2Players);
-                                if (matchHistory.has(matchKey)) {
-                                    matchHistory.delete(matchKey);
-                                    logDebugMessage(`Removed match ${matchKey} from match history.`);
-                                }
-
-                                const pair1Key = generatePairKey(team1Players[0], team1Players[1]);
-                                if (previousRoundPairs.has(pair1Key)) {
-                                    previousRoundPairs.delete(pair1Key);
-                                    logDebugMessage(`Removed Team 1 pair from previous round pairs.`);
-                                }
-                                // Also remove from recent history
-                                removePairFromRecentHistory(pair1Key);
-                                
-                                const pair2Key = generatePairKey(team2Players[0], team2Players[1]);
-                                if (previousRoundPairs.has(pair2Key)) {
-                                    previousRoundPairs.delete(pair2Key);
-                                    logDebugMessage(`Removed Team 2 pair from previous round pairs.`);
-                                }
-                                // Also remove from recent history
-                                removePairFromRecentHistory(pair2Key);
-
-                                [...team1Players, ...team2Players].forEach(player => {
-                                    player.eligible = false;
-                                    player.satOutLastRound = true;
-                                    if (!sitOutPlayers.includes(player)) {
-                                        sitOutPlayers.push(player);
-                                    }
-                                });
-
-                                // Check if all matches in the round are skipped
-                                const matchesInRound = roundContainer.querySelectorAll('.match');
-                                const allSkipped = Array.from(matchesInRound).every(
-                                    match => match.getAttribute('data-skipped') === 'true'
-                                );
-
-                                // If all matches are skipped, reset recent pair history
-                                if (allSkipped) {
-                                    logDebugMessage("All matches in round are now skipped, but we've already removed the specific pairs from history");
-                                }
-
-                                // Update the Submit Scores button text if all matches are skipped
-                                const submitScoresButton = roundContainer.querySelector('.submit-scores-btn');
-                                if (submitScoresButton) {
-                                    submitScoresButton.textContent = allSkipped ? 'Next Round' : 'Submit Scores';
-                                }
-
-                                // Update the sit-out display
-                                updateSitOutDisplayForRound(roundContainer, sitOutPlayers);
-                                reorderMatchNumbers(roundContainer);
-
-                                logDebugMessage(`Match skipped. Players moved to sitting out.`);
-                                autoSave();
-                            });
-                        }
-                    }
-                });
-            });
-            
-            // Add buttons if this is the current round and scores haven't been submitted
-            const isCurrentRound = roundNum === currentRound;
-            const hasUnsubmittedScores = roundMatches.some(match => 
-                typeof match.team1Score !== 'number' || typeof match.team2Score !== 'number'
-            );
-            
-            if (isCurrentRound && hasUnsubmittedScores) {
-                // Add the Submit Scores button
-                const submitBtn = document.createElement('button');
-                submitBtn.textContent = 'Submit Scores';
-                submitBtn.classList.add('submit-scores-btn', 'btn-success');
-                submitBtn.addEventListener('click', submitScores);
-                roundContainer.appendChild(submitBtn);
                 
-                // Add the Add Match button if needed
-                const courtCount = parseInt(document.getElementById('courtSelect').value, 10) || 1;
-                if (roundContainer.querySelectorAll('.match:not([data-skipped="true"])').length < courtCount) {
-                    const addMatchBtn = document.createElement('button');
-                    addMatchBtn.textContent = 'Add Match';
-                    addMatchBtn.classList.add('add-match-btn');
-                    addMatchBtn.addEventListener('click', () => {
-                        // Find sitting out players for this round
-                        const sitOutPlayers = [];
-                        const playingPlayers = new Set();
-                        
-                        // Collect all players in current matches
-                        roundContainer.querySelectorAll('.team1-player, .team2-player').forEach(playerSpan => {
-                            const playerName = playerSpan.textContent.trim();
-                            const player = players.find(p => p.name === playerName);
-                            if (player) {
-                                playingPlayers.add(player);
-                            }
-                        });
-                        
-                        // Find players who are sitting out
-                        players.forEach(player => {
-                            if (!playingPlayers.has(player)) {
-                                sitOutPlayers.push(player);
-                            }
-                        });
-                        
-                        addMatch(roundContainer, sitOutPlayers);
-                    });
-                    roundContainer.appendChild(addMatchBtn);
+                const matchIndex = parseInt(matchDiv.getAttribute('data-match'));
+                
+                // Try to find a matching match by index
+                const matchingMatch = roundMatches.find(m => 
+                    (m.originalIndex !== undefined && m.originalIndex === matchIndex) || 
+                    (roundMatches.indexOf(m) === i)
+                );
+                
+                // If we found a match, update the display
+                if (matchingMatch) {
+                    updateMatchDisplay(matchDiv, matchingMatch);
                 }
-            }
-            
-            // Add sitting out player display - this will be handled by the updateSitOutDisplayForRound function
-            // so we don't need to create a duplicate display here
-            
-            // Add the round container to the match display
-            document.getElementById('matchDisplay').appendChild(roundContainer);
-        });
-        
-        // Update Start Tournament button text if matches exist
-        const startTournamentBtn = document.getElementById('startTournament');
-        if (startTournamentBtn) {
-            startTournamentBtn.textContent = 'Continue Tournament';
+            });
         }
-    }
+    });
     
-    // Setup event listener for the Start Tournament button that checks if matches already exist
-    const startTournamentBtn = document.getElementById('startTournament');
-    if (startTournamentBtn) {
-        // Remove existing listeners
-        const newBtn = startTournamentBtn.cloneNode(true);
-        startTournamentBtn.parentNode.replaceChild(newBtn, startTournamentBtn);
-        
-        // Add new listener that handles both start and continue
-        newBtn.addEventListener('click', function() {
-            if (players.length < 4) {
-                alert("You need at least 4 players to start a tournament.");
-                return;
-            }
+    // If any scores display elements are still out of sync, update them
+    matches.forEach((match, index) => {
+        document.querySelectorAll(`[data-match="${index}"]`).forEach(element => {
+            const teamId = element.getAttribute('data-team');
             
-            if (matches.length > 0) {
-                // Continue tournament
-                // Check the last round container to get the actual last round number
-                const lastRoundContainer = document.querySelector('.round-container:last-child');
-                if (lastRoundContainer) {
-                    const lastRoundNumber = parseInt(lastRoundContainer.getAttribute('data-round')) || 0;
-                    
-                    // Ensure currentRound matches the last displayed round
-                    // This ensures the next round gets the correct number (lastRoundNumber + 1)
-                    currentRound = lastRoundNumber;
-                    logDebugMessage(`Adjusted currentRound to ${currentRound} to match last displayed round`);
+            // Update score value if this is a score element
+            if (element.classList.contains('score-display') || 
+                element.classList.contains('score-text') ||
+                element.classList.contains('team-score')) {
+                
+                if (teamId === '1') {
+                    if (element.tagName === 'INPUT') {
+                        element.value = match.team1Score;
+                    } else {
+                        element.textContent = `Score: ${match.team1Score}`;
+                    }
+                } else if (teamId === '2') {
+                    if (element.tagName === 'INPUT') {
+                        element.value = match.team2Score;
+                    } else {
+                        element.textContent = `Score: ${match.team2Score}`;
+                    }
                 }
-                generateNextRound();
-            } else {
-                // Start new tournament
-                currentRound = 0; // Changed from 1 to 0
-                generatePairsAndMatches();
             }
         });
-    }
-    
-    // Setup scroll event handler for the back-to-top button
-    handleScroll();
-    window.addEventListener('scroll', handleScroll);
-    
-    // Check if leaderboard button should be visible based on player count
-    if (players.length > 0) {
-        document.getElementById('floatingLeaderboardBtn').classList.remove('hidden');
-    } else {
-        document.getElementById('floatingLeaderboardBtn').classList.add('hidden');
-    }
-    
-    console.log("Initialization complete.");
-});
+    });
+}
 
-// Utility function to log the eligibility status of all players
+// NOTE: All DOMContentLoaded event listeners have been consolidated in index.html
+// The original Document Ready Event listener that was here has been moved to the consolidated listener in index.html
+
+// Function to log current players eligibility status
 function logPlayersEligibilityStatus() {
-    logDebugMessage("=== PLAYER ELIGIBILITY STATUS ===");
+    console.log("Current players' eligibility status:");
     players.forEach(player => {
-        logDebugMessage(`Player: ${player.name}, Eligible: ${player.eligible}, SatOutLastRound: ${player.satOutLastRound}, ManualSitOut: ${player.manualSitOut || false}`);
+        console.log(`Player: ${player.name}, Eligible: ${player.eligible}, Manual Sit-Out: ${player.manualSitOut}, Sat Out Last Round: ${player.satOutLastRound}`);
     });
-    logDebugMessage("===============================");
 }
 
-// Utility function to log the pair history for debugging
-function logPairHistory() {
-    pairTracker.logHistory();
-    
-    // Additional debug information about recentRounds structure
-    console.log("=== PAIR TRACKING STRUCTURE ===");
-    console.log("Recent rounds (most recent first):");
-    pairTracker.recentRounds.forEach((roundSet, index) => {
-        console.log(`Round set ${index}: ${Array.from(roundSet).join(', ')}`);
-        console.log("Contains pairs:", Array.from(roundSet).map(pair => {
-            const [p1, p2] = pair.split('-');
-            return `${p1} & ${p2}`;
-        }).join(', '));
-    });
-    
-    console.log("Previous round pairs:", Array.from(pairTracker.previousRoundPairs));
-    console.log("Previous round pairs decoded:", Array.from(pairTracker.previousRoundPairs).map(pair => {
-        const [p1, p2] = pair.split('-');
-        return `${p1} & ${p2}`;
-    }).join(', '));
-    
-    console.log("===========================");
-}
-
-// Function to remove a pair from recent history
-function removePairFromRecentHistory(pairKey) {
-    // Handle null/invalid pair keys
-    if (!pairKey) {
-        logDebugMessage(`Cannot remove invalid pair key from recent history`);
-        return false;
-    }
-    
-    const names = pairKey.split('-');
-    if (names.length !== 2) {
-        logDebugMessage(`Invalid pair key format: ${pairKey}`);
-        return false;
-    }
-    
-    const player1 = players.find(p => p.name === names[0]);
-    const player2 = players.find(p => p.name === names[1]);
-    
-    if (!player1 || !player2) {
-        logDebugMessage(`Could not find players for pair key: ${pairKey}`);
-        return false;
-    }
-    
-    return pairTracker.removePair(player1, player2);
-}
-
+/**
+ * Creates a numeric keypad for score input
+ * @returns {HTMLElement} The created keypad element
+ */
 function createNumericKeypad() {
     // Check if keypad already exists
-    if (document.getElementById('numericKeypad')) return;
+    if (document.getElementById('numericKeypad')) return document.getElementById('numericKeypad');
     
     // Create the keypad container
     const keypad = document.createElement('div');
@@ -4942,34 +5855,6 @@ function createNumericKeypad() {
     let activeInput = null;
     let currentValue = '';
     
-    // Add event listeners to numeric input fields
-    function attachKeypadToInputs() {
-        const scoreInputs = document.querySelectorAll('input[type="text"][inputmode="numeric"].team-score');
-        
-        scoreInputs.forEach(input => {
-            // Skip if already attached
-            if (input.hasAttribute('data-keypad-attached')) return;
-            
-            // Make input readonly to prevent mobile keyboard from appearing
-            input.setAttribute('readonly', 'readonly');
-            
-            input.setAttribute('data-keypad-attached', 'true');
-            input.addEventListener('click', function(e) {
-                e.preventDefault();
-                
-                // Set current active input
-                activeInput = this;
-                
-                // Reset the keypad state
-                currentValue = this.value || '';
-                updateDisplay();
-                
-                // Show the keypad
-                keypad.style.display = 'flex';
-            });
-        });
-    }
-    
     // Update the display with the current value
     function updateDisplay() {
         display.textContent = currentValue;
@@ -5007,6 +5892,10 @@ function createNumericKeypad() {
             const value = target.getAttribute('data-value');
             currentValue = value;
             updateDisplay();
+            
+            // Auto-submit for two-digit numbers (10, 11, 12, 13)
+            activeInput.value = currentValue;
+            keypad.style.display = 'none';
             return;
         }
         
@@ -5022,375 +5911,410 @@ function createNumericKeypad() {
         }
     });
     
-    // Close keypad when clicking outside
+    // Use event delegation for score inputs - more efficient approach
+    // Only check for keypad usage when an input is clicked, not on all inputs at once
     document.addEventListener('click', function(e) {
-        if (!keypad.contains(e.target) && 
-            !e.target.classList.contains('team-score')) {
-            keypad.style.display = 'none';
+        // If it's a score input being clicked
+        if (e.target.classList && e.target.classList.contains('team-score')) {
+            // Check if the user preference is to use custom keypad (at click time, not affecting all inputs)
+            const useCustomKeypad = localStorage.getItem('useCustomKeypad') !== 'false';
+            
+            // If custom keypad is disabled, do nothing
+            if (!useCustomKeypad) {
+                // Make sure input is not readonly
+                if (e.target.hasAttribute('readonly')) {
+                    e.target.removeAttribute('readonly');
+                }
+                // Ensure inputmode is set to numeric
+                e.target.setAttribute('inputmode', 'numeric');
+                return;
+            }
+            
+            // Prevent default behavior and make readonly
+            e.preventDefault();
+            e.target.setAttribute('readonly', 'readonly');
+            e.target.setAttribute('inputmode', 'none'); // Prevent mobile keyboard
+            
+            // Set current active input
+            activeInput = e.target;
+            
+            // Reset the keypad state
+            currentValue = activeInput.value || '';
+            updateDisplay();
+            
+            // Show the keypad
+            keypad.style.display = 'flex';
+        } else if (document.getElementById('numericKeypad') && 
+                  !document.getElementById('numericKeypad').contains(e.target)) {
+            // If clicking outside the keypad and not on a score input, close the keypad
+            document.getElementById('numericKeypad').style.display = 'none';
         }
     });
-    
-    // Initial attachment
-    attachKeypadToInputs();
-    
-    // Make the function accessible to call when new inputs are added
-    window.attachKeypadToInputs = attachKeypadToInputs;
     
     // Return the created keypad
     return keypad;
 }
 
-// Initialize the numeric keypad
+/**
+ * Initialize the numeric keypad
+ */
 function initNumericKeypad() {
-    const keypad = createNumericKeypad();
+    console.time('From keypad init to restore state');
+    console.log("Keypad initialization started", new Date().toISOString());
     
-    // Monitor DOM changes to attach keypad to new inputs
-    const observer = new MutationObserver(function(mutations) {
-        window.attachKeypadToInputs();
-    });
+    // Create numeric keypad if it doesn't exist
+    if (!document.getElementById('numericKeypad')) {
+        const keypad = createNumericKeypad();
+        document.body.appendChild(keypad);
+    }
     
-    observer.observe(document.body, { 
-        childList: true, 
-        subtree: true 
-    });
+    // Set up global delegated event listeners to attach keypad to inputs
+    window.attachKeypadToInputs = function() {
+        console.log('Attaching keypad to inputs at', new Date().toISOString());
+        const scoreInputs = document.querySelectorAll('.team-score');
+        
+        scoreInputs.forEach(input => {
+            // Skip if already initialized
+            if (input.dataset.keypadInitialized) return;
+            
+            // We're handling readonly a different way now
+            input.removeAttribute('readonly');
+            
+            // Mark as initialized
+            input.dataset.keypadInitialized = 'true';
+            
+            input.addEventListener('focus', function(e) {
+                if (!window.settings.useCustomKeypad) return;
+                
+                // Prevent the default mobile keyboard
+                e.preventDefault();
+                
+                const keypad = document.getElementById('numericKeypad');
+                if (!keypad) return;
+                
+                // Position keypad near the input
+                const rect = this.getBoundingClientRect();
+                keypad.style.top = (rect.bottom + window.scrollY + 10) + 'px';
+                keypad.style.left = (rect.left + window.scrollX) + 'px';
+                
+                // Show keypad and associate it with this input
+                keypad.style.display = 'grid';
+                keypad.dataset.targetInputId = this.id || Math.random().toString(36).substring(2, 9);
+                
+                if (!this.id) {
+                    this.id = keypad.dataset.targetInputId;
+                }
+                
+                // Update display with current value
+                const displayElement = keypad.querySelector('.keypad-display');
+                if (displayElement) {
+                    displayElement.textContent = this.value || '0';
+                }
+            });
+        });
+    };
+    
+    console.log("Keypad initialization completed", new Date().toISOString());
+    return true;
 }
 
-// Add function to save custom sort config to localStorage
-function saveCustomSortConfig() {
-    localStorage.setItem('pickleballCustomSortConfig', JSON.stringify(customSortConfig));
-}
 
-// Add function to load custom sort config from localStorage
-function loadCustomSortConfig() {
-    const savedConfig = localStorage.getItem('pickleballCustomSortConfig');
-    if (savedConfig) {
-        try {
-            customSortConfig = JSON.parse(savedConfig);
-        } catch (e) {
-            console.error('Error parsing custom sort config:', e);
+/**
+ * Update the readonly attribute on score inputs based on the keypad setting
+ * This is more efficient as it only affects inputs when the setting changes
+ * @param {boolean} useCustomKeypad - Whether to use the custom keypad
+ */
+window.updateScoreInputsReadonly = function(useCustomKeypad) {
+    // This function is needed for the settings toggle to work
+    // It sets readonly state for all existing score inputs when the toggle changes
+    const scoreInputs = document.querySelectorAll('input[type="text"][inputmode="numeric"].team-score, input[type="text"][inputmode="none"].team-score');
+    scoreInputs.forEach(input => {
+        if (useCustomKeypad) {
+            input.setAttribute('readonly', 'readonly');
+            input.setAttribute('inputmode', 'none'); // Prevent mobile keyboard from showing
+        } else {
+            input.removeAttribute('readonly');
+            input.setAttribute('inputmode', 'numeric'); // Restore numeric keyboard
         }
+    });
+};
+
+// Add event listeners for the leaderboard buttons
+document.addEventListener('DOMContentLoaded', function() {
+    console.log("Setting up leaderboard button event listeners");
+    
+    // Add event listener for the podium button in the top nav
+    const showPodiumBtn = document.getElementById('showPodiumBtn');
+    if (showPodiumBtn) {
+        showPodiumBtn.addEventListener('click', function() {
+            console.log("showPodiumBtn clicked, calling showPodium()");
+            showPodium();
+        });
+    } else {
+        console.error("showPodiumBtn element not found");
+    }
+    
+    // Add event listener for the floating leaderboard button
+    const floatingLeaderboardBtn = document.getElementById('floatingLeaderboardBtn');
+    if (floatingLeaderboardBtn) {
+        floatingLeaderboardBtn.addEventListener('click', function() {
+            console.log("floatingLeaderboardBtn clicked, calling showPodium()");
+            showPodium();
+        });
+    } else {
+        console.error("floatingLeaderboardBtn element not found");
+    }
+});
+
+// Add event listeners for the leaderboard buttons
+document.addEventListener('DOMContentLoaded', function() {
+    console.log("Setting up additional script.js initialization");
+    
+    // Make sure our showPodium function is available globally
+    if (typeof window.showPodium === 'undefined') {
+        window.showPodium = showPodium;
+        console.log("Made showPodium function globally available");
+    }
+});
+
+// Add this function to update the start tournament button text
+function updateStartTournamentButtonText() {
+    const startTournamentBtn = document.getElementById('startTournament');
+    if (!startTournamentBtn) return;
+    
+    const hasExistingRounds = document.querySelector('.round-container') !== null;
+    
+    if (hasExistingRounds) {
+        startTournamentBtn.innerHTML = '<span class="material-symbols-rounded">sports_tennis</span> CONTINUE PLAYING';
+    } else {
+        startTournamentBtn.innerHTML = '<span class="material-symbols-rounded">sports_tennis</span> START PLAYING';
     }
 }
 
-// Add this function to sort by custom configuration
-function sortByCustomConfig(players) {
-    currentSortingMethod = 'custom';
-    return sortPlayers(players, customSortConfig.primaryStat);
+// Function to handle the bottom continue button visibility and functionality
+function updateBottomContinueButton() {
+    const bottomContinueContainer = document.getElementById('bottomContinueContainer');
+    const bottomContinueBtn = document.getElementById('bottomContinueBtn');
+    const hasExistingRounds = document.querySelector('.round-container') !== null;
+    
+    if (!bottomContinueContainer || !bottomContinueBtn) return;
+    
+    // NOTE: The button should only be visible on initial page load with existing data
+    // The display property is controlled manually in restoreState() and hidden after use
+    // or in submitScores() and playRound()
+    
+    // This function just ensures the event listener is attached properly
+    // Remove any existing event listeners to avoid duplicates
+    bottomContinueBtn.removeEventListener('click', playRound);
+    
+    // Add event listener
+    bottomContinueBtn.addEventListener('click', playRound);
 }
 
-// Function to show custom sort configuration modal
-function showCustomSortModal() {
-    // First, check if modal already exists
-    let modal = document.getElementById('customSortModal');
+// Store reference to original functions we'll modify
+const originalUpdateStartTournamentButtonText = updateStartTournamentButtonText;
+const originalGenerateNextRound = generateNextRound;
+
+// Override updateStartTournamentButtonText to also update bottom button
+updateStartTournamentButtonText = function() {
+    // Call original function
+    originalUpdateStartTournamentButtonText();
     
-    // If not, create it
-    if (!modal) {
-        modal = document.createElement('div');
-        modal.id = 'customSortModal';
-        modal.className = 'modal';
-        
-        // Create modal content
-        const modalContent = document.createElement('div');
-        modalContent.className = 'modal-content';
-        
-        // Create header
-        const header = document.createElement('h3');
-        header.textContent = 'Custom Sort Configuration';
-        
-        // Create form
-        const form = document.createElement('div');
-        form.className = 'custom-sort-form';
-        
-        // Create explanation text
-        const explanation = document.createElement('p');
-        explanation.className = 'sort-explanation';
-        explanation.textContent = 'Select your primary stat for sorting and choose the order of tiebreakers (1 = first tiebreaker, 5 = last tiebreaker)';
-        
-        // Primary stat selection
-        const primaryStatSection = document.createElement('div');
-        primaryStatSection.className = 'form-section';
-        
-        const primaryStatLabel = document.createElement('label');
-        primaryStatLabel.textContent = 'Primary Sorting Stat:';
-        primaryStatLabel.htmlFor = 'primaryStat';
-        
-        const primaryStatSelect = document.createElement('select');
-        primaryStatSelect.id = 'primaryStat';
-        primaryStatSelect.name = 'primaryStat';
-        
-        const statOptions = [
-            { value: 'victoryPoints', text: 'Victory Points' },
-            { value: 'winPercentage', text: 'Win Percentage' },
-            { value: 'picklePoints', text: 'Pickle Points' },
-            { value: 'pickleDifferential', text: 'Pickle Differential' },
-            { value: 'picklePointAvg', text: 'Pickle Point Avg' }
-        ];
-        
-        statOptions.forEach(option => {
-            const opt = document.createElement('option');
-            opt.value = option.value;
-            opt.textContent = option.text;
-            if (option.value === customSortConfig.primaryStat) {
-                opt.selected = true;
+    // Also update bottom button
+    updateBottomContinueButton();
+};
+
+// Override generateNextRound to hide bottom button
+generateNextRound = function() {
+    // Hide the bottom continue button when creating a new round
+    const bottomContinueContainer = document.getElementById('bottomContinueContainer');
+    if (bottomContinueContainer) {
+        bottomContinueContainer.style.display = 'none';
+    }
+    
+    // Call the original function
+    originalGenerateNextRound();
+};
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Update the start tournament button text on page load
+    updateStartTournamentButtonText();
+});
+
+// Events and initialization when DOM is loaded
+document.addEventListener('DOMContentLoaded', function() {
+    console.time('From DOM load to restoreState');
+    console.log("DOM content loaded at", new Date().toISOString());
+    
+    // Initialize settings before accessing them
+    window.settings = {
+        isMainAudioMuted: localStorage.getItem('isMainAudioMuted') === 'true',
+        isLeaderboardMuted: localStorage.getItem('isLeaderboardMuted') === 'true',
+        skipIntro: localStorage.getItem('skipIntro') === 'true',
+        muteAllSounds: localStorage.getItem('muteAllSounds') === 'true',
+        useCustomKeypad: localStorage.getItem('useCustomKeypad') === 'true'
+    };
+    
+    console.log("Initial settings values:", window.settings);
+    
+    // Check if there's a saved state and restore it - this is now handled in index.html
+    // to prevent duplicate restoration calls
+    if (localStorage.getItem('pickleballCompetitionState')) {
+        console.log("Saved state found in script.js, but deferring to index.html for restoration");
+        // No longer call restoreState() here
+    }
+    
+    // Guide arrow animation for new users
+    const guideArrow = document.getElementById('guideArrow');
+    const hasVisibleTournament = document.getElementById('matchDisplay').innerHTML.trim() !== '';
+    const hasStoredData = localStorage.getItem('pickleballCompetitionState') !== null;
+    
+    console.log(`Guide arrow check - visible tournament: ${hasVisibleTournament} stored data: ${hasStoredData}`);
+    if (guideArrow && !hasVisibleTournament && !hasStoredData) {
+        guideArrow.style.display = 'block';
+    } else if (guideArrow) {
+        guideArrow.style.display = 'none';
+    }
+    
+    // Initialize time display
+    displayCurrentDate();
+    
+    // Initialize the debug area if it exists
+    createDebugArea();
+    
+    // Display the current date in other parts of the UI if needed
+    displayCurrentDate(document.getElementById('currentDateDisplay'));
+    
+    // Set up leaderboard button event listeners
+    console.log("Setting up leaderboard button event listeners");
+    const toggleLeaderboardBtn = document.getElementById('toggleLeaderboard');
+    if (toggleLeaderboardBtn) {
+        toggleLeaderboardBtn.addEventListener('click', function() {
+            const leaderboard = document.getElementById('leaderboard');
+            if (leaderboard.style.display === 'none' || !leaderboard.style.display) {
+                showPodium();
+            } else {
+                closePodium();
             }
-            primaryStatSelect.appendChild(opt);
-        });
-        
-        primaryStatSection.appendChild(primaryStatLabel);
-        primaryStatSection.appendChild(primaryStatSelect);
-        
-        // Tiebreaker section - new numbered approach
-        const tiebreakerSection = document.createElement('div');
-        tiebreakerSection.className = 'form-section';
-        
-        const tiebreakerLabel = document.createElement('div');
-        tiebreakerLabel.className = 'tiebreaker-section-label';
-        tiebreakerLabel.textContent = 'Tiebreaker Order:';
-        
-        tiebreakerSection.appendChild(tiebreakerLabel);
-        
-        // Create a table for better mobile layout
-        const tiebreakerTable = document.createElement('table');
-        tiebreakerTable.className = 'tiebreaker-table';
-        
-        // Add header row
-        const headerRow = document.createElement('tr');
-        const statHeader = document.createElement('th');
-        statHeader.textContent = 'Statistic';
-        const orderHeader = document.createElement('th');
-        orderHeader.textContent = 'Order';
-        headerRow.appendChild(statHeader);
-        headerRow.appendChild(orderHeader);
-        tiebreakerTable.appendChild(headerRow);
-        
-        // Get current tiebreaker order as a map
-        const tiebreakOrderMap = {};
-        customSortConfig.tiebreakers.forEach((tiebreaker, index) => {
-            tiebreakOrderMap[tiebreaker] = index + 1;
-        });
-        
-        // Create dropdown rows for each stat except primary
-        statOptions.forEach(option => {
-            // Skip the primary stat in tiebreakers
-            if (option.value === customSortConfig.primaryStat) {
-                return;
-            }
-            
-            const row = document.createElement('tr');
-            
-            // Stat name cell
-            const statCell = document.createElement('td');
-            statCell.textContent = option.text;
-            
-            // Order dropdown cell
-            const orderCell = document.createElement('td');
-            const orderSelect = document.createElement('select');
-            orderSelect.className = 'tiebreaker-order';
-            orderSelect.dataset.stat = option.value;
-            
-            // Create 1-4 options
-            for (let i = 1; i <= 4; i++) {
-                const orderOpt = document.createElement('option');
-                orderOpt.value = i;
-                orderOpt.textContent = i;
-                
-                // Select current position
-                if (tiebreakOrderMap[option.value] === i) {
-                    orderOpt.selected = true;
-                }
-                
-                orderSelect.appendChild(orderOpt);
-            }
-            
-            orderCell.appendChild(orderSelect);
-            
-            row.appendChild(statCell);
-            row.appendChild(orderCell);
-            tiebreakerTable.appendChild(row);
-        });
-        
-        tiebreakerSection.appendChild(tiebreakerTable);
-        
-        // Add button section
-        const buttonSection = document.createElement('div');
-        buttonSection.className = 'button-section';
-        
-        const saveButton = document.createElement('button');
-        saveButton.id = 'saveCustomSort';
-        saveButton.className = 'btn-success';
-        saveButton.textContent = 'Save & Apply';
-        
-        const cancelButton = document.createElement('button');
-        cancelButton.id = 'cancelCustomSort';
-        cancelButton.textContent = 'Cancel';
-        
-        buttonSection.appendChild(saveButton);
-        buttonSection.appendChild(cancelButton);
-        
-        // Assemble modal
-        form.appendChild(explanation);
-        form.appendChild(primaryStatSection);
-        form.appendChild(tiebreakerSection);
-        
-        modalContent.appendChild(header);
-        modalContent.appendChild(form);
-        modalContent.appendChild(buttonSection);
-        
-        modal.appendChild(modalContent);
-        document.body.appendChild(modal);
-        
-        // Add event listeners
-        document.getElementById('saveCustomSort').addEventListener('click', () => {
-            // Update primary stat
-            customSortConfig.primaryStat = document.getElementById('primaryStat').value;
-            
-            // Get all stats except primary
-            const availableStats = statOptions.map(opt => opt.value).filter(val => val !== customSortConfig.primaryStat);
-            
-            // Create a map of stat -> order
-            const orderMap = {};
-            document.querySelectorAll('.tiebreaker-order').forEach(select => {
-                orderMap[select.dataset.stat] = parseInt(select.value);
-            });
-            
-            // Sort stats by their order
-            availableStats.sort((a, b) => orderMap[a] - orderMap[b]);
-            
-            // Set as tiebreakers
-            customSortConfig.tiebreakers = availableStats;
-            
-            // Save to localStorage
-            saveCustomSortConfig();
-            
-            // Apply sorting
-            const sortedPlayers = sortByCustomConfig(players);
-            displayPodium(sortedPlayers);
-            displayPlayerStatsTable(sortedPlayers);
-            
-            // Close modal
-            modal.classList.remove('active');
-            
-            // Add notice to inform user the custom sort was saved
-            const notice = document.createElement('div');
-            notice.className = 'custom-sort-notice';
-            notice.textContent = 'Custom sort saved! It will be available across sessions.';
-            document.body.appendChild(notice);
-            
-            // Remove notice after 3 seconds
-            setTimeout(() => {
-                notice.classList.add('fade-out');
-                setTimeout(() => {
-                    document.body.removeChild(notice);
-                }, 500);
-            }, 3000);
-        });
-        
-        document.getElementById('cancelCustomSort').addEventListener('click', () => {
-            modal.classList.remove('active');
-        });
-        
-        // Update primary select change behavior
-        document.getElementById('primaryStat').addEventListener('change', function() {
-            // When primary stat changes, rebuild the tiebreaker table
-            const primaryValue = this.value;
-            
-            // Remove existing rows
-            const table = document.querySelector('.tiebreaker-table');
-            while (table.rows.length > 1) {
-                table.deleteRow(1);
-            }
-            
-            // Add new rows, skipping the new primary
-            statOptions.forEach(option => {
-                if (option.value === primaryValue) {
-                    return;
-                }
-                
-                const row = document.createElement('tr');
-                
-                // Stat name cell
-                const statCell = document.createElement('td');
-                statCell.textContent = option.text;
-                
-                // Order dropdown cell
-                const orderCell = document.createElement('td');
-                const orderSelect = document.createElement('select');
-                orderSelect.className = 'tiebreaker-order';
-                orderSelect.dataset.stat = option.value;
-                
-                // Create 1-4 options
-                for (let i = 1; i <= 4; i++) {
-                    const orderOpt = document.createElement('option');
-                    orderOpt.value = i;
-                    orderOpt.textContent = i;
-                    orderSelect.appendChild(orderOpt);
-                }
-                
-                orderCell.appendChild(orderSelect);
-                
-                row.appendChild(statCell);
-                row.appendChild(orderCell);
-                table.appendChild(row);
-            });
         });
     }
     
-    // Show the modal
-    modal.classList.add('active');
+    // Setup player input field to hide/show Add Players button
+    const playerInput = document.getElementById('playerInput');
+    const addPlayersBtn = document.getElementById('addPlayersBtn');
+    if (playerInput && addPlayersBtn) {
+        // Initially hide button if input is empty
+        updateAddPlayersButtonState();
+        
+        // Add input event listener to toggle button visibility
+        playerInput.addEventListener('input', updateAddPlayersButtonState);
+    }
+    
+    console.log("Setting up additional script.js initialization");
+    
+    // Update the button text based on current state
+    updateStartTournamentButtonText();
+    
+    // Initialize the bottom continue button
+    updateBottomContinueButton();
+    });
+
+// Function to toggle Add Players button state based on input
+function updateAddPlayersButtonState() {
+    const playerInput = document.getElementById('playerInput');
+    const addPlayersBtn = document.getElementById('addPlayersBtn');
+    
+    if (!playerInput || !addPlayersBtn) {
+        console.error("Could not find playerInput or addPlayersBtn elements");
+        return;
+    }
+    
+    // Debug output to help diagnose issues
+    console.log(`Input value: "${playerInput.value}", trimmed length: ${playerInput.value.trim().length}`);
+    
+    // Hide button if input is empty, show if it has content
+    if (playerInput.value.trim().length > 0) {
+        console.log("Showing Add Players button");
+        addPlayersBtn.style.display = 'inline-block';
+    } else {
+        console.log("Hiding Add Players button");
+        addPlayersBtn.style.display = 'none';
+    }
 }
 
-// Helper function to force update all round displays
-function forceUpdateAllRounds() {
-    console.log("Forcing update of all round displays");
+// Self-executing function to set up player input listeners immediately
+(function() {
+    // Wait for DOM to be ready
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initPlayerInputHandler);
+    } else {
+        // DOM is already ready
+        initPlayerInputHandler();
+    }
     
-    // Get all round containers
-    const roundContainers = document.querySelectorAll('.round-container');
-    
-    // For each round container, re-render all matches
-    roundContainers.forEach((container) => {
-        const roundNumber = parseInt(container.getAttribute('data-round'));
+    function initPlayerInputHandler() {
+        const playerInput = document.getElementById('playerInput');
+        const addPlayersBtn = document.getElementById('addPlayersBtn');
         
-        // Find all matches for this round
-        const roundMatches = matches.filter(match => match.round === roundNumber);
-        
-        // If we have matches for this round, update all match displays
-        if (roundMatches.length > 0) {
-            const matchDivs = container.querySelectorAll('.match');
-            
-            // Match up the round matches with the match divs as best we can
-            matchDivs.forEach((matchDiv, i) => {
-                // If we have a match for this position, update it
-                if (i < roundMatches.length) {
-                    updateMatchDisplay(matchDiv, roundMatches[i]);
-                }
-            });
+        if (!playerInput || !addPlayersBtn) {
+            console.error("Could not find playerInput or addPlayersBtn elements in initPlayerInputHandler");
+            return;
         }
+        
+        console.log("Setting up player input handlers");
+        
+        // Set initial state
+        updateAddPlayersButtonState();
+        
+        // Add input event listener
+        playerInput.removeEventListener('input', updateAddPlayersButtonState); // Remove any existing listeners
+        playerInput.addEventListener('input', updateAddPlayersButtonState);
+        
+        // Also listen for keyup events to catch all changes
+        playerInput.removeEventListener('keyup', updateAddPlayersButtonState);
+        playerInput.addEventListener('keyup', updateAddPlayersButtonState);
+        
+        console.log("Player input handlers successfully set up");
+    }
+})();
+
+// Utility function to log the pair history for debugging
+function logPairHistory() {
+    pairTracker.logHistory();
+    
+    // Additional debug information about recentRounds structure
+    console.log("=== PAIR TRACKING STRUCTURE ===");
+    console.log("Recent rounds (most recent first):");
+    pairTracker.recentRounds.forEach((roundSet, index) => {
+        console.log(`Round set ${index}: ${Array.from(roundSet).join(', ')}`);
+        console.log("Contains pairs:", Array.from(roundSet).map(pair => {
+            const [p1, p2] = pair.split('-');
+            return `${p1} & ${p2}`;
+        }).join(', '));
     });
     
-    // If any scores display elements are still out of sync, update them
-    matches.forEach((match, index) => {
-        document.querySelectorAll(`[data-match="${index}"]`).forEach(element => {
-            const teamId = element.getAttribute('data-team');
-            
-            // Update score value if this is a score element
-            if (element.classList.contains('score-display') || 
-                element.classList.contains('score-text') ||
-                element.classList.contains('team-score')) {
-                
-                if (teamId === '1') {
-                    if (element.tagName === 'INPUT') {
-                        element.value = match.team1Score;
-                    } else {
-                        element.textContent = match.team1Score;
-                    }
-                } else if (teamId === '2') {
-                    if (element.tagName === 'INPUT') {
-                        element.value = match.team2Score;
-                    } else {
-                        element.textContent = match.team2Score;
-                    }
-                }
-            }
-        });
-    });
+    console.log("Previous round pairs:", Array.from(pairTracker.previousRoundPairs));
+    console.log("Previous round pairs decoded:", Array.from(pairTracker.previousRoundPairs).map(pair => {
+        const [p1, p2] = pair.split('-');
+        return `${p1} & ${p2}`;
+    }).join(', '));
+    
+    console.log("===========================");
 }
+
+
+
+// Support panel toggle function
+function toggleSupportPanel() {
+    const supportPanel = document.getElementById('support-panel');
+    supportPanel.classList.toggle('open');
+}
+
+// Add event listener for support button
+document.addEventListener('DOMContentLoaded', function() {
+    // Support button event listener
+    document.getElementById('supportButton').addEventListener('click', toggleSupportPanel);
+    
+    // Other existing event listeners
+});
+

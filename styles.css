@@ -79,6 +79,8 @@ body {
     background-attachment: fixed;
     background-position: center;
     min-height: 100vh;
+    position: absolute;
+    top: 75px;
 }
 
 .container {
@@ -583,6 +585,8 @@ button:active {
     padding: 0px, var(--space-md),var(--space-md),var(--space-md);
     border-collapse: collapse;
     margin-top: 10px;
+    margin-left: 30px;
+    
 }
 
 #playerTable {
@@ -591,9 +595,9 @@ button:active {
 }
 
 /* Toggle Button */
-.toggle-btn {
+.playerlist-toggle-btn {
     position: fixed;
-    top: 20px;
+    top: 150px;
     left: 20px;
     z-index: 1001;
     width: 50px;
@@ -613,23 +617,9 @@ button:active {
 
 /* Leaderboard Button */
 .leaderboard-btn {
-    position: fixed;
-    top: auto;
-    bottom: 200px; /* Highest position */
-    right: 20px;
-    left: auto;
     background-color: var(--secondary);
-    opacity: 1; /* Changed from 0 to 1 to be visible by default */
-    transform: translateY(0); /* No initial transform to show by default */
-    z-index: 999;
-    width: 50px;
-    height: 50px;
-    border-radius: 50%;
-    display: flex; /* Show by default */
-    align-items: center;
-    justify-content: center;
-    box-shadow: var(--shadow-md);
-    transition: opacity var(--transition-fast), transform var(--transition-fast);
+    opacity: 1;
+    color: var(--neutral-white);
 }
 
 /* Change to a class that hides the button */
@@ -646,27 +636,10 @@ button:active {
 
 /* Current Round Button */
 .round-nav-btn {
-    position: fixed;
-    bottom: 80px; /* Lowest position */
-    right: 20px;
-    z-index: 999;
-    width: 50px;
-    height: 50px;
-    padding: 0;
-    border-radius: 50%;
     background-color: var(--accent);
-    color: var(--neutral-white);
-    box-shadow: var(--shadow-md);
-    display: flex; /* Changed from 'none' to 'flex' to show by default */
-    align-items: center;
-    justify-content: center;
     opacity: 0.9;
-    transition: transform var(--transition-fast), opacity var(--transition-fast);
-}
-
-.round-nav-btn:hover {
-    opacity: 1;
-    transform: scale(1.05);
+    color: var(--neutral-white);
+    padding: 0;
 }
 
 .round-nav-btn .btn-text {
@@ -678,15 +651,6 @@ button:active {
     left: min(450px, calc(100vw - 55px - 5vh)); /* Ensure button never goes beyond viewport width */
 }
 
-/* Tables - Base styling for all tables
-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-bottom: var(--space-lg);
-    background-color: var(--neutral-white);
-    border-radius: var(--radius-md);
-    box-shadow: var(--shadow-sm);
-}*/
 
 th, td {
     padding: var(--space-md);
@@ -1037,19 +1001,8 @@ tr:last-child td {
     height: 200px;
 }
 
-/* Action buttons in the podium display */
-#saveAsPictureBtn, #closePodiumBtn {
-    position: fixed;
-    z-index: 2100;
-}
 
-#saveAsPictureBtn {
-    position: fixed;
-    top: var(--space-md);
-    left: var(--space-md);
-    background-color: #9C27B0;
-    z-index: 2100;
-}
+
 
 #closePodiumBtn {
     top: var(--space-md);
@@ -1176,34 +1129,18 @@ tr:last-child td {
         border-radius: var(--radius-md);
     }
     
-    /* Position buttons in a fixed toolbar */
-    #saveAsPictureBtn, #closePodiumBtn {
-        width: auto;
-        padding: 8px;
-        font-size: 12px;
-        top: 10px;
-    }
+
     
     
-    /* Set specific positions for each button */
-    #saveAsPictureBtn {
-        left: 10px;
-        width: auto;
-    }
+ 
     
-    #toggleLeaderboardMute {
-        right: 60px;
-        left: auto;
-    }
+ 
     
     #closePodiumBtn {
         right: 10px;
     }
     
-    /* Show just the icons for better spacing */
-    #saveAsPictureBtn span:not(.material-symbols-rounded) {
-        display: none;
-    }
+
     
     .sorting-buttons {
         flex-direction: column;
@@ -1679,68 +1616,12 @@ input[type="file"].hidden {
 
 /* Back to Top Button */
 .back-to-top-btn {
-    position: fixed;
-    bottom: 140px; /* Middle position */
-    right: 20px;
-    width: 50px;
-    height: 50px;
-    border-radius: 50%;
     background-color: var(--primary);
-    color: var(--neutral-white);
-    box-shadow: var(--shadow-md);
-    display: flex; /* Changed from 'none' to 'flex' to show by default */
-    align-items: center;
-    justify-content: center;
-    z-index: 999;
     opacity: 0.8;
-    transition: opacity var(--transition-fast), transform var(--transition-fast);
+    color: var(--neutral-white);
 }
 
-.back-to-top-btn:hover {
-    opacity: 1;
-    transform: translateY(-2px);
-}
 
-/* Ensure consistent circle button sizes and spacing for the bottom-right column */
-.round-nav-btn {
-    bottom: 80px; /* Lowest position */
-}
-
-/* Mobile Responsive Design */
-@media (max-width: 768px) {
-    /* Mobile button sizes */
-    .back-to-top-btn,
-    .round-nav-btn,
-    .leaderboard-btn {
-        width: 40px;
-        height: 40px;
-        right: 20px;
-        position: fixed;
-        z-index: 999;
-    }
-    
-    /* The leaderboard button on mobile */
-    .leaderboard-btn {
-        bottom: 170px; /* Highest position */
-    }
-    
-    /* The back to top button on mobile */
-    .back-to-top-btn {
-        bottom: 120px; /* Middle position */
-    }
-    
-    /* The current round button on mobile */
-    .round-nav-btn {
-        bottom: 70px; /* Lowest position */
-    }
-    
-    /* Position for when player list is open - ensure buttons stay in bottom right */
-    .floating-panel.active ~ .leaderboard-btn {
-        right: 20px;
-        bottom: 170px; /* Update to match new position */
-        position: fixed;
-    }
-}
 
 /* Material Icons */
 .material-symbols-rounded {
@@ -1756,6 +1637,10 @@ button .material-symbols-rounded:only-child {
 }
 
 /* Center icons inside navigation buttons */
+.toggle-debug-btn .material-symbols-rounded,
+.toggle-info-btn .material-symbols-rounded,
+.toggle-capture-btn .material-symbols-rounded,
+.toggle-mute-btn .material-symbols-rounded,
 .back-to-top-btn .material-symbols-rounded,
 .round-nav-btn .material-symbols-rounded,
 .leaderboard-btn .material-symbols-rounded {
@@ -1999,23 +1884,22 @@ button .material-symbols-rounded:only-child {
 }
 
 /* Debug Toggle Button */
-.toggle-debug-btn {
-    position: fixed;
-    bottom: 20px;
-    left: 20px;
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    background-color: var(--neutral-medium);
-    color: var(--neutral-white);
-    box-shadow: var(--shadow-md);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 999;
-    opacity: 0.6;
-    transition: opacity var(--transition-fast), transform var(--transition-fast);
-}
+        .toggle-debug-btn {
+            left: 10px;
+            z-index: 2200; /* Higher than displays (2000) but lower than photo mode */
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: var(--neutral-white); /* Light color similar to mute button */
+            border: 1px solid var(--neutral-light);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            cursor: pointer;
+            color: var(--primary-light); /* Color that matches the mute toggle */
+            opacity: 0.9;
+        }
 
 .toggle-debug-btn:hover {
     opacity: 1;
@@ -2024,11 +1908,7 @@ button .material-symbols-rounded:only-child {
 
 /* Mobile adjustments for debug/settings button */
 @media (max-width: 768px) {
-    .toggle-debug-btn {
-        /* Remove width and height settings to maintain the 50px value */
-        bottom: 20px;
-        left: 70px; /* Position next to back to top button */
-    }
+
     
     #debugAreaContainer {
         width: calc(100% - 20px);
@@ -2106,11 +1986,7 @@ button .material-symbols-rounded:only-child {
 }
 
 @media (max-width: 768px) {
-    .toggle-debug-btn {
-        /* Remove width and height settings to maintain the 50px value */
-        bottom: 20px;
-        left: 70px; /* Position next to back to top button */
-    }
+
     
     #debugAreaContainer {
         width: calc(100% - 20px);
@@ -2224,14 +2100,7 @@ button .material-symbols-rounded:only-child {
     top: -2px;
 }
 
-/* Update saveAsPictureBtn in the leaderboard */
-#saveAsPictureBtn {
-    position: fixed;
-    top: var(--space-md);
-    left: var(--space-md);
-    background-color: #9C27B0;
-    z-index: 2100;
-}
+
 
 #saveAsPictureBtn:hover {
     background-color: #7B1FA2;
@@ -2418,7 +2287,6 @@ button .material-symbols-rounded:only-child {
 #saveMatchHistoryAsPictureBtn {
     background-color: #9C27B0; /* Subtle purple */
     color: white;
-    position: relative;
 }
 
 .capture-all-btn:hover,
@@ -3043,7 +2911,7 @@ button .material-symbols-rounded:only-child {
     display: flex;
     justify-content: center;
     align-items: center;
-    z-index: 2000;
+    z-index: 9999;
     opacity: 1;
     transition: opacity 0.7s ease-out;
     overflow: hidden;
@@ -3055,6 +2923,7 @@ button .material-symbols-rounded:only-child {
     align-items: center;
     transform: translate(0, 0) scale(1);
     transition: transform 1s cubic-bezier(0.22, 1, 0.36, 1);
+    padding-top: 20px; /* Added to move content down from edge of screen */
 }
 
 .intro-logo {
@@ -3068,7 +2937,7 @@ button .material-symbols-rounded:only-child {
 
 .intro-container h1 {
     font-size: 3.5rem; /* Reduced from 4rem */
-    margin-top: var(--space-md);
+    margin-top: var(--space-sm); /* Reduced from var(--space-md) */
     margin-bottom: var(--space-sm);
     color: var(--primary-dark);
     text-transform: uppercase;
@@ -3172,7 +3041,7 @@ button .material-symbols-rounded:only-child {
     display: flex;
     justify-content: center;
     align-items: center;
-    z-index: 2000;
+    z-index: 9999;
     opacity: 1;
     transition: opacity 0.7s ease-out;
     overflow: hidden;
@@ -3184,6 +3053,7 @@ button .material-symbols-rounded:only-child {
     align-items: center;
     transform: translate(0, 0) scale(1);
     transition: transform 1s cubic-bezier(0.22, 1, 0.36, 1);
+    padding-top: 20px; /* Added to move content down from edge of screen */
 }
 
 .intro-logo {
@@ -3197,7 +3067,7 @@ button .material-symbols-rounded:only-child {
 
 .intro-container h1 {
     font-size: 3.5rem; /* Reduced from 4rem */
-    margin-top: var(--space-md);
+    margin-top: var(--space-sm); /* Reduced from var(--space-md) */
     margin-bottom: var(--space-sm);
     color: var(--primary-dark);
     text-transform: uppercase;
@@ -3355,7 +3225,7 @@ button .material-symbols-rounded:only-child {
     gap: 10px;
     letter-spacing: 0.5px;
     text-transform: uppercase;
-    margin-top: 2.5rem; /* Reduced from 3rem */
+    margin-top: 1.5rem; /* Reduced from 2.5rem */
     opacity: 0;
     transform: translateY(20px);
 }
@@ -3397,7 +3267,7 @@ button .material-symbols-rounded:only-child {
     display: flex;
     justify-content: center;
     align-items: center;
-    z-index: 2000;
+    z-index: 9999;
     opacity: 1;
     transition: opacity 0.7s ease-out;
     overflow: hidden;
@@ -3411,6 +3281,7 @@ button .material-symbols-rounded:only-child {
     transition: transform 1s cubic-bezier(0.22, 1, 0.36, 1);
     opacity: 1;
     visibility: visible;
+    padding-top: 20px; /* Added to move content down from edge of screen */
 }
 
 .intro-logo {
@@ -3638,22 +3509,10 @@ button .material-symbols-rounded:only-child {
 }
 
 .toggle-mute-btn {
-    padding: 8px;
-    border-radius: 50%;
-    width: 40px;
-    height: 40px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background-color: var(--neutral-white);
-    border: 1px solid var(--neutral-light);
-    color: var(--primary);
-    position: absolute;
-    top: 10px;
-    left: 10px;
-    transition: all 0.2s ease;
-    box-shadow: var(--shadow-sm);
-    z-index: 100;
+    background-color: var(--neurtal-white);
+    color: var(--primary-light);
+    box-shadow: var(--shadow-md);
+   
 }
 
 .toggle-mute-btn:hover {
@@ -3737,9 +3596,8 @@ button .material-symbols-rounded:only-child {
 
 /* Copyright notice for intro screen */
 .intro-copyright {
-    position: absolute;
-    bottom: 15px;
-    left: 0;
+    position: relative;
+    margin-top: 40px;
     width: 100%;
     text-align: center;
     font-size: 0.9rem;
@@ -3780,19 +3638,12 @@ button .material-symbols-rounded:only-child {
     
     .intro-copyright {
         font-size: 0.8rem;
-        bottom: 10px;
+        margin-top: 30px;
     }
 }
 
 /* Main audio toggle button */
-#toggleMainAudioBtn {
-    position: fixed;
-    left: 10px;
-    bottom: 60px; /* Position directly above debug button */
-    z-index: 2100; /* Increase z-index to match podium buttons */
-    width: 40px;
-    height: 40px;
-}
+
 
 /* Override hover style for main audio button to match leaderboard mute button */
 #toggleMainAudioBtn:hover {
@@ -3805,40 +3656,11 @@ button .material-symbols-rounded:only-child {
     color: var(--neutral-medium);
 }
 
-/* Debug toggle button positioning */
-.toggle-debug-btn {
-    position: fixed;
-    left: 10px;
-    bottom: 10px;
-    z-index: 999;
-}
 
-/* Mobile adjustments for audio and debug buttons */
-@media (max-width: 768px) {
-    #toggleMainAudioBtn {
-        left: 10px; /* Same as debug button */
-        bottom: 60px; /* Position above the debug button */
-    }
-    
-    .toggle-capture-btn {
-        left: 10px; /* Same as debug button */
-        bottom: 110px; /* Adjust spacing for mobile */
-    }
-    
-    .toggle-info-btn {
-        left: 10px; /* Same as debug button */
-        bottom: 160px; /* Adjust spacing for mobile to match desktop arrangement */
-    }
-}
 
-/* Fixed position override for toggle buttons */
-.fixed-position {
-    position: fixed;
-    top: auto; /* Override the absolute positioning from toggle-mute-btn */
-    left: 10px;
-    bottom: 60px; /* Position directly above debug button */
-    z-index: 999;
-}
+
+
+
 
 /* Custom Confirm Dialog Styles */
 .confirm-modal {
@@ -3970,7 +3792,7 @@ button .material-symbols-rounded:only-child {
     left: 0;
     right: 0;
     bottom: 0;
-    background-color: rgba(255, 107, 107, 0.3);
+    background-color: rgba(246, 77, 77, 0.705);
     transition: .4s;
     border-radius: 34px;
 }
@@ -3988,7 +3810,7 @@ button .material-symbols-rounded:only-child {
 }
 
 input:checked + .status-toggle-slider {
-    background-color: rgba(66, 184, 131, 0.3);
+    background-color: rgba(6, 171, 64, 0.974);
 }
 
 input:focus + .status-toggle-slider {
@@ -5104,23 +4926,7 @@ input:checked + .status-toggle-slider:before {
 }
 
 /* Toggle Info Button Styles */
-        .toggle-info-btn {
-            position: fixed;
-            left: 10px;
-            bottom: 110px; /* Position above the other buttons */
-            z-index: 2100;
-            border-radius: 50%; /* Make button circular */
-            width: 40px;
-            height: 40px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background-color: rgb(68, 155, 255);
-            border: none;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-            cursor: pointer;
-            color: #f7f7f7;
-        }
+
         
         .toggle-info-btn:hover {
             background-color: #7ec5ff;
@@ -5128,42 +4934,32 @@ input:checked + .status-toggle-slider:before {
         
         /* Floating Capture All Button Styles */
         .toggle-capture-btn {
-            position: fixed;
-            left: 10px;
-            bottom: 160px; /* Position above the info button */
-            z-index: 2100; /* Higher z-index to stay above everything except debug panel */
-            border-radius: 50%; /* Make button circular */
+            left: 20px;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            color: var(--neutral-white);
+            box-shadow: var(--shadow-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 999;
+            opacity: 0.9;
+            border: none;
+            cursor: pointer;
+            transition: opacity var(--transition-fast), transform var(--transition-fast);
+        }
+        
+        /* Direct styling for the save as picture button to ensure it appears */
+        #saveAsPictureBtn {
+  
             width: 40px;
             height: 40px;
             display: flex;
             align-items: center;
             justify-content: center;
             background-color: #9C27B0; /* Match the purple of the capture all button */
-            border: none;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-            cursor: pointer;
-            color: #f7f7f7;
-        }
-        
-        /* Direct styling for the save as picture button to ensure it appears */
-        #saveAsPictureBtn {
-            position: fixed !important;
-            left: 10px !important;
-            bottom: 160px !important; /* Position above the info button */
-            z-index: 2190 !important; /* Higher z-index to stay above everything except debug panel */
-            border-radius: 50% !important; /* Make button circular */
-            width: 40px !important;
-            height: 40px !important;
-            display: flex !important;
-            align-items: center !important;
-            justify-content: center !important;
-            background-color: #9C27B0 !important; /* Match the purple of the capture all button */
-            border: none !important;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2) !important;
-            cursor: pointer !important;
-            color: #f7f7f7 !important;
-            top: auto !important; /* Override any top positioning */
-            right: auto !important; /* Override any right positioning */
+           
         }
         
         .toggle-capture-btn:hover, 
@@ -5362,19 +5158,17 @@ th:last-child {
 
 /* Floating Match History Button */
 .floating-history-btn {
-    position: fixed;
-    bottom: 260px; /* Position above other buttons */
     right: 20px;
-    width: 50px;
-    height: 50px;
+    width: 40px;
+    height: 40px;
     border-radius: 50%;
-    background-color: #2196F3; /* Light blue color */
+    background-color: #2196F3;
     color: var(--neutral-white);
     box-shadow: var(--shadow-md);
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 999;
+    z-index: 1999;
     opacity: 0.9;
     border: none;
     cursor: pointer;
@@ -5391,15 +5185,6 @@ th:last-child {
     font-size: 24px;
 }
 
-/* Mobile Responsive Design for floating history button */
-@media (max-width: 768px) {
-    .floating-history-btn {
-        width: 40px;
-        height: 40px;
-        right: 20px;
-        bottom: 220px;
-    }
-}
 
 /* When edit mode is active, disable add match and submit scores buttons */
 .round-container.edit-mode .add-match-btn,
@@ -5651,13 +5436,13 @@ th:last-child {
 
 /* Support Button and Panel */
 .support-btn {
-    position: fixed !important;
-    bottom: auto !important; /* Position it below the scroll down button (which is at 80px/70px) */
-    right: 20px !important;
-    left: auto !important; /* Ensure it's not positioned on the left */
-    top: 25px !important; /* Ensure it's not positioned at the top */
-    width: 50px;
-    height: 50px;
+    position: fixed;
+    bottom: auto; /* Position it below the scroll down button (which is at 80px/70px) */
+    right: 20px;
+    left: auto; /* Ensure it's not positioned on the left */
+    top: 100px;
+    width: 40px;
+    height: 40px;
     border-radius: 50%;
     background-color: #fff;
     color: #0D0C22;
@@ -5665,20 +5450,21 @@ th:last-child {
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 1100; /* Keep z-index high enough to be visible */
+    z-index: 999; /* Keep z-index high enough to be visible */
     transition: transform var(--transition-fast), box-shadow var(--transition-fast);
     border: none;
     cursor: pointer;
 }
 
-.support-btn:hover {
-    transform: translateY(-3px);
-    box-shadow: var(--shadow-lg);
-}
-
 .support-icon {
     width: 24px;
     height: 24px;
+    transform: scale(2.2);
+}
+
+.support-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-lg);
 }
 
 .support-panel {
@@ -5690,7 +5476,7 @@ th:last-child {
     height: 100vh;
     background-color: #fff;
     box-shadow: var(--shadow-lg);
-    z-index: 1500 !important; /* Ensure it's above other elements */
+    z-index: 2002 !important; /* Ensure it's above other elements */
     transition: right 0.3s ease-in-out, transform 0.3s ease-in-out;
     display: flex;
     flex-direction: column;
@@ -5807,21 +5593,7 @@ th:last-child {
 }
 
 /* Mobile styles for support panel */
-@media (max-width: 768px) {
-    .support-btn {
-        width: 40px;
-        height: 40px;
-        bottom: 20px !important; /* Position at the bottom on mobile, below the scroll down button which is at 70px */
-        right: 20px !important;
-        left: auto !important;
-        top: auto !important;
-    }
-    
-    .support-icon {
-        width: 20px;
-        height: 20px;
-    }
-    
+@media (max-width: 768px) {      
     .support-panel {
         width: 100% !important;
         right: -100% !important; /* Ensure panel is fully off-screen on mobile */
@@ -5855,4 +5627,201 @@ th:last-child {
         right: 0 !important;
         visibility: visible !important; /* Ensure consistency with main rule */
     }
+}
+
+/* Add styles for a player who has left the tournament */
+.status-left {
+    color: #d32f2f !important;
+    font-weight: bold;
+}
+
+/* Style for left tournament toggle slider */
+.status-toggle-slider.left-tournament {
+    background-color: #d32f2f;
+    opacity: 0.6;
+}
+
+/* Disabled toggle styling */
+.status-toggle input[type="checkbox"]:disabled + .status-toggle-slider {
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.status-toggle input[type="checkbox"]:disabled + .status-toggle-slider.left-tournament {
+    opacity: 0.7;
+    box-shadow: 0 0 4px #ff0000;
+}
+
+/* Floating Buttons Container */
+.floating-buttons-container {
+    position: fixed;
+    right: 0;
+    bottom: 50px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    z-index: 2000;
+    padding: 10px 15px 10px 25px;
+    background-color: rgba(255, 255, 255, 0.85);
+    border-radius: 12px 0 0 12px;
+    box-shadow: -2px 2px 8px rgba(0, 0, 0, 0.15);
+    transform: translateX(calc(100% - 24px)); /* Default collapsed state */
+    transition: transform 0.3s ease;
+    will-change: transform;
+}
+
+.floating-buttons-container.expanded {
+    transform: translateX(0); /* Expanded state */
+}
+
+/* Floating Buttons Container */
+.floating-buttons-container-left {
+    position: fixed;
+    left: 0;
+    bottom: 50px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    z-index: 2001;
+    padding: 10px 25px 10px 15px;
+    background-color: rgba(255, 255, 255, 0.85);
+    border-radius: 0 12px 12px 0;
+    box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.15);
+    transform: translateX(calc(-100% + 24px)); /* Default collapsed state */
+    transition: transform 0.3s ease;
+    will-change: transform;
+}
+
+.floating-buttons-container-left.expanded {
+    transform: translateX(0); /* Expanded state */
+}
+
+/* Toggle tab for containers */
+.floating-toggle-tab {
+    position: absolute;
+    width: 24px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: rgba(255, 255, 255, 0.95);
+    border-radius: 4px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+    cursor: pointer;
+    top: 50%;
+    transform: translateY(-50%);
+    transition: background-color 0.2s ease;
+    z-index: 1000;
+}
+
+.floating-toggle-tab:hover {
+    background-color: rgba(235, 235, 235, 0.95);
+}
+
+.floating-buttons-container .floating-toggle-tab {
+    left: 0;
+    border-radius: 4px 0 0 4px;
+}
+
+.floating-buttons-container-left .floating-toggle-tab {
+    right: 0;
+    border-radius: 0 4px 4px 0;
+}
+
+.floating-toggle-tab .chevron-icon {
+    font-size: 18px;
+    color: var(--primary);
+    transition: transform 0.3s ease;
+}
+
+.floating-buttons-container-left.expanded {
+    transform: translateX(0);
+}
+
+.floating-buttons-container.expanded {
+    transform: translateX(0);
+}
+
+.floating-buttons-container-left.expanded .floating-toggle-tab .chevron-icon {
+    transform: rotate(180deg);
+}
+
+.floating-buttons-container.expanded .floating-toggle-tab .chevron-icon {
+    transform: rotate(180deg);
+}
+
+/* Mobile adjustments for floating containers */
+@media (max-width: 768px) {
+    .floating-buttons-container,
+    .floating-buttons-container-left {
+        bottom: 20px;
+        gap: 8px;
+        padding: 8px 12px 8px 22px;
+    }
+    
+    .floating-buttons-container {
+        transform: translateX(calc(100% - 20px)); /* Adjust for smaller tab width on mobile */
+    }
+    
+    .floating-buttons-container-left {
+        padding: 8px 22px 8px 12px;
+        transform: translateX(calc(-100% + 20px)); /* Adjust for smaller tab width on mobile */
+    }
+    
+    .floating-toggle-tab {
+        width: 20px;
+        height: 50px;
+    }
+    
+    .floating-toggle-tab .chevron-icon {
+        font-size: 16px;
+    }
+}
+
+/* Common floating button styles */
+.floating-button {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: var(--shadow-md);
+    transition: opacity var(--transition-fast), transform var(--transition-fast);
+    border: none;
+    cursor: pointer;
+}
+
+.floating-button:hover {
+    opacity: 1;
+    transform: translateY(-2px);
+}
+
+/* Leaderboard Button */
+.leaderboard-btn {
+    background-color: var(--secondary);
+    opacity: 1;
+    color: var(--neutral-white);
+}
+
+/* Back to Top Button */
+.back-to-top-btn {
+    background-color: var(--primary);
+    opacity: 0.8;
+    color: var(--neutral-white);
+}
+
+/* Floating Match History Button */
+.floating-history-btn {
+    background-color: #2196F3;
+    opacity: 0.9;
+    color: var(--neutral-white);
+}
+
+/* Current Round Button */
+.round-nav-btn {
+    background-color: var(--accent);
+    opacity: 0.9;
+    color: var(--neutral-white);
+    padding: 0;
 }
