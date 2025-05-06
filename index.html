@@ -4,7 +4,7 @@
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2034792889395341"
     crossorigin="anonymous"></script>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, shrink-to-fit=no">
     <title>Pickle Pairs | Doing Doubles Right</title>
     
     <!-- Open Graph Meta Tags -->
@@ -3922,5 +3922,44 @@
     <!-- Add app.js for floating button container functionality -->
     <script src="app.js"></script>
 
+    <!-- Main Script -->
+    <script src="script.js"></script>
+    
+    <!-- Orientation change handling script -->
+    <script>
+        // Handle orientation changes
+        window.addEventListener('orientationchange', function() {
+            // Prevent zooming issues by forcing viewport refresh
+            const viewportMeta = document.querySelector('meta[name="viewport"]');
+            if (viewportMeta) {
+                viewportMeta.content = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no';
+                setTimeout(function() {
+                    viewportMeta.content = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, shrink-to-fit=no';
+                }, 300);
+            }
+            
+            // Force layout recalculation
+            document.body.style.display = 'none';
+            setTimeout(function() {
+                document.body.style.display = '';
+                window.scrollTo(0, 0);
+            }, 50);
+        });
+        
+        // Handle ad layout issues
+        function fixAdLayouts() {
+            const ads = document.querySelectorAll('ins.adsbygoogle');
+            if (ads) {
+                ads.forEach(ad => {
+                    ad.style.maxWidth = '100%';
+                    ad.style.overflow = 'hidden';
+                });
+            }
+        }
+        
+        // Run on load and resize
+        window.addEventListener('load', fixAdLayouts);
+        window.addEventListener('resize', fixAdLayouts);
+    </script>
 </body>
 </html>

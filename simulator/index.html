@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pickle Pairs Simulator</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0">
+</head>
+<body>
+    <div class="app-container">
+        <header class="simulator-header">
+            <div class="logo-container">
+                <img src="../simplelogotbase64renamed.png" alt="Pickle Pairs Logo" class="logo">
+                <h1>Pickle Pairs Simulator</h1>
+            </div>
+        </header>
+
+        <main class="simulator-content">
+            <div class="simulator-panel">
+                <h2>Simulator Settings</h2>
+                
+                <div class="settings-section">
+                    <h3>Initial Configuration</h3>
+                    <div class="setting-group">
+                        <label for="courtCount">Number of Courts:</label>
+                        <input type="number" id="courtCount" min="1" max="10" value="4">
+                    </div>
+                    <div class="setting-group">
+                        <label for="initialPlayerCount">Initial Players:</label>
+                        <input type="number" id="initialPlayerCount" min="4" max="9" value="6">
+                    </div>
+                </div>
+
+                <div class="settings-section">
+                    <h3>Simulation Options</h3>
+                    <div class="setting-toggle">
+                        <label for="enableAddPlayers">Add players during tournament</label>
+                        <label class="switch">
+                            <input type="checkbox" id="enableAddPlayers" checked>
+                            <span class="slider round"></span>
+                        </label>
+                    </div>
+                    <div class="setting-toggle">
+                        <label for="enableSitOut">Allow players to sit out</label>
+                        <label class="switch">
+                            <input type="checkbox" id="enableSitOut" checked>
+                            <span class="slider round"></span>
+                        </label>
+                    </div>
+                    <div class="setting-toggle">
+                        <label for="enableEditRounds">Allow editing of rounds</label>
+                        <label class="switch">
+                            <input type="checkbox" id="enableEditRounds" checked>
+                            <span class="slider round"></span>
+                        </label>
+                    </div>
+                    <div class="setting-toggle">
+                        <label for="enableEditHistory">Allow editing match history</label>
+                        <label class="switch">
+                            <input type="checkbox" id="enableEditHistory" checked>
+                            <span class="slider round"></span>
+                        </label>
+                    </div>
+                    <div class="setting-toggle">
+                        <label for="enableSkipMatches">Allow skipping matches</label>
+                        <label class="switch">
+                            <input type="checkbox" id="enableSkipMatches" checked>
+                            <span class="slider round"></span>
+                        </label>
+                    </div>
+                    <div class="setting-toggle">
+                        <label for="enableAddMatches">Allow adding matches to rounds</label>
+                        <label class="switch">
+                            <input type="checkbox" id="enableAddMatches" checked>
+                            <span class="slider round"></span>
+                        </label>
+                    </div>
+                    <div class="setting-toggle">
+                        <label for="enableTimeLimits">Enable player time limits</label>
+                        <label class="switch">
+                            <input type="checkbox" id="enableTimeLimits" checked>
+                            <span class="slider round"></span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="settings-section">
+                    <h3>Automation Settings</h3>
+                    <div class="setting-group">
+                        <label for="maxRounds">Maximum Rounds:</label>
+                        <input type="number" id="maxRounds" min="1" max="50" value="25">
+                    </div>
+                    <div class="setting-group">
+                        <label for="maxPlayers">Maximum Players:</label>
+                        <input type="number" id="maxPlayers" min="4" max="100" value="50">
+                    </div>
+                    <div class="setting-group">
+                        <label for="simulationSpeed">Simulation Speed:</label>
+                        <select id="simulationSpeed">
+                            <option value="slow">Slow</option>
+                            <option value="medium" selected>Medium</option>
+                            <option value="fast">Fast</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="settings-section">
+                    <h3>Player Settings</h3>
+                    <div class="setting-group">
+                        <label for="minAvailableTime">Minimum Available Time (minutes):</label>
+                        <input type="number" id="minAvailableTime" min="10" max="480" value="30">
+                    </div>
+                    <div class="setting-group">
+                        <label for="maxAvailableTime">Maximum Available Time (minutes):</label>
+                        <input type="number" id="maxAvailableTime" min="30" max="480" value="240">
+                    </div>
+                    <div class="setting-group">
+                        <label for="minSitOutRounds">Minimum Manual Sit Out Rounds:</label>
+                        <input type="number" id="minSitOutRounds" min="1" max="10" value="1">
+                    </div>
+                    <div class="setting-group">
+                        <label for="maxSitOutRounds">Maximum Manual Sit Out Rounds:</label>
+                        <input type="number" id="maxSitOutRounds" min="1" max="10" value="4">
+                    </div>
+                </div>
+
+                <div class="simulator-controls">
+                    <button id="startSimulationBtn" class="primary-btn">Start Simulation</button>
+                    <button id="pauseSimulationBtn" class="secondary-btn" disabled>Pause</button>
+                    <button id="resetSimulationBtn" class="danger-btn" disabled>Reset</button>
+                    <button id="showStatsBtn" class="info-btn" disabled>Show Statistics</button>
+                    <button id="showRoundStatsBtn" class="info-btn" disabled>Round Stats</button>
+                </div>
+            </div>
+
+            <div class="simulation-status">
+                <h3>Simulation Status</h3>
+                <div class="status-info">
+                    <div class="status-item">
+                        <span class="status-label">Current Round:</span>
+                        <span id="currentRound" class="status-value">0</span>
+                    </div>
+                    <div class="status-item">
+                        <span class="status-label">Total Players:</span>
+                        <span id="totalPlayers" class="status-value">0</span>
+                    </div>
+                    <div class="status-item">
+                        <span class="status-label">Active Players:</span>
+                        <span id="activePlayers" class="status-value">0</span>
+                    </div>
+                    <div class="status-item">
+                        <span class="status-label">Sitting Out:</span>
+                        <span id="sittingOutPlayers" class="status-value">0</span>
+                    </div>
+                </div>
+                <div class="log-container">
+                    <h4>Simulation Log</h4>
+                    <div id="simulationLog" class="log-content"></div>
+                </div>
+            </div>
+        </main>
+
+        <div id="simulationIframe" class="iframe-container">
+            <div class="iframe-overlay">
+                <div class="overlay-controls">
+                    <button id="nextActionBtn" class="action-btn" disabled>Run Next Action</button>
+                    <button id="autoRunBtn" class="action-btn" disabled>Auto Run</button>
+                    <span id="actionStatus" class="action-status">Waiting to start...</span>
+                    <button id="toggleOverlayBtn" class="toggle-btn" title="Toggle overlay visibility">
+                        <span class="material-symbols-rounded">visibility_off</span>
+                    </button>
+                </div>
+            </div>
+            <iframe id="appIframe" src="../index.html" title="Pickle Pairs App"></iframe>
+        </div>
+    </div>
+
+    <div id="toastContainer" class="toast-container"></div>
+
+    <script src="simulator.js"></script>
+</body>
+</html> 

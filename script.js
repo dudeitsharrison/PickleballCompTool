@@ -940,10 +940,168 @@ function prioritizeByPartnerVariety(players) {
     });
 }
 
+// Function to find optimal pairings for the critical n-2 round
+function findOptimalRemainingPairings(players, maxMatches) {
+    logDebugMessage("=== STARTING OPTIMAL REMAINING PAIRS ALGORITHM ===");
+    
+    // 1. Create a map of each player and their potential remaining partners
+    const remainingPartners = {};
+    players.forEach(player => {
+        remainingPartners[player.name] = [];
+        players.forEach(potentialPartner => {
+            if (player !== potentialPartner && 
+                pairTracker.getPairCount(player, potentialPartner) === 0) {
+                remainingPartners[player.name].push(potentialPartner);
+            }
+        });
+        logDebugMessage(`Player ${player.name} has ${remainingPartners[player.name].length} remaining potential partners`);
+    });
+    
+    // 2. Find players with fewest remaining partner options
+    const playersByConstraint = [...players].sort((a, b) => 
+        remainingPartners[a.name].length - remainingPartners[b.name].length);
+    
+    logDebugMessage(`Most constrained player: ${playersByConstraint[0].name} with ${remainingPartners[playersByConstraint[0].name].length} options`);
+    
+    // 3. Use backtracking to find optimal pairings
+    const matches = [];
+    const usedPlayers = new Set();
+    
+    // Recursive backtracking function
+    function findValidPairings() {
+        if (matches.length >= maxMatches || usedPlayers.size >= players.length) {
+            return true; // Found enough matches
+        }
+        
+        // Get available players not yet used in this round
+        const availablePlayers = players.filter(p => !usedPlayers.has(p.name));
+        if (availablePlayers.length < 4) {
+            return matches.length > 0; // Can't form more complete matches
+        }
+        
+        // Sort by fewest remaining partner options first
+        availablePlayers.sort((a, b) => {
+            const aOptions = remainingPartners[a.name].filter(p => !usedPlayers.has(p.name)).length;
+            const bOptions = remainingPartners[b.name].filter(p => !usedPlayers.has(p.name)).length;
+            return aOptions - bOptions;
+        });
+        
+        // Start with the most constrained player
+        const currentPlayer = availablePlayers[0];
+        usedPlayers.add(currentPlayer.name);
+        
+        // Try each available partner
+        const availablePartners = remainingPartners[currentPlayer.name]
+            .filter(p => !usedPlayers.has(p.name));
+            
+        for (const partner of availablePartners) {
+            usedPlayers.add(partner.name);
+            
+            // Formed team 1
+            const team1 = [currentPlayer, partner];
+            const team1Key = generatePairKey(currentPlayer, partner);
+            
+            // Find players for team 2 (also prioritizing most constrained)
+            const remainingForTeam2 = availablePlayers.filter(
+                p => p !== currentPlayer && p !== partner && !usedPlayers.has(p.name)
+            );
+            
+            if (remainingForTeam2.length >= 2) {
+                // Sort remaining players by constraint level
+                remainingForTeam2.sort((a, b) => {
+                    const aOptions = remainingPartners[a.name].filter(
+                        p => remainingForTeam2.includes(p) && p !== a
+                    ).length;
+                    const bOptions = remainingPartners[b.name].filter(
+                        p => remainingForTeam2.includes(p) && p !== b
+                    ).length;
+                    return aOptions - bOptions;
+                });
+                
+                // Try to pair the most constrained remaining player
+                const team2Player1 = remainingForTeam2[0];
+                
+                // Find potential partners for team2Player1
+                const team2Options = remainingPartners[team2Player1.name]
+                    .filter(p => remainingForTeam2.includes(p) && p !== team2Player1);
+                    
+                for (const team2Player2 of team2Options) {
+                    // Check if this is a valid match
+                    const team2 = [team2Player1, team2Player2];
+                    const team2Key = generatePairKey(team2Player1, team2Player2);
+                    
+                    const matchKey = generateMatchKey(team1, team2);
+                    
+                    // Validate this match doesn't violate any constraints
+                    if (previousRoundMatches && previousRoundMatches.has(matchKey)) {
+                        continue; // Skip if this exact match was played in the previous round
+                    }
+                    
+                    // Mark these players as used
+                    usedPlayers.add(team2Player1.name);
+                    usedPlayers.add(team2Player2.name);
+                    
+                    // Create the match
+                    matches.push({ team1, team2 });
+                    
+                    // Continue with remaining players
+                    if (findValidPairings()) {
+                        return true;
+                    }
+                    
+                    // Backtrack if this doesn't lead to a solution
+                    matches.pop();
+                    usedPlayers.delete(team2Player1.name);
+                    usedPlayers.delete(team2Player2.name);
+                }
+            }
+            
+            // Backtrack team 1
+            usedPlayers.delete(partner.name);
+        }
+        
+        // Backtrack current player
+        usedPlayers.delete(currentPlayer.name);
+        return false;
+    }
+    
+    // Start the backtracking search
+    const foundSolution = findValidPairings();
+    
+    if (foundSolution) {
+        logDebugMessage(`Found optimal solution with ${matches.length} matches for critical round`);
+        
+        // Update tracking for these pairs
+        matches.forEach(match => {
+            updatePairEncounter(match.team1[0], match.team1[1]);
+            updatePairEncounter(match.team2[0], match.team2[1]);
+        });
+        
+        return matches;
+    }
+    
+    logDebugMessage("Could not find optimal solution, falling back to standard algorithm");
+    return null;
+}
+
 function createMatchesForRound(eligiblePlayers, maxMatches) {
     logDebugMessage("=== START CREATE MATCHES FOR ROUND ===");
     logDebugMessage(`Creating matches with ${eligiblePlayers.length} eligible players: ${eligiblePlayers.map(p => p.name).join(', ')}`);
     logDebugMessage(`Maximum matches to create: ${maxMatches}`);
+    
+    // Check if we're at the critical round (n-2)
+    const totalRounds = document.querySelectorAll('.round-container').length;
+    const currentRound = totalRounds + 1; // Adding 1 because we're creating the next round
+    
+    // Only optimize at the critical round n-2
+    if (currentRound === eligiblePlayers.length - 2) {
+        logDebugMessage(`At critical round ${currentRound} (n-2), using special optimization`);
+        const optimizedMatches = findOptimalRemainingPairings(eligiblePlayers, maxMatches);
+        if (optimizedMatches && optimizedMatches.length > 0) {
+            logDebugMessage(`Using optimized pairings for round ${currentRound}`);
+            return optimizedMatches;
+        }
+    }
     
     // Sort players to prioritize those with least partner variety first
     const prioritizedPlayers = prioritizeByPartnerVariety(eligiblePlayers);
