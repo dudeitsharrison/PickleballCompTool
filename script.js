@@ -1807,18 +1807,22 @@ function calculateRepeatPairPenalty(configPairs, allPlayers) {
         }
     }
     
-    // Step 3: Prioritize unused pairs FIRST, before any other consideration
-    const unusedPairs = potentialPairs.filter(pair => pair.pairCount === 0);
+    // NEW STEP: Check for any never-paired players - this is our highest priority
+    const neverPairedCombinations = potentialPairs.filter(pair => pair.pairCount === 0);
     
-    // If we have any unused pairs, ONLY use those
-    if (unusedPairs.length > 0) {
-        logDebugMessage(`Found ${unusedPairs.length} pairs at relaxation level 0 (never paired before)`);
-        // Sort them by their opponent count (preferring lowest first)
-        const sortedUnusedPairs = unusedPairs.sort((a, b) => a.pairOpponentCount - b.pairOpponentCount);
-        pairs.push(...sortedUnusedPairs);
-        return pairs; // Only return never-paired combinations
+    if (neverPairedCombinations.length > 0) {
+        logDebugMessage(`Found ${neverPairedCombinations.length} never-paired combinations - these will take highest priority`);
+        
+        // Sort by opponent count (prefer pairs that haven't faced each other much)
+        const sortedNeverPaired = neverPairedCombinations.sort((a, b) => 
+            a.pairOpponentCount - b.pairOpponentCount
+        );
+        
+        pairs.push(...sortedNeverPaired);
+        return pairs;
     }
     
+    // Step 3: If all pairs have been used at least once, prioritize by other factors
     // Group potential pairs by their opponent count
     const pairsByOpponentCount = {};
     for (const pair of potentialPairs) {
@@ -3408,6 +3412,9 @@ document.getElementById('closePodiumBtn').addEventListener('click', closePodium)
 
 // Reset eligibility and sit-out status for each round
 function resetEligibilityAndSitOut() {
+    // IMPORTANT: We should NOT reset satOutLastRound here
+    // Instead we'll do it at the end of determineSitOuts after we've used it
+    
     players.forEach(player => {
         // Make players who sat out last round eligible
         if (player.satOutLastRound && !player.manualSitOut) {
@@ -3416,9 +3423,9 @@ function resetEligibilityAndSitOut() {
             // Set eligibility based on whether they are manually sitting out
             player.eligible = true;
         }
-
-        // Reset satOutLastRound status for all players
-        player.satOutLastRound = false;
+        
+        // Don't reset satOutLastRound here! This causes the issue with repeat sit-outs
+        // player.satOutLastRound = false;
     });
 }
 
@@ -3457,49 +3464,79 @@ function determineSitOuts() {
         console.log(`Players that need to sit out due to remaining spots: ${remainder}`);
 
         // Add remainder players to the sit-out list (even though they are eligible, they will sit out)
-        const sortedEligiblePlayers = shuffleByGamesPlayed(eligiblePlayers);  // Sort and shuffle eligible players by games played
-        for (let i = 0; i < remainder; i++) {
-            sitOutPlayers.push(sortedEligiblePlayers[i]);
-            sortedEligiblePlayers[i].eligible = false;
-            console.log(`Player ${sortedEligiblePlayers[i].name} eligibility set to: ${sortedEligiblePlayers[i].eligible} (due to remaining spots)`);
+        // MODIFIED: Ensure we don't select players who sat out last round
+        const eligibleNotSatOutLastRound = eligiblePlayers.filter(player => !player.satOutLastRound);
+        const eligibleSatOutLastRound = eligiblePlayers.filter(player => player.satOutLastRound);
+        
+        console.log("Players who sat out last round:", eligibleSatOutLastRound.map(player => player.name));
+        console.log("Players who did not sit out last round:", eligibleNotSatOutLastRound.map(player => player.name));
+        
+        // First try to select players who didn't sit out last round
+        let remainderPlayers = shuffleByGamesPlayed(eligibleNotSatOutLastRound).slice(0, remainder);
+        
+        // If we don't have enough, then include players who sat out last round
+        if (remainderPlayers.length < remainder) {
+            const additionalNeeded = remainder - remainderPlayers.length;
+            const additionalPlayers = shuffleByGamesPlayed(eligibleSatOutLastRound).slice(0, additionalNeeded);
+            remainderPlayers = [...remainderPlayers, ...additionalPlayers];
+        }
+        
+        for (let i = 0; i < remainderPlayers.length; i++) {
+            sitOutPlayers.push(remainderPlayers[i]);
+            remainderPlayers[i].eligible = false;
+            console.log(`Player ${remainderPlayers[i].name} eligibility set to: ${remainderPlayers[i].eligible} (due to remaining spots)`);
         }
     } else {
         // If there are excess players that need to sit out
         excessPlayers = eligibleCount - spotsAvailable;
         console.log(`Excess players that need to sit out: ${excessPlayers}`);
 
-        // Step 6: Exclude players who sat out last round from sitting out again unless necessary
+        // Step 6: Separate players into those who sat out last round and those who didn't
         const playersWhoSatOutLastRound = eligiblePlayers.filter(player => player.satOutLastRound);
         const playersNotSatOutLastRound = eligiblePlayers.filter(player => !player.satOutLastRound);
 
         console.log("Players who sat out last round:", playersWhoSatOutLastRound.map(player => player.name));
         console.log("Players who did not sit out last round:", playersNotSatOutLastRound.map(player => player.name));
 
-        // Step 7: Sort and shuffle players who did not sit out last round by their game count
+        // Step 7: Always prioritize players who did NOT sit out last round
         const sortedPlayersNotSatOutLastRound = shuffleByGamesPlayed(playersNotSatOutLastRound);
-
-        // Add players who did not sit out last round first, based on the highest number of games played
-        for (let i = 0; i < excessPlayers && sortedPlayersNotSatOutLastRound[i]; i++) {
+        
+        // Calculate how many players we need from the "not sat out last round" group
+        const playersNeededFromNotSatOut = Math.min(excessPlayers, sortedPlayersNotSatOutLastRound.length);
+        
+        // Add players who did not sit out last round first
+        for (let i = 0; i < playersNeededFromNotSatOut; i++) {
             sitOutPlayers.push(sortedPlayersNotSatOutLastRound[i]);  // Add them to sit-out list
             sortedPlayersNotSatOutLastRound[i].eligible = false; // Mark them as not eligible
-            sortedPlayersNotSatOutLastRound[i].satOutLastRound = true; // Mark them as having sat out this round
             console.log(`Player ${sortedPlayersNotSatOutLastRound[i].name} eligibility set to: ${sortedPlayersNotSatOutLastRound[i].eligible} (excess players, did not sit out last round)`);
         }
 
-        // If there are still remaining players to sit out, use the ones who sat out last round (only if necessary)
-        const sortedPlayersWhoSatOutLastRound = shuffleByGamesPlayed(playersWhoSatOutLastRound);
-        for (let i = sortedPlayersNotSatOutLastRound.length; i < excessPlayers; i++) {
-            sitOutPlayers.push(sortedPlayersWhoSatOutLastRound[i]);  // Add them to sit-out list
-            sortedPlayersWhoSatOutLastRound[i].eligible = false; // Mark them as not eligible
-            sortedPlayersWhoSatOutLastRound[i].satOutLastRound = true; // Mark them as having sat out this round
-            console.log(`Player ${sortedPlayersWhoSatOutLastRound[i].name} eligibility set to: ${sortedPlayersWhoSatOutLastRound[i].eligible} (excess players, sat out last round)`);
+        // Check if we still need more players to sit out (this should only happen in extreme cases)
+        const remainingSitOuts = excessPlayers - playersNeededFromNotSatOut;
+        
+        if (remainingSitOuts > 0) {
+            console.log(`WARNING: Need ${remainingSitOuts} more players to sit out, but they all sat out last round.`);
+            
+            // In this exceptional case, we have to use players who sat out last round
+            const sortedPlayersWhoSatOutLastRound = shuffleByGamesPlayed(playersWhoSatOutLastRound);
+            for (let i = 0; i < remainingSitOuts; i++) {
+                sitOutPlayers.push(sortedPlayersWhoSatOutLastRound[i]);  // Add them to sit-out list
+                sortedPlayersWhoSatOutLastRound[i].eligible = false; // Mark them as not eligible
+                console.log(`Player ${sortedPlayersWhoSatOutLastRound[i].name} eligibility set to: ${sortedPlayersWhoSatOutLastRound[i].eligible} (EXCEPTIONAL CASE: player sat out last round but there are no alternatives)`);
+            }
         }
     }
 
     // Step 8: Log the final sit-out players for debugging
     console.log("Final sit-out players for this round:", sitOutPlayers.map(player => player.name));
 
-    // Step 9: Update the eligibility of all players based on the final sit-out list
+    // Step 9: Update the eligibility and sit-out status of all players
+    // First, clear all previous round sit-out flags
+    players.forEach(player => {
+        player.satOutLastRound = false;
+    });
+    
+    // Then set the new sit-out flags
     players.forEach(player => {
         player.eligible = !sitOutPlayers.includes(player); // Players in sit-out list are not eligible
         player.satOutLastRound = sitOutPlayers.includes(player); // Mark players who sat out this round
